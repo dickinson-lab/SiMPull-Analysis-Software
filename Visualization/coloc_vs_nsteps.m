@@ -17,6 +17,10 @@ for b = 1:nChannels
         if strcmp(color1, channels{c})
             continue
         end
+        %Skip this channel if step counting wasn't done
+        if ~isfield(statsByColor,[color1 'StepHist'])
+            continue
+        end
         %Guard against images with no spots  
         nSpots = cell(size(gridData));
         [nSpots{:}] = gridData.([color1 'SpotCount']);
