@@ -10,7 +10,7 @@
 
 function outStruct = spotcount_ps(channel,rawImage,params,outStruct)                   
     [ymax, xmax, tmax] = size(rawImage);
-
+    
     %Make average image 
     timeAvg = double(zeros(ymax,xmax));
     count = 0;
@@ -53,19 +53,42 @@ function outStruct = spotcount_ps(channel,rawImage,params,outStruct)
     end
     outStruct.([channel 'SpotCount']) = nPeaks;
     
-    %Get a 5x5 box containing each spot and measure the intensity.
-    %Subtract local background by measuring a 9x9 box (Ted's method).
+    %Get a box containing each spot and measure the intensity.
+    %Subtract local background by measuring a larger box (Ted's method).
+    
+    %Determine the Wavelength
+    if (strcmp(channel, 'Blue'))
+        lambda = 480;
+    elseif (strcmp(channel, 'Green'))
+        lambda = 525;
+    elseif (strcmp(channel, 'Red'))
+        lambda = 600;
+    elseif (strcmp(channel, 'FarRed'))
+        lambda = 655;
+    else
+        error('Unexpected channel information given');
+    end
+    
+    %Based on the wavelength and the pixel size, calculate the size of box to use
+    PSFrad = lambda / (2*1.49); %Assumes we're using a 1.49 NA TIRF objective
+    smBoxRad = ceil(PSFrad/params.pixelSize); %This will result in a 5x5 box for large-pixel cameras (EMCCD) and a 7x7 box for small-pixel cameras (sCMOS)
+    smBoxArea = (2*smBoxRad + 1)^2; 
+    lgBoxRad = smBoxRad + 2;
+    lgBoxArea = (2*lgBoxRad + 1)^2;
+    areaDiff =  lgBoxArea - smBoxArea; 
+    
+    %Calculate the background and perform the subtraction
     if nPeaks > 0 
         for e = 1:nPeaks
             xcoord = peakLocations(e,1);
             ycoord = peakLocations(e,2);   
-            spotMat = rawImage(ycoord-2:ycoord+2,xcoord-2:xcoord+2,:);
-            trace5x5 = squeeze(sum(sum(spotMat,1),2));
-            BGMat = rawImage(ycoord-4:ycoord+4,xcoord-4:xcoord+4,:);
-            trace9x9 = squeeze(sum(sum(BGMat,1),2));
-            traceAvgBG = (trace9x9 - trace5x5)/(81-25);
-            trace5x5MBG = trace5x5-traceAvgBG*25;
-            outStruct.([channel 'SpotData'])(e).intensityTrace = transpose(trace5x5MBG);
+            spotMat = rawImage(ycoord-smBoxRad:ycoord+smBoxRad,xcoord-smBoxRad:xcoord+smBoxRad,:);
+            traceSmall = squeeze(sum(sum(spotMat,1),2));
+            BGMat = rawImage(ycoord-lgBoxRad:ycoord+lgBoxRad,xcoord-lgBoxRad:xcoord+lgBoxRad,:);
+            traceLarge = squeeze(sum(sum(BGMat,1),2));
+            traceAvgBG = (traceLarge - traceSmall)/areaDiff;
+            traceSmallMBG = traceSmall-traceAvgBG*smBoxArea;
+            outStruct.([channel 'SpotData'])(e).intensityTrace = transpose(traceSmallMBG);
         end
     end
     return;

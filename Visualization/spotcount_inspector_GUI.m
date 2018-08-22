@@ -207,7 +207,7 @@ timeAvg = imadjust(timeAvg,stretchlim(timeAvg,0.0005),[]);
 %Temporary fix because PS does not save a filtered image
 %filteredImage = imread([handles.gridData(b).tiffDir filesep handles.imageName '_filt.tif']);
 %filteredImage = imadjust(filteredImage,stretchlim(filteredImage,0.0005),[]);
-filteredImage = uint16(zeros(512,512));
+filteredImage = uint16(zeros(ymax,xmax));
 
 %Draw circles around spots
 if handles.gridData(b).([color 'SpotCount']) > 0

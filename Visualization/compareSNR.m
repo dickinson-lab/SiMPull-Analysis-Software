@@ -1,16 +1,26 @@
 %Compares the signal to noise ratio between two or more different
 %SiMPull experiments
 
-answer = inputdlg('Number of experiments to compare:');
-number = str2num(answer{1});
-matFile = {};
-matPath = {};
-startpath = pwd;
-for a = 1:number
-    [file path] = uigetfile('*.mat','Choose a .mat file with data from the spot counter',startpath);
-    matFile{a} = file;
-    matPath{a} = path;
-    startpath = path;
+% Choose mode
+mode = questdlg('What do you want to do?', 'Choose Mode', 'Select multiple datasets from one folder', 'Select datasets individually', 'Select multiple datasets from one folder');
+
+%Get the data from the spot counter
+if strcmp(mode, 'Select datasets individually')
+    answer = inputdlg('Number of experiments to compare:');
+    number = str2num(answer{1});
+    matFile = {};
+    matPath = {};
+    startpath = pwd;
+    for a = 1:number
+        [file path] = uigetfile('*.mat','Choose a .mat file with data from the spot counter',startpath);
+        matFile{a} = file;
+        matPath{a} = path;
+        startpath = path;
+    end
+else
+    [matFile path] = uigetfile('*.mat','Select .mat files to analyze','Multiselect','on');
+    number = length(matFile);
+    [matPath{1:number}] = deal(path);
 end
 
 load([matPath{1} filesep matFile{1}]);
@@ -86,7 +96,7 @@ for b = 1:nChannels
         allStepSNR = horzcat(allStepSNR, stepSNR);
     end
     
-    distributionPlot(allStepSNR, 'showMM',6, 'xyOri','flipped', 'xNames',matFile, 'histOpt',1.1);
+    distributionPlot(allStepSNR, 'showMM',6, 'xyOri','flipped', 'xNames',strrep(matFile(:),'_','\_'), 'histOpt',1.1);
     
 end
 

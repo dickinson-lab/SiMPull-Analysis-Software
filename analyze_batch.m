@@ -9,6 +9,9 @@
 % Only works if the channel information (i.e. which frames correspond to
 % which channel) is the same for all images. 
 
+% Note: The spot detection routine currently assumes a 1.49 NA TIRF 
+% objective - will need to adjust code if using a different objective. 
+
 clear all
 close all
 
@@ -22,7 +25,7 @@ poissonNoise = 0; %Set this option to 1 to account for poissionNoise in the back
                                                                                             %
 % These parameters determine the relationship between laser wavelength and "color"          %
 wavelengths.Blue = {'405' '445'};                                                           %
-wavelengths.Green = {'488' '514'};                                                          %
+wavelengths.Green = {'488' '505' '514'};                                                    %
 wavelengths.Red = {'561' '594'};                                                            %
 wavelengths.FarRed = {'633' '640' '645'};                                                   %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -53,39 +56,49 @@ Formats(2,1).format = 'text';
 Formats(2,1).style = 'radiobutton';
 Formats(2,1).items = {'MetaMorph TIFF' 'Nikon ND2'};
 Formats(2,1).size = [0 25];
-Formats(2,1).span = [1 8];  
+Formats(2,1).span = [1 5];  
 Formats(2,1).callback = @(~,~,h,~) updateEnabled(h); %UpdateEnabled is a custom function specific to this dialog box (with hard-coded values). Need to update if reformatting dialog box.
 DefAns.dataType = 'MetaMorph TIFF';
 
-Prompt(3,:) = {'Enter Channel Information',[],[]};
+Prompt(3,:) = {'Pixel size (nm)','pixelSize',[]};
+Formats(2,6).type = 'edit';
+Formats(2,6).format = 'integer';
+Formats(2,6).limits = [1 inf];
+Formats(2,6).size = [25 25];
+Formats(2,6).unitsloc = 'bottomleft';
+Formats(2,6).enable = 'on';
+Formats(2,6).span = [1 3];
+DefAns.pixelSize = 65;
+
+Prompt(4,:) = {'Enter Channel Information',[],[]};
 Formats(3,1).type = 'text';
 Formats(3,1).span = [1 8];
 
-Prompt(4,:) = {'Blue Channel','haveBlue',[]};
+Prompt(5,:) = {'Blue Channel','haveBlue',[]};
 Formats(5,1).type = 'check';
 Formats(5,1).span = [1 2];
 Formats(5,1).callback = @(~,~,h,~) updateEnabled(h); %UpdateEnabled is a custom function specific to this dialog box (with hard-coded values). Need to update if reformatting dialog box.
 DefAns.haveBlue = false;
 
-Prompt(5,:) = {'Green Channel','haveGreen',[]};
+Prompt(6,:) = {'Green Channel','haveGreen',[]};
 Formats(5,3).type = 'check';
 Formats(5,3).span = [1 2];
 Formats(5,3).callback = @(~,~,h,~) updateEnabled(h); %UpdateEnabled is a custom function specific to this dialog box (with hard-coded values). Need to update if reformatting dialog box.
 DefAns.haveGreen = true;
 
-Prompt(6,:) = {'Red Channel','haveRed',[]};
+Prompt(7,:) = {'Red Channel','haveRed',[]};
 Formats(5,5).type = 'check';
 Formats(5,5).span = [1 2];
 Formats(5,5).callback = @(~,~,h,~) updateEnabled(h); %UpdateEnabled is a custom function specific to this dialog box (with hard-coded values). Need to update if reformatting dialog box.
 DefAns.haveRed = false;
 
-Prompt(7,:) = {'Far Red Channel','haveFarRed',[]};
+Prompt(8,:) = {'Far Red Channel','haveFarRed',[]};
 Formats(5,7).type = 'check';
 Formats(5,7).span = [1 2];
 Formats(5,7).callback = @(~,~,h,~) updateEnabled(h); %UpdateEnabled is a custom function specific to this dialog box (with hard-coded values). Need to update if reformatting dialog box.
 DefAns.haveFarRed = false;
 
-Prompt(8,:) = {'First Frame:','BlueRange1',[]};
+Prompt(9,:) = {'First Frame:','BlueRange1',[]};
 Formats(6,1).type = 'edit';
 Formats(6,1).format = 'integer';
 Formats(6,1).limits = [1 inf];
@@ -95,7 +108,7 @@ Formats(6,1).enable = 'off';
 Formats(6,1).span = [1 2];
 DefAns.BlueRange1 = 1;
 
-Prompt(9,:) = {'First Frame:','GreenRange1',[]};
+Prompt(10,:) = {'First Frame:','GreenRange1',[]};
 Formats(6,3).type = 'edit';
 Formats(6,3).format = 'integer';
 Formats(6,3).limits = [1 inf];
@@ -105,7 +118,7 @@ Formats(6,3).enable = 'off';
 Formats(6,3).span = [1 2];
 DefAns.GreenRange1 = 1;
 
-Prompt(10,:) = {'First Frame:','RedRange1',[]};
+Prompt(11,:) = {'First Frame:','RedRange1',[]};
 Formats(6,5).type = 'edit';
 Formats(6,5).format = 'integer';
 Formats(6,5).limits = [1 inf];
@@ -115,7 +128,7 @@ Formats(6,5).enable = 'off';
 Formats(6,5).span = [1 2];
 DefAns.RedRange1 = 1;
 
-Prompt(11,:) = {'First Frame:','FarRedRange1',[]};
+Prompt(12,:) = {'First Frame:','FarRedRange1',[]};
 Formats(6,7).type = 'edit';
 Formats(6,7).format = 'integer';
 Formats(6,7).limits = [1 inf];
@@ -125,7 +138,7 @@ Formats(6,7).enable = 'off';
 Formats(6,7).span = [1 2];
 DefAns.FarRedRange1 = 1;
 
-Prompt(12,:) = {'Last Frame:','BlueRange2',[]};
+Prompt(13,:) = {'Last Frame:','BlueRange2',[]};
 Formats(7,1).type = 'edit';
 Formats(7,1).format = 'integer';
 Formats(7,1).limits = [1 inf];
@@ -135,7 +148,7 @@ Formats(7,1).enable = 'off';
 Formats(7,1).span = [1 2];
 DefAns.BlueRange2 = 1200;
 
-Prompt(13,:) = {'Last Frame:','GreenRange2',[]};
+Prompt(14,:) = {'Last Frame:','GreenRange2',[]};
 Formats(7,3).type = 'edit';
 Formats(7,3).format = 'integer';
 Formats(7,3).limits = [1 inf];
@@ -145,7 +158,7 @@ Formats(7,3).enable = 'off';
 Formats(7,3).span = [1 2];
 DefAns.GreenRange2 = 1200;
 
-Prompt(14,:) = {'Last Frame:','RedRange2',[]};
+Prompt(15,:) = {'Last Frame:','RedRange2',[]};
 Formats(7,5).type = 'edit';
 Formats(7,5).format = 'integer';
 Formats(7,5).limits = [1 inf];
@@ -155,7 +168,7 @@ Formats(7,5).enable = 'off';
 Formats(7,5).span = [1 2];
 DefAns.RedRange2 = 1200;
 
-Prompt(15,:) = {'Last Frame:','FarRedRange2',[]};
+Prompt(16,:) = {'Last Frame:','FarRedRange2',[]};
 Formats(7,7).type = 'edit';
 Formats(7,7).format = 'integer';
 Formats(7,7).limits = [1 inf];
@@ -165,11 +178,11 @@ Formats(7,7).enable = 'off';
 Formats(7,7).span = [1 2];
 DefAns.FarRedRange2 = 1200;
 
-Prompt(16,:) = {'Window to average for spot detection:',[],[]};
+Prompt(17,:) = {'Window to average for spot detection:',[],[]};
 Formats(8,1).type = 'text';
 Formats(8,1).span = [1 8];
 
-Prompt(17,:) = {' ','BlueWindow1',[]};
+Prompt(18,:) = {' ','BlueWindow1',[]};
 Formats(9,1).type = 'edit';
 Formats(9,1).format = 'integer';
 Formats(9,1).limits = [1 inf];
@@ -179,7 +192,7 @@ Formats(9,1).enable = 'off';
 Formats(9,1).span = [1 1];
 DefAns.BlueWindow1 = 6;
 
-Prompt(18,:) = {' to ','BlueWindow2',[]};
+Prompt(19,:) = {' to ','BlueWindow2',[]};
 Formats(9,2).type = 'edit';
 Formats(9,2).format = 'integer';
 Formats(9,2).limits = [1 inf];
@@ -189,7 +202,7 @@ Formats(9,2).enable = 'off';
 Formats(9,2).span = [1 1];
 DefAns.BlueWindow2 = 50;
 
-Prompt(19,:) = {' ','GreenWindow1',[]};
+Prompt(20,:) = {' ','GreenWindow1',[]};
 Formats(9,3).type = 'edit';
 Formats(9,3).format = 'integer';
 Formats(9,3).limits = [1 inf];
@@ -199,7 +212,7 @@ Formats(9,3).enable = 'on';
 Formats(9,3).span = [1 1];
 DefAns.GreenWindow1 = 6;
 
-Prompt(20,:) = {' to ','GreenWindow2',[]};
+Prompt(21,:) = {' to ','GreenWindow2',[]};
 Formats(9,4).type = 'edit';
 Formats(9,4).format = 'integer';
 Formats(9,4).limits = [1 inf];
@@ -209,7 +222,7 @@ Formats(9,4).enable = 'on';
 Formats(9,4).span = [1 1];
 DefAns.GreenWindow2 = 50;
 
-Prompt(21,:) = {' ','RedWindow1',[]};
+Prompt(22,:) = {' ','RedWindow1',[]};
 Formats(9,5).type = 'edit';
 Formats(9,5).format = 'integer';
 Formats(9,5).limits = [1 inf];
@@ -219,7 +232,7 @@ Formats(9,5).enable = 'off';
 Formats(9,5).span = [1 1];
 DefAns.RedWindow1 = 6;
 
-Prompt(22,:) = {' to ','RedWindow2',[]};
+Prompt(23,:) = {' to ','RedWindow2',[]};
 Formats(9,6).type = 'edit';
 Formats(9,6).format = 'integer';
 Formats(9,6).limits = [1 inf];
@@ -229,7 +242,7 @@ Formats(9,6).enable = 'off';
 Formats(9,6).span = [1 1];
 DefAns.RedWindow2 = 50;
 
-Prompt(23,:) = {' ','FarRedWindow1',[]};
+Prompt(24,:) = {' ','FarRedWindow1',[]};
 Formats(9,7).type = 'edit';
 Formats(9,7).format = 'integer';
 Formats(9,7).limits = [1 inf];
@@ -239,7 +252,7 @@ Formats(9,7).enable = 'off';
 Formats(9,7).span = [1 1];
 DefAns.FarRedWindow1 = 1;
 
-Prompt(24,:) = {' to ','FarRedWindow2',[]};
+Prompt(25,:) = {' to ','FarRedWindow2',[]};
 Formats(9,8).type = 'edit';
 Formats(9,8).format = 'integer';
 Formats(9,8).limits = [1 inf];
@@ -249,25 +262,25 @@ Formats(9,8).enable = 'off';
 Formats(9,8).span = [1 1];
 DefAns.FarRedWindow2 = 10;
 
-Prompt(25,:) = {'Count steps?','countBlueSteps',[]};
+Prompt(26,:) = {'Count steps?','countBlueSteps',[]};
 Formats(10,1).type = 'check';
 Formats(10,1).enable = 'off';
 Formats(10,1).span = [1 2];
 DefAns.countBlueSteps = true;
 
-Prompt(26,:) = {'Count steps?','countGreenSteps',[]};
+Prompt(27,:) = {'Count steps?','countGreenSteps',[]};
 Formats(10,3).type = 'check';
 Formats(10,3).enable = 'on';
 Formats(10,3).span = [1 2];
 DefAns.countGreenSteps = true;
 
-Prompt(27,:) = {'Count steps?','countRedSteps',[]};
+Prompt(28,:) = {'Count steps?','countRedSteps',[]};
 Formats(10,5).type = 'check';
 Formats(10,5).enable = 'off';
 Formats(10,5).span = [1 2];
 DefAns.countRedSteps = true;
 
-Prompt(28,:) = {'Count steps?','countFarRedSteps',[]};
+Prompt(29,:) = {'Count steps?','countFarRedSteps',[]};
 Formats(10,7).type = 'check';
 Formats(10,7).enable = 'off';
 Formats(10,7).span = [1 2];
@@ -410,12 +423,14 @@ for a=1:length(dirList)
         gridHeight = ceil(nPositions/gridWidth);
         gridData(1:gridHeight,1:gridWidth) = struct('nd2Dir',nd2Dir,...
                                                     'tiffDir',nd2Dir,...
-                                                    'imageName',[]);
+                                                    'imageName',[],...
+                                                    'imageSize',[]);
         index = serpind(size(gridData));
 
         params.psfSize = psfSize;
         params.fpExp = fpExp;
         params.poissonNoise = poissonNoise;
+        params.pixelSize = pixelSize;
 
         %Get Images and Find Spots
         spotwb = waitbar(0, 'Finding Spots...');
@@ -423,7 +438,11 @@ for a=1:length(dirList)
             if strcmp(dataType, 'Nikon ND2') % For Nikon files, load data here.  Metamorph TIFF files are loaded for each channel individually, below
                 imageName = fileList(b).name;
                 rawImage = squeeze(bfread([nd2Dir filesep fileList(b).name],1,'Timepoints','all','ShowProgress',false));
-                [ymax, xmax, tmax] = size(rawImage);
+                if iscell(rawImage) % bfread sometimes returns a cell array, for reasons that are unclear - check and convert if needed
+                    rawImage = cat(3, thisImage{:}); 
+                end
+                [ymax,xmax,tmax] = size(rawImage);
+                gridData(index(b)).imageSize = [ymax xmax];
                 params.imageName = imageName(1:(length(imageName)-4));
                 gridData(index(b)).imageName = params.imageName;
             end
@@ -435,7 +454,11 @@ for a=1:length(dirList)
                     waitbar( (b-1)/nPositions, spotwb, ['Finding ' color ' Spots in image ' strrep(imageName,'_','\_') '...'] );
                     thisImage = squeeze(bfread([nd2Dir filesep fileList(fileCounter).name],1,'Timepoints','all','ShowProgress',false));
                     fileCounter = fileCounter + 1;
-                    [ymax, xmax, tmax] = size(thisImage);
+                    if iscell(thisImage) % bfread sometimes returns a cell array, for reasons that are unclear - check and convert if needed
+                        thisImage = cat(3, thisImage{:}); 
+                    end
+                    [ymax,xmax,tmax] = size(thisImage);
+                    gridData(index(b)).imageSize = [ymax xmax];
                     imageLength = tmax; %For MetaMorph TIFF files that are separated by wavelength, the whole timeseries will be analyzed
                     %Make sure we've loaded an image of the correct color
                     wavePos = strfind( imageName, wavelengths.(color){1} );
@@ -463,7 +486,7 @@ for a=1:length(dirList)
                         imageLength = timeRange2 + 1 - timeRange1;
                     end
                     % Grab the appropriate portion of the image
-                    thisImage = rawImage(:,:,timeRange1:min(timeRange2,tmax));
+                    thisImage = rawImage{timeRange1:min(timeRange2,tmax)};
                 end
                 
                 % Determine the window to average over
@@ -505,7 +528,7 @@ for a=1:length(dirList)
         end
         save([nd2Dir '.mat'],'gridData','nChannels', 'channels', 'nPositions', 'statsByColor');
     end % End of spot counting
-
+    
     
     
     % Check if colocalization data exist
@@ -653,8 +676,13 @@ for a=1:length(dirList)
 
                 wbg = waitbar(0, ['Counting Steps in ' color ' Traces...'] );
                 for c = 1:nPositions
-                    %Skip this image if it has more than 1000 spots
-                    if gridData(c).([color 'SpotCount']) > 1000
+                     % Calculate the maximum spot density to allow for colocalization and step counting
+                     imgArea = gridData(c).imageSize(1) * gridData(c).imageSize(2) * pixelSize^2;
+                     maxSpots = imgArea / 3e6;  % The 3e12 factor comes from my finding that 1000 spots is approximately the max for a 512x512 EMCCD chip at 150X,
+                                                % which translates to a sensor area of 3e9 square nanometers (1000 molecules / 3e9 nm^2 = 1 molecule / 3e6 nm^2)
+                    
+                    %Skip this image if it has too many spots
+                    if gridData(c).([color 'SpotCount']) > maxSpots
                         gridData(c).([color 'GoodSpotCount']) = 'Too Many Spots to Analyze';
                         waitbar(c/nPositions,wbg);
                         continue

@@ -1,9 +1,10 @@
 /* fast_median.cpp
- * Ver 0.83
- * Peter H. Li 2011 FreeBSD License
+ * Ver 0.87
+ * Peter H. Li 2013 FreeBSD License
  * See fast_median.m for documentation.
  */
-#include "fast_median.h"
+#include "mex.h"
+#include "fast_median_lib.cpp"
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 
@@ -15,7 +16,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     mexErrMsgIdAndTxt("fast_median:prhs", "Input argument must be a numeric matrix.");
   }
 
-  // Deconst input array, get its pointer; NAUGHTY BOY!!!!
+  // Copy input array, pass to generic method
   mxArray *incopy = mxDuplicateArray(prhs[0]);
   plhs[0] = run_fast_median(incopy);
 }
