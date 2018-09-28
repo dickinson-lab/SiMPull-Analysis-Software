@@ -452,11 +452,12 @@ for a=1:length(dirList)
                 if strcmp(dataType, 'MetaMorph TIFF') %Load MetaMorph TIFF Data
                     imageName = fileList(fileCounter).name;
                     waitbar( (b-1)/nPositions, spotwb, ['Finding ' color ' Spots in image ' strrep(imageName,'_','\_') '...'] );
-                    thisImage = squeeze(bfread([nd2Dir filesep fileList(fileCounter).name],1,'Timepoints','all','ShowProgress',false));
+                    thisImage = TIFFStack([nd2Dir filesep fileList(fileCounter).name]);
+                    %thisImage = squeeze(bfread([nd2Dir filesep fileList(fileCounter).name],1,'Timepoints','all','ShowProgress',false));
                     fileCounter = fileCounter + 1;
-                    if iscell(thisImage) % bfread sometimes returns a cell array, for reasons that are unclear - check and convert if needed
-                        thisImage = cat(3, thisImage{:}); 
-                    end
+                    %if iscell(thisImage) % bfread sometimes returns a cell array, for reasons that are unclear - check and convert if needed
+                    %    thisImage = cat(3, thisImage{:}); 
+                    %end
                     [ymax,xmax,tmax] = size(thisImage);
                     gridData(index(b)).imageSize = [ymax xmax];
                     imageLength = tmax; %For MetaMorph TIFF files that are separated by wavelength, the whole timeseries will be analyzed
