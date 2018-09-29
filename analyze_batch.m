@@ -452,7 +452,8 @@ for a=1:length(dirList)
                 if strcmp(dataType, 'MetaMorph TIFF') %Load MetaMorph TIFF Data
                     imageName = fileList(fileCounter).name;
                     waitbar( (b-1)/nPositions, spotwb, ['Finding ' color ' Spots in image ' strrep(imageName,'_','\_') '...'] );
-                    thisImage = TIFFStack([nd2Dir filesep fileList(fileCounter).name]);
+                    imObj = TIFFStack([nd2Dir filesep fileList(fileCounter).name]);
+                    thisImage = imObj(:,:,:);
                     %thisImage = squeeze(bfread([nd2Dir filesep fileList(fileCounter).name],1,'Timepoints','all','ShowProgress',false));
                     fileCounter = fileCounter + 1;
                     %if iscell(thisImage) % bfread sometimes returns a cell array, for reasons that are unclear - check and convert if needed

@@ -15,7 +15,7 @@ function outStruct = spotcount_ps(channel,rawImage,params,outStruct)
     timeAvg = double(zeros(ymax,xmax));
     count = 0;
     for b=params.firstTime:params.lastTime
-        timeAvg = timeAvg + rawImage(:,:,b);
+        timeAvg = timeAvg + double(rawImage(:,:,b));
         count = count+1;
     end
     timeAvg = timeAvg/count;
