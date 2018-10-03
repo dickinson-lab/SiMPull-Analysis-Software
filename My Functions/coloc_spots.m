@@ -1,7 +1,7 @@
 %Detects colocalization between red and green TIRF channels by 
 %looking for detected spots that overlap.
 
-function [gridData, colocResults] = coloc_spots(gridData, testChannel)
+function [gridData, colocResults] = coloc_spots(gridData, testChannel, maxSpots)
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %Adjustable Parameters are here                                 %
@@ -47,7 +47,7 @@ function [gridData, colocResults] = coloc_spots(gridData, testChannel)
         end
         for d = 1:length(channels) 
             thisChannel = channels{d};
-            if (gridData(b).([testChannel 'SpotCount']) > 1000 || gridData(b).([thisChannel 'SpotCount']) > 1000)
+            if (gridData(b).([testChannel 'SpotCount']) > maxSpots || gridData(b).([thisChannel 'SpotCount']) > maxSpots)
                 gridData(b).([testChannel thisChannel 'ColocSpots']) = 'Too Many Spots to Analyze';
                 [ gridData(b).([testChannel 'SpotData']).(['coloc' thisChannel]) ] = deal( logical([]) );
                 gridData(b).([testChannel thisChannel 'ColocSpotData']) = struct([]);

@@ -528,7 +528,7 @@ for a=1:length(dirList)
             statsByColor.(['total' color 'Spots']) = sum(sum(spotCount));
             statsByColor.(['avg' color 'Spots']) = sum(sum(spotCount)) / nPositions;
         end
-        save([nd2Dir '.mat'],'gridData','nChannels', 'channels', 'nPositions', 'statsByColor');
+        save([nd2Dir '.mat'],'gridData','nChannels', 'channels', 'nPositions', 'statsByColor','params');
     end % End of spot counting
     
     
@@ -588,12 +588,20 @@ for a=1:length(dirList)
         end
     end
     
-    
+ 
+    % Calculate the maximum spot density to allow for colocalization and step counting
+    imgArea = gridData(c).imageSize(1) * gridData(c).imageSize(2) * pixelSize^2;
+    maxSpots = imgArea / 3e6;  % The 3e12 factor comes from my finding that 1000 spots is approximately the max for a 512x512 EMCCD chip at 150X,
+                               % which translates to a sensor area of 3e9 square nanometers (1000 molecules / 3e9 nm^2 = 1 molecule / 3e6 nm^2).
+                               % Note that this calculation assumes a 100X TIRF objective and doesn't account for possible differences in
+                               % optical resolution between setups - I may wish to do something more sophisticated in the future. 
+    params.maxSpots = maxSpots;
+                               
     %%% Calculate colocalization %%%
     if (nChannels > 1 && countColoc)
         for k = 1:nChannels 
             color1 = channels{k};
-            [gridData, results] = coloc_spots(gridData, color1);
+            [gridData, results] = coloc_spots(gridData, color1, maxSpots);
             for m = 1:nChannels
                 color2 = channels{m};
                 if strcmp(color1, color2)
@@ -604,7 +612,7 @@ for a=1:length(dirList)
             end
         end
     end
-    save([nd2Dir '.mat'], 'statsByColor', 'gridData', '-append');
+    save([nd2Dir '.mat'], 'statsByColor', 'gridData', 'params', '-append');
     
     
     
@@ -678,12 +686,6 @@ for a=1:length(dirList)
 
                 wbg = waitbar(0, ['Counting Steps in ' color ' Traces...'] );
                 for c = 1:nPositions
-                     % Calculate the maximum spot density to allow for colocalization and step counting
-                     imgArea = gridData(c).imageSize(1) * gridData(c).imageSize(2) * pixelSize^2;
-                     maxSpots = imgArea / 3e6;  % The 3e12 factor comes from my finding that 1000 spots is approximately the max for a 512x512 EMCCD chip at 150X,
-                                                % which translates to a sensor area of 3e9 square nanometers (1000 molecules / 3e9 nm^2 = 1 molecule / 3e6 nm^2).
-                                                % Note that this calculation assumes a 100X TIRF objective and doesn't account for possible differences in
-                                                % optical resolution between setups - I may wish to do something more sophisticated in the future. 
                                                 
                     %Skip this image if it has too many spots
                     if gridData(c).([color 'SpotCount']) > maxSpots
