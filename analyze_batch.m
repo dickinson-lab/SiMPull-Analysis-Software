@@ -590,8 +590,8 @@ for a=1:length(dirList)
     
  
     % Calculate the maximum spot density to allow for colocalization and step counting
-    imgArea = gridData(c).imageSize(1) * gridData(c).imageSize(2) * pixelSize^2;
-    maxSpots = imgArea / 3e6;  % The 3e12 factor comes from my finding that 1000 spots is approximately the max for a 512x512 EMCCD chip at 150X,
+    imgArea = gridData(1).imageSize(1) * gridData(1).imageSize(2) * pixelSize^2;
+    maxSpots = imgArea / 3e6;  % The 3e6 factor comes from my finding that 1000 spots is approximately the max for a 512x512 EMCCD chip at 150X,
                                % which translates to a sensor area of 3e9 square nanometers (1000 molecules / 3e9 nm^2 = 1 molecule / 3e6 nm^2).
                                % Note that this calculation assumes a 100X TIRF objective and doesn't account for possible differences in
                                % optical resolution between setups - I may wish to do something more sophisticated in the future. 
