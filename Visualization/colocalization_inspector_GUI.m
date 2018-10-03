@@ -476,9 +476,15 @@ firstImage = imread([handles.gridData(b).tiffDir filesep firstImageName]);
 handles.screenSize = get(0,'ScreenSize');
 figureWidth = handles.screenSize(3);
 imageWidth = (figureWidth-120) / 3;
-handles.scale = imageWidth / xmax;
+xscale = imageWidth / xmax;
+figureHeight = handles.screenSize(4);
+imageHeight = figureHeight - 350;
+yscale = imageHeight / ymax;
+handles.scale = min([xscale yscale]);
+imageWidth = handles.scale * xmax;
+figureWidth = imageWidth*3 + 120;
 imageHeight = handles.scale * ymax;
-figureHeight = imageHeight+300;
+figureHeight = imageHeight + 350;
 set(handles.figureWindow,'Name',matFile(1:end-4), 'Units','pixels', 'Position',[(handles.screenSize(3)-figureWidth)/2 handles.screenSize(4)-figureHeight-100 figureWidth figureHeight]);
 set(handles.instructionText,'Units','pixels','Position',[(figureWidth-250)/2 15 250 60]);
 set(handles.greenImagePanel,'Units','pixels','Position',[30 80 imageWidth imageHeight]);
@@ -503,11 +509,11 @@ else
     set(handles.colocCheckBox, 'Value', 0, 'Enable', 'off');
 end
 
-set(handles.greenText,'Units','pixels','Position',[30+(imageWidth-200)/2 imageHeight+90 200 30]);
-set(handles.redText,'Units','pixels','Position',[imageWidth+60+(imageWidth-200)/2 imageHeight+90 200 30]);
-set(handles.colocText,'Units','pixels','Position',[2*imageWidth+90+(imageWidth-200)/2 imageWidth+90 200 20]);
+set(handles.greenText,'Units','pixels','Position',[30+(imageWidth-200)/2 imageHeight+90 200 20]);
+set(handles.redText,'Units','pixels','Position',[imageWidth+60+(imageWidth-200)/2 imageHeight+90 200 20]);
+set(handles.colocText,'Units','pixels','Position',[2*imageWidth+90+(imageWidth-200)/2 imageHeight+90 200 20]);
 set(handles.positionText,'Units','pixels','Position',[(figureWidth-200)/2 imageHeight+250 200 20]);
-set(handles.buttonPanel,'Units','pixels','Position',[30 imageHeight+200 350 80]); 
+set(handles.buttonPanel,'Units','pixels','Position',[30 imageHeight+200 350 100]); 
 if ~(exist([handles.gridData(b).tiffDir filesep handles.gridData(b).imageName '_red_filt.tif'],'file')==2)
     set(handles.averageImageButton,'Enable','off');
     set(handles.filteredImageButton,'Enable','off');
