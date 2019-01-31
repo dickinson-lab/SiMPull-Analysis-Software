@@ -27,7 +27,7 @@ poissonNoise = 0; %Set this option to 1 to account for poissionNoise in the back
 wavelengths.Blue = {'405' '445'};                                                           %
 wavelengths.Green = {'488' '505' '514'};                                                    %
 wavelengths.Red = {'561' '594'};                                                            %
-wavelengths.FarRed = {'633' '640' '645'};                                                   %
+wavelengths.FarRed = {'633' '638' '640' '645'};                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
