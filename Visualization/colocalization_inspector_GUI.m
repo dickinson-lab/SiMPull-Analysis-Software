@@ -328,9 +328,15 @@ end
 greenCh = imread([handles.gridData(b).tiffDir filesep greenImageName]);
 [ymax xmax] = size(greenCh);
 greenCh = imadjust(greenCh,stretchlim(greenCh,0.0005),[]);
+if isfield(handles.statsByColor, [leftChannel 'RegistrationData']) %Apply registration correct if applicable
+    greenCh = imwarp(greenCh,handles.statsByColor.([leftChannel 'RegistrationData']).SpatialRefObj, regData.Transformation,'OutputView', imref2d(size(greenCh)));
+end
 
 redCh = imread([handles.gridData(b).tiffDir filesep redImageName]);
 redCh = imadjust(redCh,stretchlim(redCh,0.0005),[]);
+if isfield(handles.statsByColor, [centerChannel 'RegistrationData']) %Apply registration correct if applicable
+    redCh = imwarp(redCh,handles.statsByColor.([centerChannel 'RegistrationData']).SpatialRefObj, regData.Transformation,'OutputView', imref2d(size(redCh)));
+end
 
 %Create images for display
 greenImage = uint16(zeros(ymax,xmax,3));
@@ -464,6 +470,7 @@ handles.matPath = matPath; clear matPath;
 handles.matFile = matFile; 
 handles.gridData = gridData; clear gridData;
 handles.channels = channels; 
+handles.statsByColor = statsByColor; clear statsByColor;
 handles.gridSize = size(handles.gridData);
 handles.nElements = handles.gridSize(1)*handles.gridSize(2);
 

@@ -11,6 +11,19 @@
 function outStruct = spotcount_ps(channel,rawImage,params,outStruct)                   
     [ymax, xmax, tmax] = size(rawImage);
     
+    % Double check that our averaging window exists
+    if tmax <= params.lastTime    %If only a few frames were captured, use the whole timeseries 
+        params.firstTime = 1;
+        params.lastTime = tmax;
+    else                    %Otherwise, use the range specified in the input
+        if params.firstTime < 1 
+            params.firstTime = 1;
+        end
+        if params.lastTime > tmax
+            params.lastTime = tmax;
+        end
+    end
+    
     %Make average image 
     timeAvg = double(zeros(ymax,xmax));
     count = 0;
