@@ -329,13 +329,13 @@ greenCh = imread([handles.gridData(b).tiffDir filesep greenImageName]);
 [ymax xmax] = size(greenCh);
 greenCh = imadjust(greenCh,stretchlim(greenCh,0.0005),[]);
 if isfield(handles.statsByColor, [leftChannel 'RegistrationData']) %Apply registration correct if applicable
-    greenCh = imwarp(greenCh,handles.statsByColor.([leftChannel 'RegistrationData']).SpatialRefObj, regData.Transformation,'OutputView', imref2d(size(greenCh)));
+    greenCh = imwarp(greenCh,handles.statsByColor.([leftChannel 'RegistrationData']).SpatialRefObj, handles.statsByColor.([leftChannel 'RegistrationData']).Transformation,'OutputView', imref2d(size(greenCh)));
 end
 
 redCh = imread([handles.gridData(b).tiffDir filesep redImageName]);
 redCh = imadjust(redCh,stretchlim(redCh,0.0005),[]);
 if isfield(handles.statsByColor, [centerChannel 'RegistrationData']) %Apply registration correct if applicable
-    redCh = imwarp(redCh,handles.statsByColor.([centerChannel 'RegistrationData']).SpatialRefObj, regData.Transformation,'OutputView', imref2d(size(redCh)));
+    redCh = imwarp(redCh,handles.statsByColor.([centerChannel 'RegistrationData']).SpatialRefObj, handles.statsByColor.([centerChannel 'RegistrationData']).Transformation,'OutputView', imref2d(size(redCh)));
 end
 
 %Create images for display
@@ -360,8 +360,18 @@ colocOn = get(handles.colocCheckbox,'Value');
 
 if handles.gridData(b).([leftChannel 'SpotCount']) > 0 && (greenOn || colocOn)
     for a = 1:handles.gridData(b).([leftChannel 'SpotCount'])
-        xcoord = handles.gridData(b).([leftChannel 'SpotData'])(a).spotLocation(1);
-        ycoord = handles.gridData(b).([leftChannel 'SpotData'])(a).spotLocation(2);
+        if isfield(handles.statsByColor, [leftChannel 'RegistrationData']) %Apply registration correct if applicable
+            [xcoord,ycoord] = transformPointsForward(handles.statsByColor.([leftChannel 'RegistrationData']).Transformation, handles.gridData(b).([leftChannel 'SpotData'])(a).spotLocation(1), handles.gridData(b).([leftChannel 'SpotData'])(a).spotLocation(2));
+            xcoord = round(xcoord);
+            ycoord = round(ycoord);
+            if (xcoord < 5 || xcoord+5 > xmax || ycoord < 5 || ycoord+5 > ymax)
+                continue
+            end
+        else
+            xcoord = handles.gridData(b).([leftChannel 'SpotData'])(a).spotLocation(1);
+            ycoord = handles.gridData(b).([leftChannel 'SpotData'])(a).spotLocation(2);
+        end
+        
         %Green Circles for Spots in Green Channel
         if greenOn || (colocOn && isnumeric( handles.gridData(b).([leftChannel centerChannel 'ColocSpots']) ) && handles.gridData(b).([leftChannel 'SpotData'])(a).(['coloc' centerChannel]))
             greenImage(ycoord-5:ycoord+5,xcoord-5:xcoord+5,2) = max(handles.circle, greenImage(ycoord-5:ycoord+5,xcoord-5:xcoord+5,2));
@@ -379,8 +389,18 @@ end
 
 if handles.gridData(b).([centerChannel 'SpotCount']) > 0 && (redOn || colocOn)
     for a = 1:handles.gridData(b).([centerChannel 'SpotCount'])
-        xcoord = handles.gridData(b).([centerChannel 'SpotData'])(a).spotLocation(1);
-        ycoord = handles.gridData(b).([centerChannel 'SpotData'])(a).spotLocation(2);
+        if isfield(handles.statsByColor, [centerChannel 'RegistrationData']) %Apply registration correct if applicable
+            [xcoord,ycoord] = transformPointsForward(handles.statsByColor.([centerChannel 'RegistrationData']).Transformation, handles.gridData(b).([centerChannel 'SpotData'])(a).spotLocation(1), handles.gridData(b).([centerChannel 'SpotData'])(a).spotLocation(2));
+            xcoord = round(xcoord);
+            ycoord = round(ycoord);
+            %Skip this circle if it would fall outside the image after registration
+            if (xcoord < 5 || xcoord+5 > xmax || ycoord < 5 || ycoord+5 > ymax)
+                continue
+            end
+        else
+            xcoord = handles.gridData(b).([centerChannel 'SpotData'])(a).spotLocation(1);
+            ycoord = handles.gridData(b).([centerChannel 'SpotData'])(a).spotLocation(2);
+        end
         %Red Circles for Spots in Red Channel
         if redOn || (colocOn && isnumeric( handles.gridData(b).([centerChannel leftChannel 'ColocSpots']) ) && handles.gridData(b).([centerChannel 'SpotData'])(a).(['coloc' leftChannel]))
             greenImage(ycoord-5:ycoord+5,xcoord-5:xcoord+5,1) = max(handles.circle, greenImage(ycoord-5:ycoord+5,xcoord-5:xcoord+5,1));
@@ -417,7 +437,7 @@ if xPos == 0
     xPos = handles.gridSize(2);
 end
 yPos = ceil(b/handles.gridSize(1));
-set(handles.positionText,'String',['Image Number = ' num2str(b)]);
+set(handles.positionText,'String',['Stage Position: ' handles.gridData(b).imageName]);
 
 
 % --- Executes on button press in centerFarRedButton.
@@ -519,7 +539,7 @@ end
 set(handles.greenText,'Units','pixels','Position',[30+(imageWidth-200)/2 imageHeight+90 200 20]);
 set(handles.redText,'Units','pixels','Position',[imageWidth+60+(imageWidth-200)/2 imageHeight+90 200 20]);
 set(handles.colocText,'Units','pixels','Position',[2*imageWidth+90+(imageWidth-200)/2 imageHeight+90 200 20]);
-set(handles.positionText,'Units','pixels','Position',[(figureWidth-200)/2 imageHeight+250 200 20]);
+set(handles.positionText,'Units','pixels','Position',[(figureWidth-500)/2 imageHeight+250 500 20]);
 set(handles.buttonPanel,'Units','pixels','Position',[30 imageHeight+200 350 100]); 
 if ~(exist([handles.gridData(b).tiffDir filesep handles.gridData(b).imageName '_red_filt.tif'],'file')==2)
     set(handles.averageImageButton,'Enable','off');
