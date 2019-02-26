@@ -193,6 +193,7 @@ function leftBlueButton_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of leftBlueButton
 set(handles.leftGreenButton,'Value',0);
 set(handles.leftRedButton,'Value',0);
+set(handles.leftFarRedButton,'Value',0);
 set(handles.greenCheckbox,'String','Blue Spots');
 if get(handles.centerBlueButton,'Value')
     set(handles.colocCheckbox,'Value',0,'Enable','off');
@@ -210,6 +211,7 @@ function leftGreenButton_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of leftGreenButton
 set(handles.leftBlueButton,'Value',0);
 set(handles.leftRedButton,'Value',0);
+set(handles.leftFarRedButton,'Value',0);
 set(handles.greenCheckbox,'String','Green Spots');
 if get(handles.centerGreenButton,'Value')
     set(handles.colocCheckbox,'Value',0,'Enable','off');
@@ -227,8 +229,27 @@ function leftRedButton_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of leftRedButton
 set(handles.leftBlueButton,'Value',0);
 set(handles.leftGreenButton,'Value',0);
+set(handles.leftFarRedButton,'Value',0);
 set(handles.greenCheckbox,'String','Red Spots');
 if get(handles.centerRedButton,'Value')
+    set(handles.colocCheckbox,'Value',0,'Enable','off');
+end
+displayImages(handles);
+guidata(hObject,handles);
+
+
+% --- Executes on button press in leftFarRedButton.
+function leftFarRedButton_Callback(hObject, eventdata, handles)
+% hObject    handle to leftFarRedButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of leftFarRedButton
+set(handles.leftBlueButton,'Value',0);
+set(handles.leftGreenButton,'Value',0);
+set(handles.leftRedButton,'Value',0);
+set(handles.greenCheckbox,'String','Far Red Spots');
+if get(handles.centerFarRedButton,'Value')
     set(handles.colocCheckbox,'Value',0,'Enable','off');
 end
 displayImages(handles);
@@ -244,6 +265,7 @@ function centerBlueButton_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of centerBlueButton
 set(handles.centerGreenButton,'Value',0);
 set(handles.centerRedButton,'Value',0);
+set(handles.centerFarRedButton,'Value',0);
 set(handles.redCheckbox,'String','Blue Spots');
 if get(handles.leftBlueButton,'Value')
     set(handles.colocCheckbox,'Value',0,'Enable','off');
@@ -261,6 +283,7 @@ function centerGreenButton_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of centerGreenButton
 set(handles.centerBlueButton,'Value',0);
 set(handles.centerRedButton,'Value',0);
+set(handles.centerFarRedButton,'Value',0);
 set(handles.redCheckbox,'String','Green Spots');
 if get(handles.leftGreenButton,'Value')
     set(handles.colocCheckbox,'Value',0,'Enable','off');
@@ -278,8 +301,27 @@ function centerRedButton_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of centerRedButton
 set(handles.centerBlueButton,'Value',0);
 set(handles.centerGreenButton,'Value',0);
+set(handles.centerFarRedButton,'Value',0);
 set(handles.redCheckbox,'String','Red Spots');
 if get(handles.leftRedButton,'Value')
+    set(handles.colocCheckbox,'Value',0,'Enable','off');
+end
+displayImages(handles);
+guidata(hObject,handles);
+
+
+% --- Executes on button press in centerFarRedButton.
+function centerFarRedButton_Callback(hObject, eventdata, handles)
+% hObject    handle to centerFarRedButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of centerFarRedButton
+set(handles.centerBlueButton,'Value',0);
+set(handles.centerGreenButton,'Value',0);
+set(handles.centerRedButton,'Value',0);
+set(handles.redCheckbox,'String','Far Red Spots');
+if get(handles.leftFarRedButton,'Value')
     set(handles.colocCheckbox,'Value',0,'Enable','off');
 end
 displayImages(handles);
@@ -438,24 +480,6 @@ if xPos == 0
 end
 yPos = ceil(b/handles.gridSize(1));
 set(handles.positionText,'String',['Stage Position: ' handles.gridData(b).imageName]);
-
-
-% --- Executes on button press in centerFarRedButton.
-function centerFarRedButton_Callback(hObject, eventdata, handles)
-% hObject    handle to centerFarRedButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of centerFarRedButton
-
-
-% --- Executes on button press in leftFarRedButton.
-function leftFarRedButton_Callback(hObject, eventdata, handles)
-% hObject    handle to leftFarRedButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of leftFarRedButton
 
 
 % --- Executes on button press in loadButton.
