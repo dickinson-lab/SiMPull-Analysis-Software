@@ -2,6 +2,9 @@
 
 clear pooledData; %This prevnts carrying over data from a previous run of this script
 
+% Select files to filter
+[fileList, expDir] = uigetfile('*.mat','Choose .mat files to filter',pwd,'MultiSelect','on');
+
 %%%% Options Dialog Box using inputsdlg
 Title = 'Program Options';
 Options.Resize = 'on';
@@ -13,92 +16,84 @@ Prompt = {};
 Formats = {};
 DefAns = struct([]);
 
-Prompt(1,:) = {'Select folder containig data to analyze','expDir',[]};
-Formats(1,1).type = 'edit';
-Formats(1,1).format = 'dir';
-Formats(1,1).required = 'on';
-Formats(1,1).size = [0 25];
+Prompt(1,:) = {'Choose which channels to filter',[],[]};
+Formats(1,1).type = 'text';
 Formats(1,1).span = [1 4];  
-DefAns(1).expDir = [];
 
-Prompt(2,:) = {'Choose which channels to filter',[],[]};
-Formats(2,1).type = 'text';
-Formats(2,1).span = [1 4];  
+Prompt(2,:) = {'Blue','filterBlue',[]};
+Formats(2,1).type = 'check';
+DefAns(1).filterBlue = false;
 
-Prompt(3,:) = {'Blue','filterBlue',[]};
-Formats(3,1).type = 'check';
-DefAns.filterBlue = false;
-
-Prompt(4,:) = {'Green','filterGreen',[]};
-Formats(3,2).type = 'check';
+Prompt(3,:) = {'Green','filterGreen',[]};
+Formats(2,2).type = 'check';
 DefAns.filterGreen = true;
 
-Prompt(5,:) = {'Red','filterRed',[]};
-Formats(3,3).type = 'check';
+Prompt(4,:) = {'Red','filterRed',[]};
+Formats(2,3).type = 'check';
 DefAns.filterRed = false;
 
-Prompt(6,:) = {'Far Red','filterFarRed',[]};
-Formats(3,4).type = 'check';
+Prompt(5,:) = {'Far Red','filterFarRed',[]};
+Formats(2,4).type = 'check';
 DefAns.filterFarRed = false;
 
-Prompt(7,:) = {' ',[],[]};
-Formats(4,1).type = 'text';
-Formats(4,1).span = [1 4];
+Prompt(6,:) = {' ',[],[]};
+Formats(3,1).type = 'text';
+Formats(3,1).span = [1 4];
 
-Prompt(8,:) = {'Filter based on photobleaching step size to reject dim noise?','applyIntFilt',[]};
-Formats(5,1).type = 'check';
-Formats(5,1).span = [1 4];
+Prompt(7,:) = {'Filter based on photobleaching step size to reject dim noise?','applyIntFilt',[]};
+Formats(4,1).type = 'check';
+Formats(4,1).span = [1 4];
 DefAns.applyIntFilt = true;
 
-Prompt(9,:) = {'Choose how to apply step size filter',[],[]};
-Formats(6,1).type = 'text';
-Formats(6,1).span = [1 4];
+Prompt(8,:) = {'Choose how to apply step size filter',[],[]};
+Formats(5,1).type = 'text';
+Formats(5,1).span = [1 4];
 
-Prompt(10,:) = {'','intFiltMode',[]};
-Formats(7,1).type = 'list';
-Formats(7,1).format = 'text';
-Formats(7,1).style = 'radiobutton';
-Formats(7,1).items = {'Calculate threshold separately for each experiment' 'Use threshold from a reference sample for all data' 'Calculate a global threshold by pooling all data'};
-Formats(7,1).size = [0 25];
-Formats(7,1).span = [1 4];  
+Prompt(9,:) = {'','intFiltMode',[]};
+Formats(6,1).type = 'list';
+Formats(6,1).format = 'text';
+Formats(6,1).style = 'radiobutton';
+Formats(6,1).items = {'Calculate threshold separately for each experiment' 'Use threshold from a reference sample for all data' 'Calculate a global threshold by pooling all data'};
+Formats(6,1).size = [0 25];
+Formats(6,1).span = [1 4];  
 DefAns.intFiltMode = 'Calculate a global threshold by pooling all data';
 
-Prompt(11,:) = {'Step size filter strength:',[],[]};
-Formats(8,1).type = 'text';
-Formats(8,1).span = [1 4];
+Prompt(10,:) = {'Step size filter strength:',[],[]};
+Formats(7,1).type = 'text';
+Formats(7,1).span = [1 4];
 
-Prompt(12,:) = {'','intFiltStrength',[]};
-Formats(9,1).type = 'list';
-Formats(9,1).format = 'text';
-Formats(9,1).style = 'radiobutton';
-Formats(9,1).items = {'Aggressive' 'Moderate' 'Conservative'};
-Formats(9,1).size = [0 25];
-Formats(9,1).span = [1 4];  
+Prompt(11,:) = {'','intFiltStrength',[]};
+Formats(8,1).type = 'list';
+Formats(8,1).format = 'text';
+Formats(8,1).style = 'radiobutton';
+Formats(8,1).items = {'Aggressive' 'Moderate' 'Conservative'};
+Formats(8,1).size = [0 25];
+Formats(8,1).span = [1 4];  
 DefAns.intFiltStrength = 'Moderate';
 
-Prompt(13,:) = {' ',[],[]};
-Formats(10,1).type = 'text';
-Formats(10,1).span = [1 4];
+Prompt(12,:) = {' ',[],[]};
+Formats(9,1).type = 'text';
+Formats(9,1).span = [1 4];
 
-Prompt(14,:) = {'Filter based on number of photobleaching steps per spot?','applyStepFilt',[]};
-Formats(11,1).type = 'check';
-Formats(11,1).span = [1 4];
+Prompt(13,:) = {'Filter based on number of photobleaching steps per spot?','applyStepFilt',[]};
+Formats(10,1).type = 'check';
+Formats(10,1).span = [1 4];
 DefAns.applyStepFilt = true;
 
-Prompt(15,:) = {'Keep data with >= this many photobleaching steps:','stepCutoff',[]};
-Formats(12,1).type = 'edit';
-Formats(12,1).format = 'integer';
-Formats(12,1).limits = [0 inf];
-Formats(12,1).size = [40 25];
-Formats(12,1).span = [1 4];  
-Formats(12,1).unitsloc = 'bottomleft';
-Formats(12,1).enable = 'on';
+Prompt(14,:) = {'Keep data with >= this many photobleaching steps:','stepCutoff',[]};
+Formats(11,1).type = 'edit';
+Formats(11,1).format = 'integer';
+Formats(11,1).limits = [0 inf];
+Formats(11,1).size = [40 25];
+Formats(11,1).span = [1 4];  
+Formats(11,1).unitsloc = 'bottomleft';
+Formats(11,1).enable = 'on';
 DefAns.stepCutoff = 1;
 
-Prompt(16,:) = {'Retain rejected spots?','includeRejected',[]};
-Formats(13,1).type = 'check';
-Formats(13,1).enable = 'on';
-Formats(13,1).span = [1 4];  
+Prompt(15,:) = {'Retain spots that show a step up in intensity?','includeRejected',[]};
+Formats(12,1).type = 'check';
+Formats(12,1).enable = 'on';
+Formats(12,1).span = [1 4];  
 DefAns.includeRejected = true;
 
 [FilterParams,Cancelled] = inputsdlg(Prompt,Title,Formats,DefAns,Options);
@@ -124,10 +119,10 @@ else
     end
 end
 
-fileList = dir([expDir filesep '*.mat']);
+%fileList = dir([expDir filesep '*.mat']);
 
 % Ask what to do if filtered data already exist
-if any(cell2mat(strfind({fileList.name}, 'filtered')))
+if any(cell2mat(strfind(fileList, 'filtered')))
     button = questdlg('Filtered data already exist for this experiment. How do you want to proceed?',...
         'Found Existing Data',...
         'Stop','Overwrite','Overwrite');
@@ -160,17 +155,17 @@ if applyIntFilt && strcmp(intFiltMode, 'Global');
     % Gather the data
     for j = 1:length(fileList)
         % Don't try to analyze the summary table
-        if strfind(fileList(j).name, 'summary')
+        if strfind(fileList{j}, 'summary')
             continue
         end
 
         % Don't include data that have been filtered previously
-        if strfind(fileList(j).name, 'filtered')
+        if strfind(fileList{j}, 'filtered')
             continue 
         end
 
         % Load data and add to a big structure that has all of the data
-        load([expDir filesep fileList(j).name]);
+        load([expDir filesep fileList{j}]);
         if ~exist('pooledData', 'var')
             pooledData = gridData;
         else
@@ -202,16 +197,16 @@ for a = 1:length(fileList)
     aborted = false;
     
     % Don't try to analyze the summary table
-    if strfind(fileList(a).name, 'summary')
+    if strfind(fileList{a}, 'summary')
         continue
     end
     
     % Don't re-filter data that has been filtered previously
-    if strfind(fileList(a).name, 'filtered')
+    if strfind(fileList{a}, 'filtered')
         continue 
     end
     
-    load([expDir filesep fileList(a).name]);
+    load([expDir filesep fileList{a}]);
     
     % Filtering by step size (intensity)
     if applyIntFilt
@@ -231,7 +226,7 @@ for a = 1:length(fileList)
                 [gridData, statsByColor, threshold, aborted] = stepSizeFilter(gridData, color, statsByColor, globalThreshold.(color));
             end
             if aborted
-                errordlg(['Step size filter failed! Experiment ' fileList(a).name ' was not filtered']);
+                errordlg(['Step size filter failed! Experiment ' fileList{a} ' was not filtered']);
                 continue
             end
         end
@@ -282,7 +277,7 @@ for a = 1:length(fileList)
     if nChannels >1
         for h = 1:nChannels
             color = channels{h};
-            [gridData, results] = coloc_spots(gridData, color);
+            [gridData, results] = coloc_spots(gridData, statsByColor, color, params.maxSpots);
             for m = 1:nChannels
                 color2 = channels{m};
                 if strcmp(color, color2)
@@ -312,8 +307,8 @@ for a = 1:length(fileList)
         end
     end
     
-    extIdx = strfind(fileList(a).name, '.mat');
-    dataName = fileList(a).name(1 : extIdx-1);
+    extIdx = strfind(fileList{a}, '.mat');
+    dataName = fileList{a}(1 : extIdx-1);
     outFileName = [dataName '_filtered.mat'];
     save([expDir filesep outFileName], 'gridData', 'channels', 'nChannels', 'nPositions', 'statsByColor', 'FilterParams');
     
