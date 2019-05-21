@@ -299,7 +299,7 @@ Formats(11,7).size = [25 25];
 Formats(11,7).unitsloc = 'bottomleft';
 Formats(11,7).enable = 'off';
 Formats(11,7).span = [1 1];
-DefAns.FarRedWindow1 = 1;
+DefAns.FarRedWindow1 = 6;
 
 Prompt(33,:) = {' to ','FarRedWindow2',[]};
 Formats(11,8).type = 'edit';
@@ -309,7 +309,7 @@ Formats(11,8).size = [25 25];
 Formats(11,8).unitsloc = 'bottomleft';
 Formats(11,8).enable = 'off';
 Formats(11,8).span = [1 1];
-DefAns.FarRedWindow2 = 10;
+DefAns.FarRedWindow2 = 50;
 
 Prompt(34,:) = {'Count steps?','countBlueSteps',[]};
 Formats(12,1).type = 'check';
@@ -333,7 +333,7 @@ Prompt(37,:) = {'Count steps?','countFarRedSteps',[]};
 Formats(12,7).type = 'check';
 Formats(12,7).enable = 'off';
 Formats(12,7).span = [1 2];
-DefAns.countFarRedSteps = false;
+DefAns.countFarRedSteps = true;
 
 [Answer,Cancelled] = inputsdlg(Prompt,Title,Formats,DefAns,Options);
 clear Prompt Title Formats DefAns Options
