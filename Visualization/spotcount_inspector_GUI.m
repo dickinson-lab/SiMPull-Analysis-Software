@@ -73,7 +73,7 @@ handles.circle = uint16([    0,      0,      0,  65500,  65500,  65500,  65500, 
                              0,      0,      0,  65500,  65500,  65500,  65500,  65500,      0,      0,      0]);      
  
 
-                         %Load data from the spot counter and set up figure window
+%Load data from the spot counter and set up figure window
 handles = initializeData(handles);
 
 %Show first image 
@@ -204,10 +204,8 @@ timeAvg = imread([handles.gridData(b).tiffDir filesep handles.imageName '.tif'])
 [ymax, xmax] = size(timeAvg);
 timeAvg = imadjust(timeAvg,stretchlim(timeAvg,0.0005),[]);
 
-%Temporary fix because PS does not save a filtered image
-%filteredImage = imread([handles.gridData(b).tiffDir filesep handles.imageName '_filt.tif']);
-%filteredImage = imadjust(filteredImage,stretchlim(filteredImage,0.0005),[]);
-filteredImage = uint16(zeros(ymax,xmax));
+%For historical reasons the left panel is "timeAvg" and the center panel is "filteredImage"
+filteredImage = timeAvg;
 
 %Draw circles around spots
 if handles.gridData(b).([color 'SpotCount']) > 0
@@ -215,7 +213,6 @@ if handles.gridData(b).([color 'SpotCount']) > 0
     for a = 1:spotCount
         xcoord = handles.gridData(b).([color 'SpotData'])(a).spotLocation(1);
         ycoord = handles.gridData(b).([color 'SpotData'])(a).spotLocation(2);
-        timeAvg(ycoord-5:ycoord+5,xcoord-5:xcoord+5) = max(handles.circle, timeAvg(ycoord-5:ycoord+5,xcoord-5:xcoord+5));
         filteredImage(ycoord-5:ycoord+5,xcoord-5:xcoord+5) = max(handles.circle, filteredImage(ycoord-5:ycoord+5,xcoord-5:xcoord+5));
     end
 end
@@ -331,6 +328,9 @@ for a=1:handles.nChannels
         handles.([color 'HistXmax']) = find(statsByColor.([color 'StepHist']),1,'last');
     else
         handles.([color 'HistXmax']) = 0;
+        %Prevent us from trying to show a histogram if step counting hasn't been done
+        set(handles.traceButton,'Value',true,'Enable','Off');
+        set(handles.histButton,'Value',0,'Enable','Off');
     end
 end
 

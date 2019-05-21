@@ -44,7 +44,7 @@ function [gridData, summary] = tossImage(varargin) % Typical arguments: matPath,
     gridData = gridData(index);
 
     % Recalculate summary statistics
-    varToSave = {'nPositions', 'nChannels', 'gridData', 'channels', 'statsByColor'};
+    varToSave = {'nPositions', 'nChannels', 'gridData', 'channels', 'statsByColor', 'params'};
     nPositions = nPositions - 1;
 
     for a = 1:length(channels)

@@ -636,7 +636,7 @@ for a=1:length(dirList)
                     gridData(index(b)).imageName = params.imageName;
                     
                     % Load Image
-                    waitbar( ( (i-1)*nPositions+b-1)/nChannels*nPositions, spotwb, ['Finding ' color ' Spots in image ' strrep(imageName,'_','\_') '...'] );
+                    waitbar( ( (i-1)*nPositions + (b-1) ) / (nChannels*nPositions), spotwb, ['Finding ' color ' Spots in image ' strrep(imageName,'_','\_') '...'] );
                     imObj = TIFFStack([nd2Dir filesep imagesOfThisColor(b).name]);
                     [~,xmax,~] = size(imObj);
                     if dv %For dual-view images, load just the half of the image we want to analyze
@@ -687,7 +687,7 @@ for a=1:length(dirList)
                 end
             end
         end
-        save([nd2Dir '.mat'],'gridData','nChannels', 'channels', 'nPositions', 'statsByColor','params');
+        save([nd2Dir '.mat'],'gridData','nChannels', 'channels', 'nPositions', 'statsByColor', 'params');
     end % End of spot counting
     
     %% Colocalization Analysis

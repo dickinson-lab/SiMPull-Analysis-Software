@@ -3,7 +3,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Adjustable parameters are here %
-minSteps = 3;  %Counts spots with >= this many photobleaching steps
+minSteps = 1;  %Counts spots with >= this many photobleaching steps
 maxSteps = 10; %Counts spots with <= this many photobleaching steps (must be <= 10 or the program will crash)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

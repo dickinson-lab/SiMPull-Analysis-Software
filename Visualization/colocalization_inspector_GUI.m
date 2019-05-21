@@ -435,13 +435,13 @@ if handles.gridData(b).([centerChannel 'SpotCount']) > 0 && (redOn || colocOn)
             [xcoord,ycoord] = transformPointsForward(handles.statsByColor.([centerChannel 'RegistrationData']).Transformation, handles.gridData(b).([centerChannel 'SpotData'])(a).spotLocation(1), handles.gridData(b).([centerChannel 'SpotData'])(a).spotLocation(2));
             xcoord = round(xcoord);
             ycoord = round(ycoord);
-            %Skip this circle if it would fall outside the image after registration
-            if (xcoord < 5 || xcoord+5 > xmax || ycoord < 5 || ycoord+5 > ymax)
-                continue
-            end
         else
             xcoord = handles.gridData(b).([centerChannel 'SpotData'])(a).spotLocation(1);
             ycoord = handles.gridData(b).([centerChannel 'SpotData'])(a).spotLocation(2);
+        end
+        %Skip this circle if it would fall outside the image after registration
+        if (xcoord <= 5 || xcoord+5 >= xmax || ycoord <= 5 || ycoord+5 >= ymax)
+            continue
         end
         %Red Circles for Spots in Red Channel
         if redOn || (colocOn && isnumeric( handles.gridData(b).([centerChannel leftChannel 'ColocSpots']) ) && handles.gridData(b).([centerChannel 'SpotData'])(a).(['coloc' leftChannel]))
