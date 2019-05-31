@@ -33,8 +33,9 @@ for a = 1:length(channels)
         color2 = channels{b};
         if isfield(statsByColor, ['pct' color1 'Coloc_w_' color2]);
             colocIndex = cellfun(@isnumeric, {subGridData.([color1 color2 'ColocSpots'])});
+            regionStats.([color1 '_vs_' color2 '_SpotsTested']) = sum(cell2mat({subGridData(colocIndex).([color1 'SpotCount'])}));
             regionStats.(['num' color1 'Coloc_w_' color2]) = sum(cell2mat({subGridData(colocIndex).([color1 color2 'ColocSpots'])}));
-            regionStats.(['pct' color1 'Coloc_w_' color2]) = 100 * regionStats.(['num' color1 'Coloc_w_' color2]) / regionStats.(['total' color1 'Spots']);
+            regionStats.(['pct' color1 'Coloc_w_' color2]) = 100 * regionStats.(['num' color1 'Coloc_w_' color2]) / regionStats.([color1 '_vs_' color2 '_SpotsTested']);
         end
     end
 
