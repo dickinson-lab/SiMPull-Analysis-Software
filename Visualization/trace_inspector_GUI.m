@@ -195,14 +195,14 @@ set(hObject, 'String', {'All Traces', 'Rejected Traces', 'Traces with 0 Steps', 
 
 function handles = updatePlot(b, handles)
 %Generate the Fit for the New Trajectory
-if isempty(handles.activeSpotData(b).changepoints);
+if isempty(handles.activeSpotData(b).changepoints)
     nChangepoints = 0;
 else
     [nChangepoints, ~] = size(handles.activeSpotData(b).changepoints);
 end
 lastchangepoint = 1;
 traj = handles.activeSpotData(b).intensityTrace;
-tmax = handles.tmax;
+tmax = length(traj);
 fit = zeros(1,tmax);
 for a = 1:nChangepoints+1
     if a>nChangepoints

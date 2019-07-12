@@ -623,8 +623,8 @@ for a=1:length(dirList)
             %% Loop over Channels first
             for i = 1:nChannels
                 color = channels{i};
-                filesMatching = cellfun(@(x) cellfun(@(y) regexp(x, y), wavelengths.(color), 'UniformOutput', false), {fileList.name},'UniformOutput',false);
-                colorIndex = cellfun(@(x) any(~cellfun(@isempty, x)), filesMatching);
+                filesMatching = cellfun(@(x) cellfun(@(y) endsWith(x, [y '.tif']), wavelengths.(color), 'UniformOutput', false), {fileList.name},'UniformOutput',false);
+                colorIndex = cellfun(@(x) any(~cellfun(@(y) isequal(0, y), x)), filesMatching);
                 imagesOfThisColor = fileList(colorIndex);
                 %% Perform spot counting for each image
                 for b = 1:length(imagesOfThisColor)
@@ -678,7 +678,7 @@ for a=1:length(dirList)
             statsByColor.(['avg' color 'Spots']) = sum(sum(spotCount)) / nPositions;
             if dv
                 statsByColor.([color 'DVposition']) = dvPositions{j};
-                if strcmp(dvPositions{j}, 'Right')
+                if strcmp(dvPositions{j}, 'Right') && exist('regData','var')
                     statsByColor.([color 'RegistrationData']) = regData;
                 else
                     statsByColor.([color 'RegistrationData']) = struct('Transformation', affine2d,...

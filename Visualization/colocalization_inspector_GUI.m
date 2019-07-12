@@ -367,14 +367,14 @@ else
     greenImageName = [handles.gridData(b).imageName '_green_filt.tif'];
     redImageName = [handles.gridData(b).imageName '_red_filt.tif'];    
 end
-greenCh = imread([handles.gridData(b).tiffDir filesep greenImageName]);
+greenCh = imread([handles.imgPath filesep greenImageName]);
 [ymax xmax] = size(greenCh);
 greenCh = imadjust(greenCh,stretchlim(greenCh,0.0005),[]);
 if isfield(handles.statsByColor, [leftChannel 'RegistrationData']) %Apply registration correct if applicable
     greenCh = imwarp(greenCh,handles.statsByColor.([leftChannel 'RegistrationData']).SpatialRefObj, handles.statsByColor.([leftChannel 'RegistrationData']).Transformation,'OutputView', imref2d(size(greenCh)));
 end
 
-redCh = imread([handles.gridData(b).tiffDir filesep redImageName]);
+redCh = imread([handles.imgPath filesep redImageName]);
 redCh = imadjust(redCh,stretchlim(redCh,0.0005),[]);
 if isfield(handles.statsByColor, [centerChannel 'RegistrationData']) %Apply registration correct if applicable
     redCh = imwarp(redCh,handles.statsByColor.([centerChannel 'RegistrationData']).SpatialRefObj, handles.statsByColor.([centerChannel 'RegistrationData']).Transformation,'OutputView', imref2d(size(redCh)));
@@ -510,8 +510,16 @@ else
 end
 [matFile matPath] = uigetfile('*.mat','Choose a .mat file with data from the spot counter',startPath);
 load([matPath filesep matFile]);
-handles.matPath = matPath; clear matPath;
+handles.matPath = matPath; 
 handles.matFile = matFile; 
+%locate image folder
+nameIdx = strfind(matFile,'_filtered.mat');
+if ~isempty(nameIdx)
+    handles.imgPath = [matPath matFile(1:nameIdx-1)];
+else
+    handles.imgPath = [matPath filesep matFile(1:end-4)];
+end
+
 handles.gridData = gridData; clear gridData;
 handles.channels = channels; 
 handles.statsByColor = statsByColor; clear statsByColor;
@@ -520,7 +528,7 @@ handles.nElements = handles.gridSize(1)*handles.gridSize(2);
 
 %Get first image
 firstImageName = [handles.gridData(b).imageName '_' channels{1} 'avg.tif'];
-firstImage = imread([handles.gridData(b).tiffDir filesep firstImageName]);
+firstImage = imread([handles.imgPath filesep firstImageName]);
 [ymax xmax] = size(firstImage);
     
 %Set up figure window
@@ -565,7 +573,7 @@ set(handles.redText,'Units','pixels','Position',[imageWidth+60+(imageWidth-200)/
 set(handles.colocText,'Units','pixels','Position',[2*imageWidth+90+(imageWidth-200)/2 imageHeight+90 200 20]);
 set(handles.positionText,'Units','pixels','Position',[(figureWidth-500)/2 imageHeight+250 500 20]);
 set(handles.buttonPanel,'Units','pixels','Position',[30 imageHeight+200 350 100]); 
-if ~(exist([handles.gridData(b).tiffDir filesep handles.gridData(b).imageName '_red_filt.tif'],'file')==2)
+if ~(exist([handles.imgPath filesep handles.gridData(b).imageName '_red_filt.tif'],'file')==2)
     set(handles.averageImageButton,'Enable','off');
     set(handles.filteredImageButton,'Enable','off');
 end
