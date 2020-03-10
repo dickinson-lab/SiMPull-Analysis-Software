@@ -1,7 +1,7 @@
 %Exptracts and displays the time to bleach (i.e., the length of time a
 %fluor is active before bleaching) based on an exponential fit. 
 
-clear all;
+%clear all;
 %close all;
 
 %Get the data from the spot counter

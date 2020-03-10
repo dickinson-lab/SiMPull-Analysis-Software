@@ -89,7 +89,7 @@ for b = 1:nChannels
 
         stepSizes = getStepSizes(gridData, channel, minSteps, maxSteps);
         if length(allStepSizes) > length(stepSizes)
-            stepSizes( length(stepSizes)+1 : length(allStepSizes) ) = NaN;
+            stepSizes( length(stepSizes)+1 : length(allStepSizes), 1) = NaN;
         elseif length(stepSizes) > length(allStepSizes)
             allStepSizes( length(allStepSizes)+1 : length(stepSizes), :) = NaN;
         end

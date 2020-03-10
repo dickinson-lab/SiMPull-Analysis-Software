@@ -17,7 +17,7 @@ close all
 % Adjustable parameters for spot detection are here                                         %
 gridWidth = 1; % Set to 1 for a single row of images in a microfluidic channel              %
 psfSize = 1;                                                                                %
-fpExp = 1e-3; %Expectation value for false positive objects in probabilistic segmentation   %
+fpExp = 1e-5; %Expectation value for false positive objects in probabilistic segmentation   %
 poissonNoise = 0; %Set this option to 1 to account for poissionNoise in the background      %
                                                                                             %
 % These parameters determine the relationship between laser wavelength and "color"          %
@@ -622,9 +622,13 @@ for a=1:length(dirList)
         %% This section is for TIFF files %%
             %% Loop over Channels first
             for i = 1:nChannels
+                %Figure out which files we need to load
                 color = channels{i};
-                filesMatching = cellfun(@(x) cellfun(@(y) endsWith(x, [y '.tif']), wavelengths.(color), 'UniformOutput', false), {fileList.name},'UniformOutput',false);
-                colorIndex = cellfun(@(x) any(~cellfun(@(y) isequal(0, y), x)), filesMatching);
+                colorIndex = false(1,length(fileList));
+                for r = 1:length(wavelengths.(color))
+                    ptrn = ['_[\d-]*' wavelengths.(color){r} '[\d-]*\.tif$'];
+                    colorIndex = colorIndex | ~cellfun(@isempty, regexp({fileList.name}, ptrn)); 
+                end
                 imagesOfThisColor = fileList(colorIndex);
                 %% Perform spot counting for each image
                 for b = 1:length(imagesOfThisColor)

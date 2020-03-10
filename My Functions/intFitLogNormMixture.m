@@ -74,9 +74,9 @@ function [noiseFrac, mu1, mu2, sigma, localmin] = intFitLogNormMixture(varargin)
             plot(xgrid,dist1pdfgrid.*scale,'-r','linewidth',2);
             plot(xgrid,dist2pdfgrid.*scale,'-r','linewidth',2);
             plot(xgrid,pdfgrid.*scale,'-','linewidth',2);
-            bar(logninv(0.99,mu1,sigma), max(datahist), 'FaceColor',[0.5 0 0],'EdgeColor','none','Barwidth',100);
-            bar(localmin,max(datahist),'FaceColor',[0.5 0.5 0],'EdgeColor','none','Barwidth',100);
-            bar(logninv(0.01,mu2,sigma), max(datahist), 'FaceColor',[0 0.5 0],'EdgeColor','none','Barwidth',100);
+            bar(logninv(0.99,mu1,sigma), max(datahist), 'FaceColor',[0.5 0 0],'EdgeColor','none','Barwidth',10);
+            bar(localmin,max(datahist),'FaceColor',[0.5 0.5 0],'EdgeColor','none','Barwidth',10);
+            bar(logninv(0.01,mu2,sigma), max(datahist), 'FaceColor',[0 0.5 0],'EdgeColor','none','Barwidth',10);
         hold off
         xlabel('intensity'); ylabel('Probability Density');
 

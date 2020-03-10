@@ -375,7 +375,7 @@ summary(:,emptyColumns) = [];
 
 % Save summary table
 slash = strfind(expDir,filesep);
-expName = expDir(slash(end)+1:end);
+expName = expDir(slash(end-1)+1:end-1);
 save([expDir filesep expName '_summary_filtered.mat'],'summary');
 
 % Clear variables, keeping only summary table
