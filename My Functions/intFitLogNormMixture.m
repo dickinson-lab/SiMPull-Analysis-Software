@@ -53,8 +53,11 @@ function [noiseFrac, mu1, mu2, sigma, localmin] = intFitLogNormMixture(varargin)
     sigma = paramEsts(4);
     
     %Find the local minimum between the noise peak and the signal peak
-    pdf_fit = @(x) pdf_mixture(x, noiseFrac, mu1, mu2, sigma);
-    localmin = fminbnd(pdf_fit, exp(mu1-sigma^2), exp(mu2-sigma^2));
+    xgrid = linspace(min([0 0.9*min(data) 1.1*min(data)]),1.1*max(data),1000);
+    dist1pdfgrid = noiseFrac*lognpdf(xgrid,mu1,sigma);
+    dist2pdfgrid = (1-noiseFrac)*lognpdf(xgrid,mu2,sigma);
+    [~, index] = min(abs(dist1pdfgrid./dist2pdfgrid-1));
+    localmin = xgrid(index);
     
     if plotResults
         %Plot Results (PDF)
@@ -64,9 +67,7 @@ function [noiseFrac, mu1, mu2, sigma, localmin] = intFitLogNormMixture(varargin)
         datahist = histc(data,bins);
         h = bar(bins,datahist);
         set(h,'FaceColor',[.9 .9 .9]);
-        xgrid = linspace(min([0 0.9*min(data) 1.1*min(data)]),1.1*max(data),200);
-        dist1pdfgrid = noiseFrac*lognpdf(xgrid,mu1,sigma);
-        dist2pdfgrid = (1-noiseFrac)*lognpdf(xgrid,mu2,sigma);
+        pdf_fit = @(x) pdf_mixture(x, noiseFrac, mu1, mu2, sigma);
         pdfgrid = pdf_fit(xgrid);
         %pdfgrid = pdf_mixture(xgrid,paramEsts(1),paramEsts(2),paramEsts(3),paramEsts(4));
         scale = max(datahist)/max(pdfgrid);
