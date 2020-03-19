@@ -24,7 +24,7 @@ function varargout = colocalization_inspector_GUI(varargin)
 
 % Edit the above text to modify the response to help spotcount_inspector_GUI
 
-% Last Modified by GUIDE v2.5 07-Apr-2017 10:05:01
+% Last Modified by GUIDE v2.5 10-Mar-2020 14:23:04
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -111,6 +111,9 @@ elseif strcmp(eventdata.Key, 'p')
     b = b-1;
 elseif strcmp(eventdata.Key, 'r')
     b=round(rand(1)*handles.nElements);
+elseif strcmp(eventdata.Key, 'backspace') || strcmp(eventdata.Key, 'delete')
+    set(handles.defineROIbutton,'Enable','off');
+    set(handles.excludeROIbutton,'Enable','off');
 end
 if b<1 
     b=handles.nElements; 
@@ -334,7 +337,6 @@ function tossImageButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 [gridData, ~] = tossImage(handles.matPath, handles.matFile, handles.arrayPos);
-handles.gridData = gridData;
 handles.gridData = gridData; clear gridData;
 handles.gridSize = size(handles.gridData);
 handles.nElements = handles.gridSize(1)*handles.gridSize(2);
@@ -343,6 +345,54 @@ if handles.arrayPos > handles.nElements
 end
 displayImages(handles);
 guidata(hObject,handles);
+
+
+% --- Executes on button press in drawROIbutton.
+function drawROIbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to drawROIbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+rect = drawrectangle(handles.mergedImagePanel,'Color','cyan','FaceAlpha',0);
+handles.ROI = rect.Position;
+set(handles.defineROIbutton,'Enable','on');
+set(handles.excludeROIbutton,'Enable','on');
+addlistener(rect, 'DeletingROI', @(src,evt) deletingROI(handles));
+addlistener(rect, 'ROIMoved', @(src,evt) movedROI(src,evt));
+guidata(hObject,handles);
+
+function deletingROI(handles)
+set(handles.defineROIbutton,'Enable','off');
+set(handles.excludeROIbutton,'Enable','off');
+
+function handles = movedROI(~, evt)
+handles = guidata(evt.Source.Parent);
+handles.ROI = evt.CurrentPosition;
+guidata(evt.Source.Parent, handles);
+
+
+% --- Executes on button press in excludeROIbutton.
+function excludeROIbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to excludeROIbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[gridData, ~] = defineROI(handles.matPath, handles.matFile, handles.arrayPos, handles.ROI, 0);
+handles.gridData = gridData; clear gridData;
+
+displayImages(handles);
+guidata(hObject,handles);
+
+
+% --- Executes on button press in defineROIbutton.
+function defineROIbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to defineROIbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[gridData, ~] = defineROI(handles.matPath, handles.matFile, handles.arrayPos, handles.ROI, 1);
+handles.gridData = gridData; clear gridData;
+
+displayImages(handles);
+guidata(hObject,handles);
+
 
 
 function displayImages(handles)
@@ -402,7 +452,7 @@ colocOn = get(handles.colocCheckbox,'Value');
 
 if handles.gridData(b).([leftChannel 'SpotCount']) > 0 && (greenOn || colocOn)
     for a = 1:handles.gridData(b).([leftChannel 'SpotCount'])
-        if isfield(handles.statsByColor, [leftChannel 'RegistrationData']) %Apply registration correct if applicable
+        if isfield(handles.statsByColor, [leftChannel 'RegistrationData']) %Apply registration correction if applicable
             [xcoord,ycoord] = transformPointsForward(handles.statsByColor.([leftChannel 'RegistrationData']).Transformation, handles.gridData(b).([leftChannel 'SpotData'])(a).spotLocation(1), handles.gridData(b).([leftChannel 'SpotData'])(a).spotLocation(2));
             xcoord = round(xcoord);
             ycoord = round(ycoord);
@@ -482,6 +532,9 @@ yPos = ceil(b/handles.gridSize(1));
 set(handles.positionText,'String',['Stage Position: ' handles.gridData(b).imageName]);
 
 
+
+
+
 % --- Executes on button press in loadButton.
 function loadButton_Callback(hObject, eventdata, handles)
 % hObject    handle to loadButton (see GCBO)
@@ -522,6 +575,8 @@ end
 
 handles.gridData = gridData; clear gridData;
 handles.channels = channels; 
+handles.nChannels = nChannels;
+handles.params = params;
 handles.statsByColor = statsByColor; clear statsByColor;
 handles.gridSize = size(handles.gridData);
 handles.nElements = handles.gridSize(1)*handles.gridSize(2);
@@ -578,4 +633,9 @@ if ~(exist([handles.imgPath filesep handles.gridData(b).imageName '_red_filt.tif
     set(handles.filteredImageButton,'Enable','off');
 end
 set(handles.tossImageButton, 'Units','pixels','Position',[(figureWidth-120)/2 imageHeight+200 120 30]);
+set(handles.artifactPanel, 'Units','pixels','Position',[2*imageWidth+90+(imageWidth-400)/2 imageHeight+150 400 60]);
 set(handles.loadButton, 'Units','pixels','Position',[400 imageHeight+250 150 30]);
+
+handles.ROI = [];
+
+
