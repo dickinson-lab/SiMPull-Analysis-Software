@@ -24,7 +24,7 @@ function varargout = colocalization_inspector_GUI(varargin)
 
 % Edit the above text to modify the response to help spotcount_inspector_GUI
 
-% Last Modified by GUIDE v2.5 10-Mar-2020 14:23:04
+% Last Modified by GUIDE v2.5 19-Mar-2020 15:32:50
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -114,6 +114,8 @@ elseif strcmp(eventdata.Key, 'r')
 elseif strcmp(eventdata.Key, 'backspace') || strcmp(eventdata.Key, 'delete')
     set(handles.defineROIbutton,'Enable','off');
     set(handles.excludeROIbutton,'Enable','off');
+else
+    return
 end
 if b<1 
     b=handles.nElements; 
@@ -336,6 +338,8 @@ function tossImageButton_Callback(hObject, eventdata, handles)
 % hObject    handle to tossImageButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+set(handles.busyTextPanel,'Visible','on');
+drawnow;
 [gridData, ~] = tossImage(handles.matPath, handles.matFile, handles.arrayPos);
 handles.gridData = gridData; clear gridData;
 handles.gridSize = size(handles.gridData);
@@ -375,6 +379,8 @@ function excludeROIbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to excludeROIbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+set(handles.busyTextPanel,'Visible','on');
+drawnow;
 [gridData, ~] = defineROI(handles.matPath, handles.matFile, handles.arrayPos, handles.ROI, 0);
 handles.gridData = gridData; clear gridData;
 
@@ -387,6 +393,8 @@ function defineROIbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to defineROIbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+set(handles.busyTextPanel,'Visible','on');
+drawnow;
 [gridData, ~] = defineROI(handles.matPath, handles.matFile, handles.arrayPos, handles.ROI, 1);
 handles.gridData = gridData; clear gridData;
 
@@ -394,8 +402,26 @@ displayImages(handles);
 guidata(hObject,handles);
 
 
+% --- Executes on button press in reRegisterButton.
+function reRegisterButton_Callback(hObject, eventdata, handles)
+% hObject    handle to reRegisterButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.busyTextPanel,'Visible','on');
+drawnow;
+[gridData, statsByColor, ~] = reRegister(handles.gridData, handles.channels, handles.nChannels, handles.params, handles.statsByColor, handles.matPath, handles.matFile, handles.arrayPos);
+handles.gridData = gridData; clear gridData;
+handles.statsByColor = statsByColor; clear statsByColor;
+
+displayImages(handles);
+set(handles.busyTextPanel,'Visible','off');
+guidata(hObject,handles);
+
+
 
 function displayImages(handles)
+set(handles.busyTextPanel,'Visible','on');
+drawnow;
 b=handles.arrayPos;
 
 %Figure out which channels are selected
@@ -456,7 +482,7 @@ if handles.gridData(b).([leftChannel 'SpotCount']) > 0 && (greenOn || colocOn)
             [xcoord,ycoord] = transformPointsForward(handles.statsByColor.([leftChannel 'RegistrationData']).Transformation, handles.gridData(b).([leftChannel 'SpotData'])(a).spotLocation(1), handles.gridData(b).([leftChannel 'SpotData'])(a).spotLocation(2));
             xcoord = round(xcoord);
             ycoord = round(ycoord);
-            if (xcoord < 5 || xcoord+5 > xmax || ycoord < 5 || ycoord+5 > ymax)
+            if (xcoord <= 5 || xcoord+5 > xmax || ycoord <= 5 || ycoord+5 > ymax)
                 continue
             end
         else
@@ -524,12 +550,12 @@ else
         set(handles.colocText,'String',handles.gridData(b).([centerChannel leftChannel 'ColocSpots']));
     end
 end
-xPos = mod(b,handles.gridSize(2));
-if xPos == 0 
-    xPos = handles.gridSize(2);
-end
-yPos = ceil(b/handles.gridSize(1));
+
+%Update visibility of components
 set(handles.positionText,'String',['Stage Position: ' handles.gridData(b).imageName]);
+set(handles.busyTextPanel,'Visible','off');
+set(handles.excludeROIbutton,'Enable','off');
+set(handles.defineROIbutton,'Enable','off');
 
 
 
@@ -632,10 +658,8 @@ if ~(exist([handles.imgPath filesep handles.gridData(b).imageName '_red_filt.tif
     set(handles.averageImageButton,'Enable','off');
     set(handles.filteredImageButton,'Enable','off');
 end
-set(handles.tossImageButton, 'Units','pixels','Position',[(figureWidth-120)/2 imageHeight+200 120 30]);
-set(handles.artifactPanel, 'Units','pixels','Position',[2*imageWidth+90+(imageWidth-400)/2 imageHeight+150 400 60]);
+set(handles.artifactPanel, 'Units','pixels','Position',[2*imageWidth+90+(imageWidth-400)/2 imageHeight+150 400 90]);
 set(handles.loadButton, 'Units','pixels','Position',[400 imageHeight+250 150 30]);
+set(handles.busyTextPanel,'Units','pixels','Position',[(figureWidth-150)/2 imageHeight/2 150 80], 'Visible','off');
 
 handles.ROI = [];
-
-
