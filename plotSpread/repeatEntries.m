@@ -16,6 +16,15 @@ function out = repeatEntries(val,kTimes)
 % c: jonas, 2/04
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% note: in case we need to speed this up: adapt the code below
+% nn = cellfun(@numel,points);
+% a = find(nn);
+% index = zeros(sum(nn),1);
+% index([1;cumsum(nn(a(1:end-1)))+1])=1;
+% 
+% % get the indices
+% ii = a(cumsum(index));
+
 %===========
 % test input
 %===========

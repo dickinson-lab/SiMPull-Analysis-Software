@@ -1,8 +1,10 @@
 function handles = plotSpread(varargin)
 %PLOTSPREAD plots distributions of points by spreading them around the y-axis
 %
-% SYNOPSIS: handles = plotSpread(data,binWidth,spreadFcn,xNames,showMM,xValues)
-%           handles = plotSpread(ah,...)
+% SYNOPSIS: handles = plotSpread(data, propertyName, propertyValue, ...)
+%           handles = plotSpread(ah, ...
+%           deprecated:
+%           handles = plotSpread(data,binWidth,spreadFcn,xNames,showMM,xValues)
 %
 % INPUT data: cell array of distributions or nDatapoints-by-mDistributions
 %           array, or array with data that is indexed by either
@@ -33,6 +35,9 @@ function handles = plotSpread(varargin)
 %       categoryMarkers : cell array of strings, with one marker per
 %           category. See linespec for admissible markers. Will override
 %           distributionMarkers. Default: ''
+%       categoryLabels : cell array of strings with one label per category
+%           (categories sorted in ascending order). Default: unique
+%           category indices
 %       binWidth : width of bins (along y) that control which data
 %           points are considered close enough to be spread. Default: 0.1
 %       spreadFcn : cell array of length 2 with {name,param}
@@ -105,8 +110,14 @@ def.xyOri = 'normal';
 def.categoryIdx = [];
 def.categoryColors = [];
 def.categoryMarkers = '';
+def.categoryLabels = '';
 def.yLabel = '';
 def.spreadWidth = [];
+
+% in development
+def.individualLabels = false; % one category label across all distributions
+%                               this should be smartly determined rather
+%                               than hard-coded
 
 %% CHECK INPUT
 
@@ -151,6 +162,7 @@ if ~isempty(varargin) && ~ischar(varargin{1}) && ~isstruct(varargin{1})
     opt.categoryMarkers = def.distributionMarkers;
     opt.yLabel = '';
     opt.spreadWidth = def.spreadWidth;
+    opt.individualLabels = false;
     
     for fn = fieldnames(def)'
         if ~isfield(opt,fn{1})
@@ -263,6 +275,7 @@ if isempty(opt.xValues)
     opt.xValues = 1:nData;
 end
 
+
 if isempty(opt.spreadWidth) 
     % scale width
     tmp = median(diff(sort(opt.xValues)));
@@ -291,6 +304,11 @@ else
     [categoryIdx,categoryLabels] = grp2idx(opt.categoryIdx(:));
     nCategories = max(categoryIdx);
 end
+if ~isempty(opt.categoryLabels)
+    categoryLabels = opt.categoryLabels;
+elseif ~iscell(categoryLabels)
+    categoryLabels = num2cell(categoryLabels);
+end
 
 % plotColors, plotMarkers, plotLabels: nDist-by-nCat arrays
 plotColors = repmat(opt.distributionColors(:),1,nCategories);
@@ -309,9 +327,15 @@ else
     plotLabels = cell(nData,nCategories);
     for iData = 1:nData
         for iCategory = 1:nCategories
+            if opt.individualLabels
             plotLabels{iData,iCategory} = ...
                 sprintf('%s-%s',num2str(distributionLabels{iData}),...
                 num2str(categoryLabels{iCategory}));
+            else
+                plotLabels{iData,iCategory} = ...
+                sprintf('%s',...
+                num2str(categoryLabels{iCategory}));
+            end
         end
     end
     
@@ -398,6 +422,10 @@ end
 % assign either nData, or xValues number of values, in case we're working
 % with group-indices
 [m,md,sem,sd] = deal(nan(max(nData,length(opt.xValues)),1));
+% make sure xValues are not something weird
+opt.xValues = double(opt.xValues);
+
+    
 % augment data to make n-by-2
 data(:,2) = 0;
 for iData = 1:nData
@@ -484,6 +512,7 @@ for iData = 1:nData
 end
 
 
+
 % if ~empty, use xNames
 switch opt.xyOri
     case 'normal'
@@ -533,6 +562,21 @@ switch opt.xyOri
         
         xlabel(ah,opt.yLabel);
         
+end
+
+% ## in development
+if ~opt.individualLabels
+       % hack: add legend entry only once per category
+       goodH = ishandle(ph);
+       for iCategory = 1:nCategories
+           for iData = find(goodH(:,iCategory),1,'first')+1:nData
+       if goodH(iData,iCategory)
+           set(get(get(ph(iData,iCategory),'Annotation'),'LegendInformation'),...
+        'IconDisplayStyle','off');
+       end
+           end
+       end
+       
 end
 
 
