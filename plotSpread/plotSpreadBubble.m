@@ -23,7 +23,7 @@ function handles = plotSpread(varargin)
 %       distributionMarkers : string, or cell array of strings, with either
 %           a single marker or one marker per distribution (or per entry in
 %           distributionIdx). See linespec for admissible markers.
-%           Default: '.'
+%           Default: 'o'
 %		categoryIdx: grouping variable that determines group membership for data
 %			points across distributions. Grouping is resolved by calling
 %           grp2idx.
@@ -95,6 +95,17 @@ function handles = plotSpread(varargin)
 % created by: jonas
 % DATE: 11-Jul-2009
 %
+% Support for different size bubbles added 4/2/2020 by Dan Dickinson.
+% Default marker was changed to 'o' to accommodate this.
+% Pass property "markerSizes" with same format as y data, or pass a scalar
+% to change the sizes of all points. 
+%
+% To nicely plot SiMPull data, make a variable pctColoc with each column as
+% one experimental condition and replicate measurements in rows. Make a second
+% variable nBaits with corresponding number of spots tested for
+% colocalization. Then call 
+%           plotSpreadBubble(pctColoc,'markerSizes',nBaits);
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 def.binWidth = 0.1;
@@ -104,7 +115,7 @@ def.showMM = false;
 def.xValues = [];
 def.distributionIdx = [];
 def.distributionColors = 'b';
-def.distributionMarkers = '.';
+def.distributionMarkers = 'o';
 def.xMode = 'manual';
 def.xyOri = 'normal';
 def.categoryIdx = [];
@@ -113,6 +124,7 @@ def.categoryMarkers = '';
 def.categoryLabels = '';
 def.yLabel = '';
 def.spreadWidth = [];
+def.markerSizes = 6;
 
 % in development
 def.individualLabels = false; % one category label across all distributions
@@ -148,6 +160,7 @@ if ~isempty(varargin) && ~ischar(varargin{1}) && ~isstruct(varargin{1})
     parserObj.addOptional('xNames',def.xNames);
     parserObj.addOptional('showMM',def.showMM);
     parserObj.addOptional('xValues',def.xValues);
+    parserObj.addOptional('markerSizes',def.markerSizes);
     
     parserObj.parse(varargin{:});
     opt = parserObj.Results;
@@ -186,7 +199,14 @@ else
     opt = parserObj.Results;
 end
 
-% If marker size data is provided, make sure it matches the size of the data
+
+% If user provided marker sizes, make sure this input is the same size as
+% the data
+if ~isscalar(opt.markerSizes)
+    if any(size(opt.markerSizes) ~= size(data))
+        error('Marker size data must match y axis data.');
+    end
+end
 
 
 % We want data to be a vector, so that indexing with both groupIdx and
@@ -213,8 +233,20 @@ else
 end
 
 
-% Now do the same for marker sizes, but no need to build a distributionIdx
-% since this must be the same as for data
+% Now do the same for marker sizes, but no need to re-generate
+% distributionIdx or nData since these must be the same as for the data.
+
+if ~isscalar(opt.markerSizes)
+    if iscell(opt.markerSizes)
+        % make sure data is all n-by-1
+        opt.markerSizes = cellfun(@(x)x(:),opt.markerSizes,'UniformOutput',false);
+        % make vector
+        opt.markerSizes = cat(1,opt.markerSizes{:});
+    else
+        % distributions in columns
+        opt.markerSizes = opt.markerSizes(:);
+    end
+end
 
 
 
@@ -240,7 +272,7 @@ if ~isempty(opt.xNames)
 end
 
 
-% distribution colors&markers
+% distribution colors
 if ischar(opt.distributionColors)
     opt.distributionColors = {opt.distributionColors};
 end
@@ -266,6 +298,7 @@ else
     opt.distributionColors = mat2cell(opt.distributionColors,ones(nData,1),3);
 end
 
+% distribution markers
 if ischar(opt.distributionMarkers)
     opt.distributionMarkers = {opt.distributionMarkers};
 end
@@ -273,7 +306,20 @@ if length(opt.distributionMarkers) == 1
     % expand
     opt.distributionMarkers = repmat(opt.distributionMarkers,nData,1);
 elseif length(opt.distributionMarkers) ~= nData
-    error('please submit one color per distribution (%i dist, %i colors)',nData,length(opt.distributionMarkers));
+    error('please submit one marker style per distribution (%i dist, %i colors)',nData,length(opt.distributionMarkers));
+end
+
+% marker sizes
+if length(opt.markerSizes) == 1
+    % expand
+    opt.markerSizes = repmat(opt.markerSizes,length(data),1);
+elseif length(opt.markerSizes) ~= length(data)
+    error('please submit one marker size per data point (%i data points, %i sizes)',length(data),length(opt.markerSizes));
+end
+% Normalize size
+if max(opt.markerSizes) > 500
+    scalefactor = 500 / max(opt.markerSizes);
+    opt.markerSizes = scalefactor .* opt.markerSizes;
 end
 
 
@@ -398,7 +444,7 @@ badData = ~isfinite(data) | ~isfinite(distributionIdx) | ~isfinite(categoryIdx);
 data(badData) = [];
 distributionIdx(badData) = [];
 categoryIdx(badData) = [];
-
+opt.markerSizes(badData) = [];
 
 
 
@@ -500,18 +546,20 @@ for iData = 1:nData
         if any(currentIdx)
             switch opt.xyOri
                 case 'normal'
-                    ph(iData,iCategory) = plot(ah,data(currentIdx,1),...
+                    ph(iData,iCategory) = scatter(ah,data(currentIdx,1),...
                         data(currentIdx,2),...
-                        'marker',plotMarkers{iData,iCategory},...
-                        'color',plotColors{iData,iCategory},...
-                        'lineStyle','none',...
+                        opt.markerSizes(currentIdx),...                        
+                        plotColors{iData,iCategory},...
+                        plotMarkers{iData,iCategory},...
+                        'LineWidth',1,...
                         'DisplayName',plotLabels{iData,iCategory});
                 case 'flipped'
                     ph(iData,iCategory) = plot(ah,data(currentIdx,2),...
                         data(currentIdx,1),...
-                        'marker',plotMarkers{iData,iCategory},...
-                        'color',plotColors{iData,iCategory},...
-                        'lineStyle','none',...
+                        opt.markerSizes(currentIdx),...                        
+                        plotColors{iData,iCategory},...
+                        plotMarkers{iData,iCategory},...
+                        'LineWidth',1,...
                         'DisplayName',plotLabels{iData,iCategory});
             end
         end
