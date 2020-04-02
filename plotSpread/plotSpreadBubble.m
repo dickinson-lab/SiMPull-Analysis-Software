@@ -1,4 +1,4 @@
-function handles = plotSpread(varargin)
+function handles = plotSpreadBubble(varargin)
 %PLOTSPREAD plots distributions of points by spreading them around the y-axis
 %
 % SYNOPSIS: handles = plotSpread(data, propertyName, propertyValue, ...)
