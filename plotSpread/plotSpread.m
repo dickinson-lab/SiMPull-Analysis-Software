@@ -186,9 +186,6 @@ else
     opt = parserObj.Results;
 end
 
-% If marker size data is provided, make sure it matches the size of the data
-
-
 % We want data to be a vector, so that indexing with both groupIdx and
 % distributionIdx becomes straightforward, and so that we can conveniently
 % eliminate NaNs that otherwise could mess up grouping.
@@ -211,10 +208,6 @@ else
     distributionIdx = repeatEntries((1:nData)',size(data,1));
     data = data(:);
 end
-
-
-% Now do the same for marker sizes, but no need to build a distributionIdx
-% since this must be the same as for data
 
 
 
