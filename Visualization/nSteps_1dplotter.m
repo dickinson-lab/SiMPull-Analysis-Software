@@ -25,7 +25,13 @@ for c = 1:nChannels
     end
 
     thisfig = figure('Name', [color ' Step Counts'],'NextPlot','add');
-    xvalues = (1:gridSize(1))';
+    
+    %Get x values
+    imageNames = cell(size(gridData));
+    [imageNames{:}]=gridData.imageName;
+    splitNames = cellfun(@(x) strsplit(x,'_'), imageNames, 'UniformOutput', false);
+    xvalues = cell2mat( cellfun(@(x) str2num(x{end}), splitNames, 'UniformOutput', false) );
+    
     figcolors = hsv(12);
     hold on
     for b = 1:length(statsByColor.([color 'StepHist']))

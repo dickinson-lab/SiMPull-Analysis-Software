@@ -42,8 +42,12 @@ for c = 1:nChannels
     bkgMean = [];
     
     for b=1:number
-        load([matPath{b} filesep matFile{b}]);
+        if b>1 %No need to re-load the first file since we already loaded it above
+            load([matPath{b} filesep matFile{b}]);
+        end
         fileName = matFile{b};
+        
+        %Get y values
         spotCount = cell(size(gridData));
         [spotCount{:}] = gridData.([color 'SpotCount']);
         spotCount = transpose(cell2mat(spotCount'));
@@ -51,8 +55,13 @@ for c = 1:nChannels
             msgbox('This program only works for 1-dimensional spotcount data.  If you have 2D data, use spotcount_gridplotter.m instead');
             return
         end
-
-        xvalues = (1:length(spotCount))';
+        
+        %Get x values
+        imageNames = cell(size(gridData));
+        [imageNames{:}]=gridData.imageName;
+        splitNames = cellfun(@(x) strsplit(x,'_'), imageNames, 'UniformOutput', false);
+        xvalues = cell2mat( cellfun(@(x) str2num(x{end}), splitNames, 'UniformOutput', false) );
+        
         plot(xvalues,spotCount,'Marker','.','MarkerSize',10,'Color',colors(b,:),'DisplayName',strrep(fileName(1:end-4),'_','\_'));
         
         % If this is a background dataset, record the mean

@@ -58,7 +58,12 @@ for c = 1:nChannels
             
             pctColoc = ( colocSpots ./ spotCounts ) * 100;
             
-            xvalues = (1:length(colocSpots))';
+            %Get x values
+            imageNames = cell(size(gridData));
+            [imageNames{:}]=gridData.imageName;
+            splitNames = cellfun(@(x) strsplit(x,'_'), imageNames, 'UniformOutput', false);
+            xvalues = cell2mat( cellfun(@(x) str2num(x{end}), splitNames, 'UniformOutput', false) );
+
             plot(xvalues,pctColoc,'Marker','.','MarkerSize',10,'Color',colors(b,:),'DisplayName',strrep(fileName(1:end-4),'_','\_'));
         end
     end
