@@ -381,9 +381,20 @@ function excludeROIbutton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 set(handles.busyTextPanel,'Visible','on');
 drawnow;
-[gridData, ~] = defineROI(handles.matPath, handles.matFile, handles.arrayPos, handles.ROI, 0);
-handles.gridData = gridData; clear gridData;
-
+if get(handles.roiAllImagesButton,'Value')
+    % If "all images" is selected, do all
+    wb = waitbar(0,'');
+    for c=1:handles.nElements
+        waitbar((c-1)/handles.nElements, wb, ['Processing image ' num2str(c) ' of ' num2str(handles.nElements)]);
+        [handles.gridData, handles.statsByColor, ~] = defineROI(handles.gridData, handles.channels, handles.nChannels, handles.nElements, handles.params, handles.statsByColor, handles.matPath, handles.matFile, c, handles.ROI, 0);
+    end
+    set(handles.roiAllImagesButton,'Value',0);
+    set(handles.roiThisImageButton,'Value',1);
+    close(wb);
+else
+    % Otherwise, just do the current image           
+    [handles.gridData, handles.statsByColor, ~] = defineROI(handles.gridData, handles.channels, handles.nChannels, handles.nElements, handles.params, handles.statsByColor, handles.matPath, handles.matFile, handles.arrayPos, handles.ROI, 0);
+end
 displayImages(handles);
 guidata(hObject,handles);
 
@@ -395,8 +406,20 @@ function defineROIbutton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 set(handles.busyTextPanel,'Visible','on');
 drawnow;
-[gridData, ~] = defineROI(handles.matPath, handles.matFile, handles.arrayPos, handles.ROI, 1);
-handles.gridData = gridData; clear gridData;
+if get(handles.roiAllImagesButton,'Value')
+    % If "all images" is selected, do all
+    wb = waitbar(0,'');
+    for c=1:handles.nElements
+        waitbar((c-1)/handles.nElements, wb, ['Processing image ' num2str(c) ' of ' num2str(handles.nElements)]);
+        [handles.gridData, handles.statsByColor, ~] = defineROI(handles.gridData, handles.channels, handles.nChannels, handles.nElements, handles.params, handles.statsByColor, handles.matPath, handles.matFile, c, handles.ROI, 1);
+    end
+    set(handles.roiAllImagesButton,'Value',0);
+    set(handles.roiThisImageButton,'Value',1);
+    close(wb);
+else
+    % Otherwise, just do the current image           
+    [handles.gridData, handles.statsByColor, ~] = defineROI(handles.gridData, handles.channels, handles.nChannels, handles.nElements, handles.params, handles.statsByColor, handles.matPath, handles.matFile, handles.arrayPos, handles.ROI, 1);
+end
 
 displayImages(handles);
 guidata(hObject,handles);
@@ -409,9 +432,7 @@ function reRegisterButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 set(handles.busyTextPanel,'Visible','on');
 drawnow;
-[gridData, statsByColor, ~] = reRegister(handles.gridData, handles.channels, handles.nChannels, handles.params, handles.statsByColor, handles.matPath, handles.matFile, handles.arrayPos);
-handles.gridData = gridData; clear gridData;
-handles.statsByColor = statsByColor; clear statsByColor;
+[handles.gridData, handles.statsByColor, ~] = reRegister(handles.gridData, handles.channels, handles.nChannels, handles.params, handles.statsByColor, handles.matPath, handles.matFile, handles.arrayPos);
 
 displayImages(handles);
 set(handles.busyTextPanel,'Visible','off');
@@ -658,7 +679,7 @@ if ~(exist([handles.imgPath filesep handles.gridData(b).imageName '_red_filt.tif
     set(handles.averageImageButton,'Enable','off');
     set(handles.filteredImageButton,'Enable','off');
 end
-set(handles.artifactPanel, 'Units','pixels','Position',[2*imageWidth+90+(imageWidth-400)/2 imageHeight+150 400 90]);
+set(handles.artifactPanel, 'Units','pixels','Position',[2*imageWidth+90+(imageWidth-520)/2 imageHeight+150 520 100]);
 set(handles.loadButton, 'Units','pixels','Position',[400 imageHeight+250 150 30]);
 set(handles.busyTextPanel,'Units','pixels','Position',[(figureWidth-150)/2 imageHeight/2 150 80], 'Visible','off');
 

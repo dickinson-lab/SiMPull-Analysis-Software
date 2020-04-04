@@ -3,20 +3,17 @@
 % re-calculates summary tables. Used for getting rid of known artifacts 
 % (e.g. edge of microfluidic channel)
 %
+% At first glance a lot of inputs seem to be required, but this is because
+% all of the analysis data is passed via the calling function to avoid
+% (slow) loading from disk.
+%
 % This function is not meant to be called directly.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [gridData, summary] = defineROI(matPath, matFile, selection, ROI, keepROI) % selection = number of image to be modified
-                                                                                    % keepROI = logical 1 if ROI contains the good region of the image
-                                                                                    %         = logical 0 if ROI contains an artifact to be excluded    
-    % Load data
-    load([matPath filesep matFile]);
-    if exist('gridData', 'var') ~= 1
-        msgbox('This script requires SiMPull data from the spot counter.');
-        return
-    end
-
-    imageNames = {gridData.imageName};
+function [gridData, statsByColor, summary] = defineROI(gridData, channels, nChannels, nPositions, params, statsByColor, matPath, matFile, selection, ROI, keepROI) 
+    % selection = number of image to be modified
+    % keepROI   = logical 1 if ROI contains the good region of the image
+    %           = logical 0 if ROI contains an artifact to be excluded    
                                                                                     
     % Remove non-selected spots from image and re-calculate summary stats
     for c = 1:nChannels
@@ -24,7 +21,12 @@ function [gridData, summary] = defineROI(matPath, matFile, selection, ROI, keepR
         color1 = channels{c};
         index = true(size(gridData(selection).([color1 'SpotData'])));
         for d = 1:length(index)
+            %Get spot location
             spotLoc = gridData(selection).([color1 'SpotData'])(d).spotLocation;
+            %If necessary, transform to account for registration
+            if isfield(statsByColor,[color1 'RegistrationData']) && strcmp(statsByColor.([color1 'DVposition']),'Right')
+                spotLoc = transformPointsForward( statsByColor.([color1 'RegistrationData']).Transformation, spotLoc);
+            end
             index(d) = ( ROI(1) < spotLoc(1) && spotLoc(1) < ROI(1)+ROI(3) && ROI(2) < spotLoc(2) && spotLoc(2) < ROI(2)+ROI(4) );
         end
         if ~keepROI
