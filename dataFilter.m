@@ -310,7 +310,7 @@ for a = 1:length(fileList)
     extIdx = strfind(fileList{a}, '.mat');
     dataName = fileList{a}(1 : extIdx-1);
     outFileName = [dataName '_filtered.mat'];
-    save([expDir filesep outFileName], 'gridData', 'channels', 'nChannels', 'nPositions', 'statsByColor', 'FilterParams');
+    save([expDir filesep outFileName], 'gridData', 'channels', 'nChannels', 'nPositions', 'params', 'statsByColor', 'FilterParams');
     
     %%% Add Data to the Summary Table %%%
     for q = 1:nChannels 
