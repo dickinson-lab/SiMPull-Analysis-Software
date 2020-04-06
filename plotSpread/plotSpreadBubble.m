@@ -144,6 +144,7 @@ if ~iscell(varargin{1}) && length(varargin{1}) == 1 && ...
     varargin(1:2) = [];
     newAx = false;
 else
+    figure
     ah = gca;
     data = varargin{1};
     varargin(1) = [];
@@ -541,7 +542,6 @@ end
 
 
 %% plot
-figure
 set(ah,'NextPlot','add')
 ph = NaN(nData,nCategories);
 for iData = 1:nData
