@@ -1,6 +1,10 @@
 %Calculates summary statistics for a region of a dataset
 
-[matFile matPath] = uigetfile('*.mat','Choose a .mat file with data from the spot counter');
+if exist('matPath','var')
+    [matFile, matPath] = uigetfile('*.mat','Choose a .mat file with data from the spot counter',matPath);
+else
+    [matFile, matPath] = uigetfile('*.mat','Choose a .mat file with data from the spot counter');
+end
 
 load([matPath filesep matFile]);
 if exist('gridData', 'var') ~= 1
