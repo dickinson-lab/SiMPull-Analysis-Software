@@ -1,6 +1,6 @@
 %Calculates summary statistics for a region of a dataset
 
-if exist('matPath','var')
+if exist('matPath','var') && ischar(matPath) 
     [matFile, matPath] = uigetfile('*.mat','Choose a .mat file with data from the spot counter',matPath);
 else
     [matFile, matPath] = uigetfile('*.mat','Choose a .mat file with data from the spot counter');
