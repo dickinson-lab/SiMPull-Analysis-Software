@@ -106,6 +106,9 @@ function handles = plotSpreadBubble(varargin)
 % colocalization. Then call 
 %           plotSpreadBubble(pctColoc,'markerSizes',nBaits);
 %
+% It is also often useful to set the 'xNames' and 'distributionColors'
+% properties.
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 def.binWidth = 0.1;
@@ -538,6 +541,7 @@ end
 
 
 %% plot
+figure
 set(ah,'NextPlot','add')
 ph = NaN(nData,nCategories);
 for iData = 1:nData
