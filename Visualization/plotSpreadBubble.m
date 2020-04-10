@@ -1,5 +1,21 @@
 function handles = plotSpreadBubble(varargin)
-%PLOTSPREAD plots distributions of points by spreading them around the y-axis
+%
+% PLOTSPREAD plots distributions of points by spreading them around the y-axis
+%
+% Support for different size bubbles added 4/2/2020 by Dan Dickinson.
+% Default marker was changed to 'o' to accommodate this.
+% Pass property "markerSizes" with same format and shape as y data, or pass 
+% a scalar to change the sizes of all points. 
+%
+% To nicely plot SiMPull data, make a variable pctColoc with each column as
+% one experimental condition and replicate measurements in rows. Make a second
+% variable nBaits with corresponding number of spots tested for
+% colocalization. Then call 
+%           plotSpreadBubble(pctColoc,'markerSizes',nBaits);
+%
+% It is also often useful to set the 'xNames' and 'distributionColors'
+% properties.
+%
 %
 % SYNOPSIS: handles = plotSpread(data, propertyName, propertyValue, ...)
 %           handles = plotSpread(ah, ...
@@ -94,20 +110,6 @@ function handles = plotSpreadBubble(varargin)
 %
 % created by: jonas
 % DATE: 11-Jul-2009
-%
-% Support for different size bubbles added 4/2/2020 by Dan Dickinson.
-% Default marker was changed to 'o' to accommodate this.
-% Pass property "markerSizes" with same format as y data, or pass a scalar
-% to change the sizes of all points. 
-%
-% To nicely plot SiMPull data, make a variable pctColoc with each column as
-% one experimental condition and replicate measurements in rows. Make a second
-% variable nBaits with corresponding number of spots tested for
-% colocalization. Then call 
-%           plotSpreadBubble(pctColoc,'markerSizes',nBaits);
-%
-% It is also often useful to set the 'xNames' and 'distributionColors'
-% properties.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
