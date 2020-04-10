@@ -77,24 +77,45 @@ rowcounter = 2;
 
 %% Register Dual-view images
 if dv && any(strcmp(dvPositions, 'Left')) && any(strcmp(dvPositions,'Right')) % Registration is only required if the dataset has signal both left and right
-    %% Dialog box
-    [Answer,Cancelled] = dvRegisterDlg;
-    if Cancelled 
-        return
-    else
-        v2struct(Answer);
+    %% Decide whether to use existing registration or do a new one
+    useExistingReg = false;
+    % Check if data have already been analyzed and if so, whether registration data exist
+    if exist([expDir filesep dirList{1} '.mat'], 'file')
+        existing = load([expDir filesep dirList{1} '.mat'], 'statsByColor');
+        if any(cell2mat(regexp(fieldnames(existing.statsByColor),'RegistrationData')))
+            %Ask the user whether to re-register or use existing
+            ans1 = questdlg('Image registration data appear to already exist for this dataset. What do you want to do?',...
+                            'Found Existing Registration',...   %Title
+                            'Do new registration',...           %Option 1
+                            'Use existing',...                  %Option 2
+                            'Use existing');                    %Default
+            if strcmp(ans1,'Use existing')
+                useExistingReg = true;
+            end
+        end
     end
     
-    %% Open the image file, make an average image and perform 2D registration
-    regImg = TIFFStack(regFile);
-    subImg = regImg(:,:,RegWindow1:RegWindow2);
-    avgImg = mean(subImg, 3);
-    [ymax, xmax] = size(avgImg);
-    leftImg = avgImg(:,1:(xmax/2));
-    rightImg = avgImg(:,(xmax/2)+1:xmax);
-    regData = registerImages(rightImg, leftImg);
-    % We don't save the registration info here because it's saved as part of each individual file below.  
-    % Instead we just hang on to the regData variable for later use.     
+    %% Proceed with new image registration 
+    if ~useExistingReg
+        % Dialog box
+        [Answer,Cancelled] = dvRegisterDlg;
+        if Cancelled 
+            return
+        else
+            v2struct(Answer);
+        end
+
+        % Open the image file, make an average image and perform 2D registration
+        regImg = TIFFStack(regFile);
+        subImg = regImg(:,:,RegWindow1:RegWindow2);
+        avgImg = mean(subImg, 3);
+        [ymax, xmax] = size(avgImg);
+        leftImg = avgImg(:,1:(xmax/2));
+        rightImg = avgImg(:,(xmax/2)+1:xmax);
+        regData = registerImages(rightImg, leftImg);
+        % We don't save the registration info here because it's saved as part of each individual file below.  
+        % Instead we just hang on to the regData variable for later use.
+    end
 end
 
 %% Loop over all folders in the data set (each corresponds to one experiment)
@@ -317,9 +338,18 @@ for a=1:length(dirList)
             statsByColor.(['avg' color 'Spots']) = sum(sum(spotCount)) / nPositions;
             if dv
                 statsByColor.([color 'DVposition']) = dvPositions{j};
-                if strcmp(dvPositions{j}, 'Right') && exist('regData','var')
+                if useExistingReg
+                    % If we're going to use existing registration data, load and copy it
+                    % Note: This step will fail if the first sample in the dataset had registration data that the user asked to
+                    % reuse, but registration data is missing for other samples. However, that would only happen if the user 
+                    % has done something very strange. 
+                    existing = load([expDir filesep dirList{a} '.mat'], 'statsByColor');
+                    statsByColor.([color 'RegistrationData']) = existing.statsByColor.([color 'RegistrationData']);
+                elseif strcmp(dvPositions{j}, 'Right') && exist('regData','var')
+                    % Or if we did registration above, save this new registration info
                     statsByColor.([color 'RegistrationData']) = regData;
                 else
+                    % Otherwise, create an empty registration structure (this also applies to the fixed (left) image)
                     statsByColor.([color 'RegistrationData']) = struct('Transformation', affine2d,...
                                                                        'RegisteredImage',[],...
                                                                        'SpatialRefObj',imref2d([ymax xmax]));
