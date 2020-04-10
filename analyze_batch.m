@@ -455,11 +455,8 @@ if dv && any(strcmp(dvPositions, 'Left')) && any(strcmp(dvPositions,'Right')) % 
     leftImg = avgImg(:,1:(xmax/2));
     rightImg = avgImg(:,(xmax/2)+1:xmax);
     regData = registerImages(rightImg, leftImg);
-    
-% else %If registration isn't required, create a registration structure that doesn't do anything
-%     regData = struct('Transformation', affine2d,...
-%                      'RegisteredImage',[],...
-%                      'SpatialRefObj',imref2d(size(leftImg)));
+    % We don't save the registration info here because it's saved as part of each individual file below.  
+    % Instead we just hang on to the regData variable for later use.     
 end
 
 %% Loop over all folders in the data set (each corresponds to one experiment)

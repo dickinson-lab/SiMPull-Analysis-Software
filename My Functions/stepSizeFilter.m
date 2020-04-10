@@ -4,6 +4,9 @@ function [gridData, statsByColor, threshold, aborted] = stepSizeFilter(varargin)
 % Aggressive filter tosses 99% of noise peak; conservative filter keeps 99% of signal peak; 
 % moderate filter (default) draws threshold at the local minimum between signal and noise peaks.
 
+% NOTE: This function is intended to deal with only a single channel and
+% does not update colocalization data.  To do so, call coloc_spots separately.
+
     %Filters photobleaching step data by removing small steps based on a
     %calculated threshold.
     
@@ -60,24 +63,20 @@ function [gridData, statsByColor, threshold, aborted] = stepSizeFilter(varargin)
         
         %Get data
         posSpotData = gridData(a).([channel 'SpotData']);
+        index = true(length(posSpotData),1); %Used later for eliminating spots
         for c = 1:length(posSpotData)
             spotData = posSpotData(c);
-            
-            %Skip this spot if it has no steps
-            if spotData.nSteps == 0
-                continue
-            end
-            
+           
             %If the trace was previously rejected, we'll un-reject it and see if it can be salvaged 
             if strcmp(spotData.nSteps, 'Rejected')
                 spotData.nSteps = length(spotData.steplevels) - 1;
                 statsByColor.([channel 'BadSpots']) = statsByColor.([channel 'BadSpots']) -1;
             end
             
-            %Reject trace and move on if total intensity change is below the threshold
-            if spotData.steplevels(1) - spotData.steplevels(end) < threshold
-                posSpotData(c).nSteps = 'Too Dim';
-                statsByColor.([channel 'BadSpots']) = statsByColor.([channel 'BadSpots']) + 1;
+            % Eliminate this spot and move on if total intensity is below the threshold. 
+            % This will also eliminate dim spots that don't bleach
+            if spotData.steplevels(1) < threshold
+                index(c) = 0;
                 continue
             end
             
@@ -139,17 +138,29 @@ function [gridData, statsByColor, threshold, aborted] = stepSizeFilter(varargin)
         end
         
         %Save results for the whole image
+        posSpotData = posSpotData(index); %This elminates spots that were found to be too dim 
         gridData(a).([channel 'SpotData']) = posSpotData;
         
         %Tabulate the spot counts 
         newStepHist = newStepHist + gridData(a).([channel 'StepDist']);
+        gridData(a).([channel 'SpotCount']) = length(posSpotData);
         gridData(a).([channel 'GoodSpotCount']) = sum(gridData(a).([channel 'StepDist']));
+        
     end
+    %Update statsByColor
+    statsByColor.(['total' channel 'Spots']) = sum(cell2mat({ gridData.([channel 'SpotCount']) }) );
+    statsByColor.(['avg' channel 'Spots']) = statsByColor.(['total' channel 'Spots']) / nPositions;
     statsByColor.([channel 'StepHist']) = newStepHist;
+    
+    index2 = cellfun(@(x) isnumeric(x), {gridData.([channel 'GoodSpotCount'])});
+    statsByColor.([channel 'BadSpots']) = sum(cell2mat( {gridData(index2).([channel 'SpotCount'])} )) - sum(cell2mat( {gridData(index2).([channel 'GoodSpotCount'])} ));
+
+    statsByColor.([channel 'TracesAnalyzed']) = statsByColor.([channel 'BadSpots']) + sum(statsByColor.([channel 'StepHist']));
+    
     aborted = false;
     
     if saveOutput 
         dataName = filename(1 : extIdx-1);
         outFileName = [dataName '_filtered.mat'];
-        save([pathname filesep outFileName],'gridData','greenStepHist','greenStats','lognormFitParams','threshold','-append');
+        save([pathname filesep outFileName],'gridData', 'channels', 'nChannels', 'nPositions', 'statsByColor', 'threshold','-append');
     end
