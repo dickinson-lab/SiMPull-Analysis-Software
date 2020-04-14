@@ -1,7 +1,7 @@
 % Dialog box for analyze_batch.  This dialog box gets an image to use for
 % dual-view registration.
 
-function [Answer, Cancelled] = dvRegisterDlg()
+function [Answer, Cancelled] = dvRegisterDlg(expDir)
     Title = 'Dual-view Registration';
     Options.Resize = 'off';
     Options.Interpreter = 'tex';

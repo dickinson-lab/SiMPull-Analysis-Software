@@ -72,7 +72,7 @@ function [gridData, statsByColor, summary] = defineROI(gridData, channels, nChan
             
             for f = 1:20
                 fsteps = cellfun(@(x) any(x(:)==f),counts);
-                gridData(selection).([color1 'StepHist'])(f) = sum(fsteps);
+                gridData(selection).([color1 'StepDist'])(f) = sum(fsteps);
             end
             
             countedIndex = cellfun(@isnumeric, {gridData.([color1 'GoodSpotCount'])});

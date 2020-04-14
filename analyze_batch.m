@@ -98,7 +98,7 @@ if dv && any(strcmp(dvPositions, 'Left')) && any(strcmp(dvPositions,'Right')) % 
     %% Proceed with new image registration 
     if ~useExistingReg
         % Dialog box
-        [Answer,Cancelled] = dvRegisterDlg;
+        [Answer,Cancelled] = dvRegisterDlg(expDir);
         if Cancelled 
             return
         else

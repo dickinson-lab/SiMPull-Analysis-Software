@@ -92,5 +92,5 @@ function [Answer, Cancelled] = dataFilterDlg()
     Formats(12,1).span = [1 4];  
     DefAns.includeRejected = true;
 
-    [FilterParams,Cancelled] = inputsdlg(Prompt,Title,Formats,DefAns,Options);
+    [Answer,Cancelled] = inputsdlg(Prompt,Title,Formats,DefAns,Options);
 end
