@@ -294,29 +294,33 @@ for a=1:length(dirList)
                     posName = posName{1}{1};
                     params.imageName = posName;
                     gridData(index(b)).imageName = params.imageName;
-                    
-                    % Load Image
-                    waitbar( ( (i-1)*nPositions + (b-1) ) / (nChannels*nPositions), spotwb, ['Finding ' color ' Spots in image ' strrep(imageName,'_','\_') '...'] );
-                    imObj = TIFFStack([nd2Dir filesep imagesOfThisColor(b).name]);
-                    [~,xmax,~] = size(imObj);
-                    if dv %For dual-view images, load just the half of the image we want to analyze
-                        if strcmp(dvPositions{i}, 'Left')
-                            thisImage = imObj(:,1:xmax/2,:);
-                        else
-                            thisImage = imObj(:,(xmax/2)+1:xmax,:);
-                        end
-                    else %For single-channel images, load the whole thing
-                        thisImage = imObj(:,:,:);
-                    end
-                    [ymax,xmax,tmax] = size(thisImage);
-                    gridData(index(b)).imageSize = [ymax xmax];
-                    
-                    % Add parameters for averaging window
+                    % Parameters for averaging window
                     params.firstTime = firstTime.(color);
                     params.lastTime = lastTime.(color);
                     
-                    % Actually do the spot counting
-                    resultsStruct = spotcount_ps(color,thisImage,params,gridData(index(b)));
+                    % Load Image and pass TIFFStack object to spotcount_ps
+                    waitbar( ( (i-1)*nPositions + (b-1) ) / (nChannels*nPositions), spotwb, ['Finding ' color ' Spots in image ' strrep(imageName,'_','\_') '...'] );
+                    imObj = TIFFStack([nd2Dir filesep imagesOfThisColor(b).name]);
+                    [ymax,xmax,tmax] = size(imObj);
+                    params.dv = dv;
+                    params.dvPosition = dvPositions{i};
+                    resultsStruct = spotcount_ps(color,imObj,params,gridData(index(b)));
+                    
+                    
+                    if dv %For dual-view images, count spots in just the half of the image we want to analyze
+                        xmax = xmax/2;
+                        if strcmp(dvPositions{i}, 'Left')
+                            
+                            thisImage = ;
+                        else
+                            thisImage = imObj(:,(xmax/2)+1:xmax,:);
+                        end
+                    else %For single-channel images, do the whole thing
+                        thisImage = imObj(:,:,:);
+                    end
+                    
+                    % Save Results to gridData
+                    gridData(index(b)).imageSize = [ymax xmax];
                     gridData(index(b)).([color 'SpotData']) = resultsStruct.([color 'SpotData']);
                     gridData(index(b)).([color 'SpotCount']) = resultsStruct.([color 'SpotCount']);
                     clear resultsStruct;
