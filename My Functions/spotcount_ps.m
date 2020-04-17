@@ -8,6 +8,8 @@
 % pixel intensities in a 5x5 spot centered on each peak pixel and subtracting 
 % local background. 
 
+% Modified 4/17/2020 to accept dual-view image data. 
+
 function outStruct = spotcount_ps(channel,rawImage,params,outStruct)                   
     [ymax, xmax, tmax] = size(rawImage);
     
