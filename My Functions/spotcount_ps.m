@@ -8,28 +8,9 @@
 % pixel intensities in a 5x5 spot centered on each peak pixel and subtracting 
 % local background. 
 
-function outStruct = spotcount_ps(channel,rawImage,params,outStruct)                   
+function outStruct = spotcount_ps(channel, rawImage, avgImage, params, outStruct)                   
     [ymax, xmax, tmax] = size(rawImage);
-    
-    % Double check that our averaging window exists
-    if tmax <= params.lastTime    %If only a few frames were captured, use the whole timeseries 
-        params.firstTime = 1;
-        params.lastTime = tmax;
-    else                    %Otherwise, use the range specified in the input
-        if params.firstTime < 1 
-            params.firstTime = 1;
-        end
-        if params.lastTime > tmax
-            params.lastTime = tmax;
-        end
-    end
-    
-    %Make average image 
-    avgImage = uint16( mean( rawImage(:,:,params.firstTime:params.lastTime), 3) );
-    
-    %Save average image for later reference
-    imwrite(avgImage,[outStruct.tiffDir filesep params.imageName '_' channel 'avg.tif'],'tiff');
-    
+
     % Spot detection with probabilistic segmentation
     [coordinates,~,~] = psDetectSpots(avgImage,[25 25],params.psfSize,'fpExp',params.fpExp,'poissonNoise',params.poissonNoise);
     if isempty(coordinates)  %Protects against crashing when no spots are found

@@ -311,12 +311,13 @@ for a=1:length(dirList)
                     [ymax,xmax,tmax] = size(thisImage);
                     gridData(index(b)).imageSize = [ymax xmax];
                     
-                    % Add parameters for averaging window
+                    % Generate average image for spot counting
                     params.firstTime = firstTime.(color);
                     params.lastTime = lastTime.(color);
+                    avgImage = averageImage(thisImage, color, params);
                     
                     % Actually do the spot counting
-                    resultsStruct = spotcount_ps(color,thisImage,params,gridData(index(b)));
+                    resultsStruct = spotcount_ps(color, thisImage, avgImage, params, gridData(index(b)));
                     gridData(index(b)).([color 'SpotData']) = resultsStruct.([color 'SpotData']);
                     gridData(index(b)).([color 'SpotCount']) = resultsStruct.([color 'SpotCount']);
                     clear resultsStruct;
