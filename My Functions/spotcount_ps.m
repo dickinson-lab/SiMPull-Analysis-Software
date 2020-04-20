@@ -25,18 +25,16 @@ function outStruct = spotcount_ps(channel,rawImage,params,outStruct)
     end
     
     %Make average image 
-    if params.dv %For dual-view images, count spots in just the half of the image we want to analyze
-        xmax = xmax/2;
-        if strcmp(params.dvPosition, 'Left')
-            avgImage = uint16( mean( rawImage(:, 1:xmax, params.firstTime:params.lastTime), 3) );
-        else
-            avgImage = uint16( mean( rawImage(:, (xmax+1):end, params.firstTime:params.lastTime), 3) );
-        end
-    else %For single-channel images, do the whole thing
-        avgImage = uint16( mean( rawImage(:,:,params.firstTime:params.lastTime), 3) );
+    timeAvg = double(zeros(ymax,xmax));
+    count = 0;
+    for b=params.firstTime:params.lastTime
+        timeAvg = timeAvg + double(rawImage(:,:,b));
+        count = count+1;
     end
+    timeAvg = timeAvg/count;
 
     %Save average image for later reference
+    avgImage = uint16(timeAvg);
     imwrite(avgImage,[outStruct.tiffDir filesep params.imageName '_' channel 'avg.tif'],'tiff');
     
     % Spot detection with probabilistic segmentation
