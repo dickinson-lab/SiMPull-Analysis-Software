@@ -97,7 +97,12 @@ function outStruct = spotcount_ps(channel,rawImage,params,outStruct)
     %Calculate the background and perform the subtraction
     if nPeaks > 0 
         for e = 1:nPeaks
-            xcoord = peakLocations(e,1);
+            if params.dv && strcmp(params.dvPosition, 'Right')
+                % We need to correct the x position to account for the fact that we only looked for spots in half the image
+                xcoord = peakLocations(e,1) + xmax;
+            else
+                xcoord = peakLocations(e,1);
+            end
             ycoord = peakLocations(e,2);   
             spotMat = rawImage(ycoord-smBoxRad:ycoord+smBoxRad,xcoord-smBoxRad:xcoord+smBoxRad,:);
             traceSmall = squeeze(sum(sum(spotMat,1),2));
