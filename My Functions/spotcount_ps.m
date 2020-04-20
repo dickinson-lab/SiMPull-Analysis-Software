@@ -25,16 +25,9 @@ function outStruct = spotcount_ps(channel,rawImage,params,outStruct)
     end
     
     %Make average image 
-    timeAvg = double(zeros(ymax,xmax));
-    count = 0;
-    for b=params.firstTime:params.lastTime
-        timeAvg = timeAvg + double(rawImage(:,:,b));
-        count = count+1;
-    end
-    timeAvg = timeAvg/count;
-
+    avgImage = uint16( mean( rawImage(:,:,params.firstTime:params.lastTime), 3) );
+    
     %Save average image for later reference
-    avgImage = uint16(timeAvg);
     imwrite(avgImage,[outStruct.tiffDir filesep params.imageName '_' channel 'avg.tif'],'tiff');
     
     % Spot detection with probabilistic segmentation
