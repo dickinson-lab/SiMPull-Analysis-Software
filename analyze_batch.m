@@ -317,7 +317,10 @@ for a=1:length(dirList)
                     avgImage = averageImage(thisImage, color, params);
                     
                     % Actually do the spot counting
-                    gridData(index(b)) = spotcount_ps(color, thisImage, avgImage, params, gridData(index(b)));
+                    gridData(index(b)) = spotcount_ps(color, avgImage, params, gridData(index(b)));
+                    
+                    % Extract and save intensity traces for found spots
+                    gridData(index(b)) = extractIntensityTraces(color, thisImage, params, gridData(index(b)));
                     
                 end % Loop b over images
                 
