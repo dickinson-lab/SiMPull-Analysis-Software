@@ -57,16 +57,17 @@ function [gridData, colocResults] = coloc_spots(gridData, statsByColor, testChan
                     [ gridData(b).([testChannel 'SpotData']).(['coloc' thisChannel]) ] = deal(false);
                     if gridData(b).([thisChannel 'SpotCount']) > 0  
                         % For each spot detected in the test channel, see if there is a matching spot in the current channel
+                        
                         % Extract spot locations
-                        testSpots = cell(gridData(b).([testChannel 'SpotCount']),1);
-                        [testSpots{:}] = gridData(b).([testChannel 'SpotData']).spotLocation;
-                        theseSpots = cell(gridData(b).([thisChannel 'SpotCount']),1);
-                        [theseSpots{:}] = gridData(b).([thisChannel 'SpotData']).spotLocation;
+                        [testSpots] = {gridData(b).([testChannel 'SpotData']).spotLocation}';
+                        [theseSpots] = {gridData(b).([thisChannel 'SpotData']).spotLocation}';
+                        
                         % If necessary, apply an affine transformation for registration
                         if isfield(statsByColor, [testChannel 'RegistrationData'])
                             testSpots = cellfun(@(x) transformPointsForward( statsByColor.([testChannel 'RegistrationData']).Transformation, x), testSpots, 'UniformOutput', false);
                             theseSpots = cellfun(@(x) transformPointsForward( statsByColor.([thisChannel 'RegistrationData']).Transformation, x), theseSpots, 'UniformOutput', false);
                         end
+                        
                         % Look for colocalization
                         for a = 1:gridData(b).([testChannel 'SpotCount'])
                             query = cell2mat(testSpots(a));
