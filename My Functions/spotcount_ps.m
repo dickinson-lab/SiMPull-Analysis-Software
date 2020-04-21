@@ -30,16 +30,30 @@ function outStruct = spotcount_ps(channel, rawImage, avgImage, params, outStruct
     [nPeaks, ~] = size(peakLocations);
 
     %Saves the results
-    if nPeaks == 0
-        outStruct.([channel 'SpotData']) = struct('spotLocation',[0,0],...
-                                                  'intensityTrace',zeros(1,tmax),...
-                                                  'isColocalized',false);
-    else
+    existingSpots = 0;
+    if isfield(outStruct, [channel 'SpotData']) && nPeaks > 0
+        
+        % If our data structure already has some spots, add the new ones to the end of the list
+        existingSpots = length(outStruct.([channel 'SpotData']));
         peakCell = mat2cell(peakLocations,ones(nPeaks,1));
-        outStruct.([channel 'SpotData']) = struct('spotLocation',peakCell);
-    end
-    outStruct.([channel 'SpotCount']) = nPeaks;
+        % I couldn't figure out how to do this assignment on one line
+        temp = struct('spotLocation',peakCell);
+        [ outStruct( existingSpots+1 : existingSpots+nPeaks).spotLocation ] = temp.spotLocation;
+        outStruct.([channel 'SpotCount']) = existingSpots + nPeaks;
     
+    else
+        
+        %Otherwise, make new fields to hold the data. 
+        if nPeaks == 0
+        outStruct.([channel 'SpotData']) = struct('spotLocation',[0,0],...
+                                                  'intensityTrace',zeros(1,tmax));
+        else
+            peakCell = mat2cell(peakLocations,ones(nPeaks,1));
+            outStruct.([channel 'SpotData']) = struct('spotLocation',peakCell);
+        end
+        outStruct.([channel 'SpotCount']) = nPeaks;
+    end
+
     %Get a box containing each spot and measure the intensity.
     %Subtract local background by measuring a larger box (Ted's method).
     
@@ -66,7 +80,7 @@ function outStruct = spotcount_ps(channel, rawImage, avgImage, params, outStruct
     
     %Calculate the background and perform the subtraction
     if nPeaks > 0 
-        for e = 1:nPeaks
+        for e = existingSpots+1 : existingSpots+nPeaks   %existingSpots = 0 if this is a fresh analysis
             xcoord = peakLocations(e,1);
             ycoord = peakLocations(e,2);   
             spotMat = rawImage(ycoord-smBoxRad:ycoord+smBoxRad,xcoord-smBoxRad:xcoord+smBoxRad,:);

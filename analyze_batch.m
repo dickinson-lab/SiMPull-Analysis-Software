@@ -317,10 +317,8 @@ for a=1:length(dirList)
                     avgImage = averageImage(thisImage, color, params);
                     
                     % Actually do the spot counting
-                    resultsStruct = spotcount_ps(color, thisImage, avgImage, params, gridData(index(b)));
-                    gridData(index(b)).([color 'SpotData']) = resultsStruct.([color 'SpotData']);
-                    gridData(index(b)).([color 'SpotCount']) = resultsStruct.([color 'SpotCount']);
-                    clear resultsStruct;
+                    gridData(index(b)) = spotcount_ps(color, thisImage, avgImage, params, gridData(index(b)));
+                    
                 end % Loop b over images
                 
             end % Loop i over channels
