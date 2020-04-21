@@ -21,7 +21,7 @@ function [dataStruct] = extractIntensityTraces(channel, rawImage, params, dataSt
     
     %Based on the wavelength and the pixel size, calculate the size of box to use
     PSFrad = lambda / (2*1.49); %Assumes we're using a 1.49 NA TIRF objective
-    smBoxRad = ceil(PSFrad/params.pixelSize); %This will result in a 5x5 box for large-pixel cameras (EMCCD) and a 7x7 box for small-pixel cameras (sCMOS)
+    smBoxRad = ceil(PSFrad/params.pixelSize); %This will result in a 5x5 box for large-pixel cameras (EMCCD, Prime95B) and a 7x7 box for small-pixel cameras (sCMOS)
     smBoxArea = (2*smBoxRad + 1)^2; 
     lgBoxRad = smBoxRad + 2;
     lgBoxArea = (2*lgBoxRad + 1)^2;
@@ -35,8 +35,8 @@ function [dataStruct] = extractIntensityTraces(channel, rawImage, params, dataSt
             continue
         end
         % Otherwise, go ahead
-        xcoord = peakLocations(e,1);
-        ycoord = peakLocations(e,2);   
+        xcoord = dataStruct.([channel 'SpotData'])(e).spotLocation(1);
+        ycoord = dataStruct.([channel 'SpotData'])(e).spotLocation(2);   
         spotMat = rawImage(ycoord-smBoxRad:ycoord+smBoxRad,xcoord-smBoxRad:xcoord+smBoxRad,:);
         traceSmall = squeeze(sum(sum(spotMat,1),2));
         BGMat = rawImage(ycoord-lgBoxRad:ycoord+lgBoxRad,xcoord-lgBoxRad:xcoord+lgBoxRad,:);
