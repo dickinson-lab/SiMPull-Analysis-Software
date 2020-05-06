@@ -11,11 +11,23 @@ function handles = plotSpreadBubble(varargin)
 % one experimental condition and replicate measurements in rows. Make a second
 % variable nBaits with corresponding number of spots tested for
 % colocalization. Then call 
-%           plotSpreadBubble(pctColoc,'markerSizes',nBaits);
+%       >> plotSpreadBubble(pctColoc,'markerSizes',nBaits);
 %
-% It is also often useful to set the 'xNames' and 'distributionColors'
-% properties.
+% One can also show a weighted mean and 95% confidence interval as follows: 
+%       >> plotSpreadBubble(pctColoc, 'markerSizes', nBaits,...
+%                           'showWeightedMean', argument);
 %
+%   where argument can be either a logical true (to show the weighted mean 
+%   using default settings), or a color identifier string or colormap array.  
+%   Weighted mean and 95% confidence intervals are calculated on the basis
+%   of the number of baits given as an argument to 'markerSizes'. If
+%   'markerSizes' is not specified, a non-weighted mean with no error bars
+%   is shown instead. 
+%
+% It is also often useful to set the 'xNames' and 'distributionColors' properties.
+%
+%
+% Original documentation from Jonas Dorn follows below:
 %
 % SYNOPSIS: handles = plotSpread(data, propertyName, propertyValue, ...)
 %           handles = plotSpread(ah, ...
@@ -130,6 +142,7 @@ def.categoryLabels = '';
 def.yLabel = '';
 def.spreadWidth = [];
 def.markerSizes = 6;
+def.showWeightedMean = false;
 
 % in development
 def.individualLabels = false; % one category label across all distributions
@@ -167,6 +180,7 @@ if ~isempty(varargin) && ~ischar(varargin{1}) && ~isstruct(varargin{1})
     parserObj.addOptional('showMM',def.showMM);
     parserObj.addOptional('xValues',def.xValues);
     parserObj.addOptional('markerSizes',def.markerSizes);
+    parserObj.addOptional('showWeightedMean',def.showWeightedMean);
     
     parserObj.parse(varargin{:});
     opt = parserObj.Results;
@@ -316,7 +330,10 @@ elseif length(opt.distributionMarkers) ~= nData
 end
 
 % marker sizes
+allMarkersSameSize = false;
 if length(opt.markerSizes) == 1
+    % Save information that we have only a single marker size
+    allMarkersSameSize = true; 
     % expand
     opt.markerSizes = repmat(opt.markerSizes,length(data),1);
 elseif length(opt.markerSizes) ~= length(data)
@@ -328,6 +345,21 @@ if max(opt.markerSizes) > 500
     opt.markerSizes = scalefactor .* opt.markerSizes;
 end
 
+% Weighted mean
+if opt.showWeightedMean
+    % Set color to default if a logical value was given
+    if islogical(opt.showWeightedMean)
+        opt.showWeightedMean = 'k';
+    end
+    % Validate color if specified
+    if isnumeric(opt.showWeightedMean)
+        if size(opt.showWeightedMean,2) ~= 3 || size(opt.distributionColors,1) ~= 1
+            error('please specify colormap with one row and three columns')
+        end
+    elseif ~ischar(opt.showWeightedMean)
+        error('Argument to showWeightedMean must be a logical true, a colorspec string or a 3-number colormap.')
+    end
+end
 
 stdWidth = 1;
 if isempty(opt.xValues)
@@ -480,7 +512,7 @@ end
 %% SPREAD POINTS
 % assign either nData, or xValues number of values, in case we're working
 % with group-indices
-[m,md,sem,sd] = deal(nan(max(nData,length(opt.xValues)),1));
+[wm,m,md,sem,sd,ci] = deal(nan(max(nData,length(opt.xValues)),1));
 % make sure xValues are not something weird
 opt.xValues = double(opt.xValues);
 
@@ -532,7 +564,18 @@ for iData = 1:nData
         currentData(:,2) = data(currentDataIdx,1);
         data(currentDataIdx,:) = currentData;
         
-        
+        % Calculate mean and confidence intervals
+        if opt.showWeightedMean
+            m(iData) = nanmean(currentData(:,2));
+            if ~allMarkersSameSize
+                currNBaits = opt.markerSizes(currentDataIdx,1);
+                weights = currNBaits ./ sum(currNBaits);
+                wm(iData) = sum(weights.*currentData(:,2));
+                weightedDiffSq = weights .* ( (currentData(:,2)-wm(iData)).^2 );
+                sumSqWeights = sum( weights .^ 2 );
+                ci(iData) = 1.96 * sqrt( sum(weightedDiffSq) / (length(currNBaits) * (1 - sumSqWeights))); 
+            end
+        end
         if opt.showMM > 0
             m(iData) = nanmean(currentData(:,2));
             md(iData) = nanmedian(currentData(:,2));
@@ -545,6 +588,17 @@ end
 
 %% plot
 set(ah,'NextPlot','add')
+
+% Draw weighted means and error bars
+if opt.showWeightedMean
+    if allMarkersSameSize
+        errorbar(ah,opt.xValues,m,zeros(1,nData),'.','Color',opt.showWeightedMean,'LineWidth',2,'CapSize',15)
+    else
+        errorbar(ah,opt.xValues,wm,zeros(1,nData),'.','Color',opt.showWeightedMean,'LineWidth',2,'CapSize',15)
+        errorbar(ah,opt.xValues,wm,ci,'.','Color',opt.showWeightedMean,'LineWidth',2)
+    end
+end
+
 ph = NaN(nData,nCategories);
 for iData = 1:nData
     for iCategory = 1:nCategories
@@ -641,7 +695,7 @@ if ~opt.individualLabels
 end
 
 
-% add mean/median
+% add mean/median (Original code from Jonas - see above for weighted means)
 mh = [];mdh=[];
 if opt.showMM
     % plot mean, median. Mean is filled red circle, median is green square
