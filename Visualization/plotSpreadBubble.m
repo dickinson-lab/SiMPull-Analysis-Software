@@ -9,8 +9,8 @@ function handles = plotSpreadBubble(varargin)
 %
 % To nicely plot SiMPull data, make a variable pctColoc with each column as
 % one experimental condition and replicate measurements in rows. Make a second
-% variable nBaits with corresponding number of spots tested for
-% colocalization. Then call 
+% variable nBaits with corresponding number of spots tested for colocalization
+% in each sample. Then call 
 %       >> plotSpreadBubble(pctColoc,'markerSizes',nBaits);
 %
 % One can also show a weighted mean and 95% confidence interval as follows: 

@@ -667,7 +667,7 @@ if nChannels>1
 else
     set(handles.(['center' channels{1} 'Button']), 'Value',1);
     set(handles.redCheckbox, 'Value', 0, 'Enable', 'off');
-    set(handles.colocCheckBox, 'Value', 0, 'Enable', 'off');
+    set(handles.colocCheckbox, 'Value', 0, 'Enable', 'off');
 end
 
 set(handles.greenText,'Units','pixels','Position',[30+(imageWidth-200)/2 imageHeight+90 200 20]);
