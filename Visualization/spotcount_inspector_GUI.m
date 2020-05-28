@@ -200,7 +200,7 @@ if ~showingTraces
     stepHistXmax = handles.([color 'HistXmax']);
 end
 
-timeAvg = imread([handles.gridData(b).tiffDir filesep handles.imageName '.tif']);
+timeAvg = imread([handles.imgPath filesep handles.imageName '.tif']);
 [ymax, xmax] = size(timeAvg);
 timeAvg = imadjust(timeAvg,stretchlim(timeAvg,0.0005),[]);
 
@@ -281,6 +281,14 @@ else
     [handles.matFile, handles.matPath] = uigetfile('*.mat','Choose a .mat file with data from the spot counter');
 end
 load([handles.matPath filesep handles.matFile]);
+%locate image folder
+nameIdx = strfind(handles.matFile,'_filtered.mat');
+if ~isempty(nameIdx)
+    handles.imgPath = [handles.matPath handles.matFile(1:nameIdx-1)];
+else
+    handles.imgPath = [handles.matPath filesep handles.matFile(1:end-4)];
+end
+
 handles.gridData = gridData; clear gridData;
 handles.gridSize = size(handles.gridData);
 handles.nElements = handles.gridSize(1)*handles.gridSize(2);
@@ -289,7 +297,7 @@ handles.nChannels = nChannels; clear nChannels;
 
 %Get first image
 firstImageName = [handles.gridData(1).imageName '_' channels{1} 'avg.tif'];
-firstImage = imread([handles.gridData(1).tiffDir filesep firstImageName]);
+firstImage = imread([handles.imgPath filesep firstImageName]);
 [ymax xmax] = size(firstImage);
 tmax = length(handles.gridData(1).([channels{1} 'SpotData'])(1).intensityTrace);
 handles.tmax = tmax;
