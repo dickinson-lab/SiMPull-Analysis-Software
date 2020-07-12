@@ -23,9 +23,6 @@ function [avgImage] = averageImage(rawImage, channel, params)
     
     %Make average image 
     avgImage = uint16( mean( rawImage(:,:,params.firstTime:params.lastTime), 3) );
-    
-    %Save average image for later reference
-    imwrite(avgImage,[outStruct.tiffDir filesep params.imageName '_' channel 'avg.tif'],'tiff');
 
 end
 

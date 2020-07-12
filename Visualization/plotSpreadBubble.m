@@ -24,7 +24,8 @@ function handles = plotSpreadBubble(varargin)
 %   'markerSizes' is not specified, a non-weighted mean with no error bars
 %   is shown instead. 
 %
-% It is also often useful to set the 'xNames' and 'distributionColors' properties.
+% It is also often useful to set the 'xNames' and 'distributionColors' properties
+% (see below).
 %
 %
 % Original documentation from Jonas Dorn follows below:

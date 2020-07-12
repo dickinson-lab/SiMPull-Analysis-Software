@@ -286,8 +286,14 @@ for a=1:length(dirList)
                     colorIndex = colorIndex | ~cellfun(@isempty, regexp({fileList.name}, ptrn)); 
                 end
                 imagesOfThisColor = fileList(colorIndex);
+                
                 %% Perform spot counting for each image
                 for b = 1:length(imagesOfThisColor)
+                    %Make fields in gridData to hold the results
+                    gridData(b).([color 'SpotData']) = struct('spotLocation',[],...
+                                                              'intensityTrace',[]);
+                    gridData(b).([color 'SpotCount']) = 0;
+                    
                     % Get position name
                     imageName = imagesOfThisColor(b).name;
                     posName = regexp(imageName, '(\S+)_[0-9\-]+.tif','tokens');
@@ -315,6 +321,8 @@ for a=1:length(dirList)
                     params.firstTime = firstTime.(color);
                     params.lastTime = lastTime.(color);
                     avgImage = averageImage(thisImage, color, params);
+                    %Save average image for later reference
+                    imwrite(avgImage,[nd2Dir filesep params.imageName '_' color 'avg.tif'],'tiff');
                     
                     % Actually do the spot counting
                     gridData(index(b)) = spotcount_ps(color, avgImage, params, gridData(index(b)));

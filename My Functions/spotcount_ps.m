@@ -26,26 +26,22 @@ function outStruct = spotcount_ps(channel, avgImage, params, outStruct)
     [nPeaks, ~] = size(peakLocations);
 
     %Saves the results
-    if isfield(outStruct, [channel 'SpotData']) && nPeaks > 0
+    existingSpots = outStruct.([channel 'SpotCount']);
+    
+    if existingSpots > 0 && nPeaks > 0
         
         % If our data structure already has some spots, add the new ones to the end of the list
-        existingSpots = length(outStruct.([channel 'SpotData']));
         peakCell = mat2cell(peakLocations,ones(nPeaks,1));
         % I couldn't figure out how to do this assignment on one line
         temp = struct('spotLocation',peakCell);
         [ outStruct( existingSpots+1 : existingSpots+nPeaks).spotLocation ] = temp.spotLocation;
         outStruct.([channel 'SpotCount']) = existingSpots + nPeaks;
     
-    else
+    elseif nPeaks > 0
         
-        %Otherwise, make new fields to hold the data. 
-        if nPeaks == 0
-        outStruct.([channel 'SpotData']) = struct('spotLocation',[],...
+        %Otherwise, just put the new data in place 
+        peakCell = mat2cell(peakLocations,ones(nPeaks,1));
+        outStruct.([channel 'SpotData']) = struct('spotLocation',peakCell,...
                                                   'intensityTrace',[]);
-        else
-            peakCell = mat2cell(peakLocations,ones(nPeaks,1));
-            outStruct.([channel 'SpotData']) = struct('spotLocation',peakCell,...
-                                                      'intensityTrace',[]);
-        end
         outStruct.([channel 'SpotCount']) = nPeaks;
     end
