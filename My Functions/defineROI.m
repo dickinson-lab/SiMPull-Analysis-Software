@@ -15,6 +15,28 @@ function [gridData, statsByColor, summary] = defineROI(gridData, channels, nChan
     % keepROI   = logical 1 if ROI contains the good region of the image
     %           = logical 0 if ROI contains an artifact to be excluded    
                                                                                     
+    %Update gridData with a record of what regions have been defined
+    %and/or excluded
+    if ~keepROI
+       %Check if an ROI has already been excluded for this image
+       alreadyExists = any(cellfun(@(x) isequal(x, 'None'), gridData(selection).excludedRegions));
+       %If this is the first excluded ROI, replace 'None' with the ROI
+       if alreadyExists    
+          gridData(selection).excludedRegions{1} = ROI;
+       %Otherwise, append the newly excluded ROI to the existing list 
+       else
+          gridData(selection).excludedRegions{end+1} = ROI;
+       end
+    else 
+       %Check if an ROI has already been defined for this image, etc.
+       alreadyExists = any(cellfun(@(x) isequal(x, 'All'), gridData(selection).regionsOfInterest));
+       if alreadyExists
+          gridData(selection).regionsOfInterest{1} = ROI;
+       else
+          gridData(selection).regionsOfInterest{end+1} = ROI;
+       end
+    end
+    
     % Remove non-selected spots from image and re-calculate summary stats
     for c = 1:nChannels
         % Spot count data
@@ -80,6 +102,7 @@ function [gridData, statsByColor, summary] = defineROI(gridData, channels, nChan
             statsByColor.([color1 'BadSpots']) = sum(cell2mat({gridData(countedIndex).([color1 'SpotCount'])})) - sum(cell2mat({gridData(countedIndex).([color1 'GoodSpotCount'])}));
             statsByColor.([color1 'StepHist']) = sum(cell2mat({gridData.([color1 'StepDist'])})');
         end
+            
     end
 
     % Save data
