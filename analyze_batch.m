@@ -235,7 +235,7 @@ for a=1:length(dirList)
                 imageName = fileList(b).name;
                 rawImage = squeeze(bfread([nd2Dir filesep fileList(b).name],1,'Timepoints','all','ShowProgress',false));
                 if iscell(rawImage) % bfread sometimes returns a cell array, for reasons that are unclear - check and convert if needed
-                    rawImage = cat(3, thisImage{:}); 
+                    rawImage = cat(3, rawImage{:}); 
                 end
                 [ymax,xmax,tmax] = size(rawImage);
                 gridData(index(b)).imageSize = [ymax xmax];
@@ -246,7 +246,12 @@ for a=1:length(dirList)
                 for i = 1:nChannels 
                     color = channels{i};                    
                     waitbar( (b-1)/nPositions, spotwb, ['Finding ' color ' Spots in image ' strrep(imageName,'_','\_') '...'] );
-
+ 
+                    %Make fields in gridData to hold the results
+                    gridData(b).([color 'SpotData']) = struct('spotLocation',[],...
+                                                              'intensityTrace',[]);
+                    gridData(b).([color 'SpotCount']) = 0;               
+                    
                     % Check that the selected range of times is present in the data (only required for Nikon ND2 files)
                     timeRange1 = Answer.([color 'Range1']);
                     timeRange2 = Answer.([color 'Range2']);
@@ -258,17 +263,20 @@ for a=1:length(dirList)
                     end
 
                     % Grab the appropriate portion of the image
-                    thisImage = rawImage{timeRange1:min(timeRange2,tmax)};
+                    thisImage = rawImage(:,:, timeRange1:min(timeRange2,tmax)  );
 
-                    % Add parameters for averaging window
+                    % Generate average image for spot counting
                     params.firstTime = firstTime.(color);
                     params.lastTime = lastTime.(color);
+                    avgImage = averageImage(thisImage, color, params);
+                    %Save average image for later reference
+                    imwrite(avgImage,[nd2Dir filesep params.imageName '_' color 'avg.tif'],'tiff');
                     
                     % Actually do the spot counting
-                    resultsStruct = spotcount_ps(color,thisImage,params,gridData(index(b)));
-                    gridData(index(b)).([color 'SpotData']) = resultsStruct.([color 'SpotData']);
-                    gridData(index(b)).([color 'SpotCount']) = resultsStruct.([color 'SpotCount']);
-                    clear resultsStruct;
+                    gridData(index(b)) = spotcount_ps(color, avgImage, params, gridData(index(b)));
+                    
+                    % Extract and save intensity traces for found spots
+                    gridData(index(b)) = extractIntensityTraces(color, thisImage, params, gridData(index(b)));
                     
                 end %Loop i over channels
                 
