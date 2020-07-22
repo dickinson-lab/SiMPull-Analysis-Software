@@ -249,11 +249,6 @@ for a=1:length(dirList)
                     color = channels{i};                    
                     waitbar( (b-1)/nPositions, spotwb, ['Finding ' color ' Spots in image ' strrep(imageName,'_','\_') '...'] );
  
-                    %Make fields in gridData to hold the results
-                    gridData(b).([color 'SpotData']) = struct('spotLocation',[],...
-                                                              'intensityTrace',[]);
-                    gridData(b).([color 'SpotCount']) = 0;               
-                    
                     % Check that the selected range of times is present in the data (only required for Nikon ND2 files)
                     timeRange1 = Answer.([color 'Range1']);
                     timeRange2 = Answer.([color 'Range2']);
@@ -299,11 +294,7 @@ for a=1:length(dirList)
                 
                 %% Perform spot counting for each image
                 for b = 1:length(imagesOfThisColor)
-                    %Make fields in gridData to hold the results
-                    gridData(b).([color 'SpotData']) = struct('spotLocation',[],...
-                                                              'intensityTrace',[]);
-                    gridData(b).([color 'SpotCount']) = 0;
-                    
+                                        
                     % Get position name
                     imageName = imagesOfThisColor(b).name;
                     posName = regexp(imageName, '(\S+)_[0-9\-]+.tif','tokens');

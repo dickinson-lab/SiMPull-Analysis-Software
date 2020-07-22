@@ -26,7 +26,17 @@ function outStruct = spotcount_ps(channel, avgImage, params, outStruct)
     [nPeaks, ~] = size(peakLocations);
 
     %Saves the results
-    existingSpots = outStruct.([channel 'SpotCount']);
+    
+    % Check for previously-existing spots
+    if isfield(outStruct, [channel 'SpotCount'])
+        existingSpots = outStruct.([channel 'SpotCount']);
+    else
+        %Make fields in gridData to hold the results
+        outStruct.([channel 'SpotData']) = struct('spotLocation',[],...
+                                                  'intensityTrace',[]);
+        outStruct.([channel 'SpotCount']) = 0;
+        existingSpots = 0;
+    end
     
     if existingSpots > 0 && nPeaks > 0
         
