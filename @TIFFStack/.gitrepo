@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/DylanMuir/TIFFStack
+	branch = master
+	commit = 6492032e4e2c0e0cda7a1ba8484cee76c0a02672
+	parent = 7c9d60ec76d7b348166d2a1bb2c101cad228fa87
+	method = merge
+	cmdver = 0.4.1
