@@ -2,9 +2,25 @@
 % extracts the intensity of each spot as a function of time and performs
 % local background subtraction.
 
-function [dataStruct] = extractIntensityTraces(channel, rawImage, params, dataStruct)
+% In addition to the required inputs which are self-explanatory, the
+% function can also take a logical index as the last argument, which will 
+% be used to choose only a subset of spots for trace extraction. 
+
+function [dataStruct] = extractIntensityTraces(channel, rawImage, params, dataStruct, varargin)
     %Get a box containing each spot and measure the intensity.
     %Subtract local background by measuring a larger box (Ted's method).
+    
+    %Get number of spots
+    nPeaks = length(dataStruct.([channel 'SpotData']));
+    
+    %Check for logical index input
+    if nargin == 4
+        index = true(1,nPeaks);
+    elseif nargin == 5 && islogical(varargin{1})
+        index = varargin{1};
+    else
+        error('Incorrect number or type of input arguments given');
+    end
     
     %Determine the Wavelength
     if (strcmp(channel, 'Blue'))
@@ -28,8 +44,12 @@ function [dataStruct] = extractIntensityTraces(channel, rawImage, params, dataSt
     areaDiff =  lgBoxArea - smBoxArea; 
     
     %Calculate the background and perform the subtraction
-    nPeaks = length(dataStruct.([channel 'SpotData']));
     for e = 1:nPeaks
+        % Skip this spot if instructed by calling function
+        if ~index(e)
+            continue
+        end
+        
         % Check if we already have an intensity trace for this spot; if so, we don't need to calculate it again. 
         if isfield(dataStruct.([channel 'SpotData']), 'intensityTrace') && ~isempty(dataStruct.([channel 'SpotData'])(e).intensityTrace)
             continue

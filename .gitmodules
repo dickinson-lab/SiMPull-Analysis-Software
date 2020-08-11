@@ -1,0 +1,6 @@
+[submodule "TensorStack"]
+	path = TensorStack
+	url = https://github.com/DylanMuir/TensorStack
+[submodule "@TIFFStack"]
+	path = @TIFFStack
+	url = https://github.com/DylanMuir/TIFFStack
