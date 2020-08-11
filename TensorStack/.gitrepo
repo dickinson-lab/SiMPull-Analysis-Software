@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/DylanMuir/TensorStack
+	branch = master
+	commit = d8e86625b0b0e1b79364d77fe56ac9f9520c1958
+	parent = edd46a2c8b18db860891e271bf158201f05f8561
+	method = merge
+	cmdver = 0.4.1
