@@ -1,5 +1,5 @@
-%% detectCoAppearance.m
-%  This script is for analyzing SiMPull data in which the binidng of bait
+function detectCoAppearance(varargin)
+%  This program is for analyzing SiMPull data in which the binidng of bait
 %  proteins to the coverslip is monitored in real time following cell
 %  lysis. 
 %
@@ -8,49 +8,67 @@
 %  Then, those spots are analyzed to determine their time of appearance 
 %  and whether spots in a prey channel co-appear. 
 %
+%  This function can be run in two modes.  If called with no arguments, the
+%  user is asked to select files to analyze and set options; this works well 
+%  for processing a single dataset.  Alternatively, a cell array containing
+%  the paths to the images to be analyzed can be passed in along with
+%  channel and registration information, by calling 
+%  >> detectCoAppearance(imgFilesCellArray, DialogBoxAnswers, regData)
+%
+%  This latter usage is not meant to be called directly by the user;
+%  instead run the batchDetectCoAppearance.m wrapper script. 
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Adjustable parameters for spot detection are here                                                 %
 params.psfSize = 1;                                                                                 %
 params.fpExp = 1e-5; %Expectation value for false positive objects in probabilistic segmentation    %
 params.poissonNoise = 0; %Set this option to 1 if photon shot noise dominates detector noise        %
 window = 50; %Temporal averaging window for spot detection                                          %
-%                                                                                                   %
-% These parameters determine the relationship between laser wavelength and "color"                  %
-wavelengths.Blue = {'405' '445'};                                                                   %
-wavelengths.Green = {'488' '505' '514'};                                                            %
-wavelengths.Red = {'561' '594'};                                                                    %
-wavelengths.FarRed = {'633' '638' '640' '645'};                                                     %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Set up
-% Ask user for images. Multiselect is used here because sometimes Micro-Manager splits long time series into pieces. 
-imgFile = uipickfiles('Prompt','Select image files to analyze and arrange them in order','Type',{'*.tif','TIF-file'});
+if nargin == 0 
+    % Ask user for images. Multiselect is used here because sometimes Micro-Manager splits long time series into pieces. 
+    imgFile = uipickfiles('Prompt','Select image files to analyze and arrange them in order','Type',{'*.tif','TIF-file'});
 
-% Get image name and root directory
-slash = strfind(imgFile{1},filesep);
-imgName = imgFile{1}(slash(end)+1:strfind(imgFile{1},'_MMStack')-1); 
-expDir = imgFile{1}(1:slash(end));
+    % Get image name and root directory
+    slash = strfind(imgFile{1},filesep);
+    imgName = imgFile{1}(slash(end)+1:strfind(imgFile{1},'_MMStack')-1); 
+    expDir = imgFile{1}(1:slash(end));
 
-% Options dialog box
-[Answer,Cancelled] = dynamicChannelInfoDlg(expDir);
-if Cancelled 
-    return
-else
+    % Options dialog box
+    [Answer,Cancelled] = dynamicChannelInfoDlg(expDir);
+    if Cancelled 
+        return
+    else
+        v2struct(Answer);
+    end
+
+    % Image registration
+    regImg = TIFFStack(regFile);
+    subImg = regImg(:,:,RegWindow1:RegWindow2);
+    avgImg = mean(subImg, 3);
+    [~, xmax] = size(avgImg);
+    leftImg = avgImg(:,1:(xmax/2));
+    rightImg = avgImg(:,(xmax/2)+1:xmax);
+    regData = registerImages(rightImg, leftImg);
+    % We don't save the registration info here because it's saved as part of each individual file below.  
+    % Instead we just hang on to the regData variable for later use.
+elseif nargin == 3
+    imgFile = varargin{1};
+    slash = strfind(imgFile{1},filesep);
+    imgName = imgFile{1}(slash(end)+1:strfind(imgFile{1},'_MMStack')-1); 
+    expDir = imgFile{1}(1:slash(end));  
+    
+    Answer = varargin{2};
     v2struct(Answer);
+    regData = varargin{3};
+else
+    error('Incorrect number of input arguments given. Call detectCoAppearance(imgFilesCellArray, DialogBoxAnswers, regData) to provide parameters, or call with no arguments to raise dialog boxes.');
 end
 
-% Image registration
-regImg = TIFFStack(regFile);
-subImg = regImg(:,:,RegWindow1:RegWindow2);
-avgImg = mean(subImg, 3);
-[~, xmax] = size(avgImg);
-leftImg = avgImg(:,1:(xmax/2));
-rightImg = avgImg(:,(xmax/2)+1:xmax);
-regData = registerImages(rightImg, leftImg);
-% We don't save the registration info here because it's saved as part of each individual file below.  
-% Instead we just hang on to the regData variable for later use.
-
 %% Load images
+wb = waitbar(0,'Loading Images...','Name',strrep(['Analyzing Experiment ' expDir],'_','\_'));
 warning('off'); %Prevent unnecessary warnings from libtiff
 if length(imgFile) > 1 %if the user selected multiple files
     nFiles = length(imgFile);
@@ -67,6 +85,7 @@ else
 end
 
 %% Find difference peaks
+waitbar(0,wb,'Finding bait protein appearances...');
 baitChannel = Answer.([BaitPos 'Channel']); 
 params.pixelSize = pixelSize;
 % Figure out what portion of the image we're going to work with and set x indices accordingly
@@ -87,6 +106,7 @@ lastFoundSpots = {};
 [~,~,ndiffs] = size(diffMap);
 for b = 1:ndiffs
     %% Probabilistic Segmentation
+    waitbar((b-1)/ndiffs,wb);
     % Run PS and put data in a temporary structure (foundSpots)
     psResults = spotcount_ps(baitChannel, diffMap(:,:,b), params, struct('dataFolder',path,'avgWindow',window));
     
@@ -141,6 +161,7 @@ dynData = findAppearanceTimes(dynData, baitChannel);
 % We don't do spot detection for the prey channel; 
 % instead, just copy the positions of spots found in the bait channel and apply a registration correction.
 % At the same time, identify and ignore bait spots that are so close to the edge that they aren't visible in the prey channel
+waitbar(0,wb,'Finding co-appearing prey spots...');
 if strcmp(BaitPos, 'Left')
     preyChannel = RightChannel;
 else
@@ -179,7 +200,9 @@ if strcmp(BaitPos, 'Right')
 elseif strcmp(BaitPos, 'Left')
     xmin = xmax/2 + 1;
 end
-for e = 1:dynData.([baitChannel 'SpotData'])(end).appearedInWindow
+nWindows = dynData.([baitChannel 'SpotData'])(end).appearedInWindow;
+for e = 1:nWindows
+    waitbar((e-1)/nWindows,wb);
     % Load the appropriate portion of the image into memory
     if e==1
         % The first time through the loop, we just want the first 500 frames

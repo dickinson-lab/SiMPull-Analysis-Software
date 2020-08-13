@@ -41,6 +41,13 @@ classdef uipickfiles_subs
 
         function d = filtered_dir(full_filter,re_filter,filter_both,sort_fcn)
         % Like dir, but applies filters and sorting.
+        % Args: full_filter = path to the starting directory. String end specifices file type, 
+        %                     e.g. '/' finds only subdirectories, '/*' finds all files, '/*.tif' finds only tiffs, etc.
+        %       re_filter = regexp filter for files
+        %       filter_both = logical switch for filtering (not sure what 'both' refers to - just call with false for now)
+        %       sort_fcn = anonymous function handle of the form @(x,c)file_sort(x,sort_state,c)
+        %          where  sort_state is a 3-element logical vector; [1 0 0 ] is the default value           
+        % 
         p = fileparts(full_filter);
         if isempty(p) && full_filter(1) == '/'
             p = '/';
