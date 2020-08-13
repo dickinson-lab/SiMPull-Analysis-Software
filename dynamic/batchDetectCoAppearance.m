@@ -38,3 +38,4 @@ for a = 1:length(imgDir)
     detectCoAppearance(imgFile, Answer, regData);
     
 end
+close(statusbar)

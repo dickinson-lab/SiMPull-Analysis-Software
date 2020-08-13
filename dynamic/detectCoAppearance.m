@@ -244,3 +244,4 @@ dynData.([baitChannel preyChannel 'CoAppearing']) = sum([ dynData.([baitChannel 
 
 %% Save data
 save([expDir filesep imgName '.mat'], 'dynData','params');
+close(wb)
