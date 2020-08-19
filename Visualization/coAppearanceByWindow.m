@@ -23,6 +23,7 @@ preyTrend = movsum(coAppearing,trendWindow,'omitnan');
 colocTrend = 100 * (preyTrend ./ baitTrend);
 
 % Plot
+figure
 plot(x,pctColoc,'o')
 hold on
 plot(x,colocTrend,'-')

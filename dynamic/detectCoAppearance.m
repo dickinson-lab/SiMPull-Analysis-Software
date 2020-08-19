@@ -108,7 +108,7 @@ for b = 1:ndiffs
     %% Probabilistic Segmentation
     waitbar((b-1)/ndiffs,wb);
     % Run PS and put data in a temporary structure (foundSpots)
-    psResults = spotcount_ps(baitChannel, diffMap(:,:,b), params, struct('dataFolder',path,'avgWindow',window));
+    psResults = spotcount_ps(baitChannel, diffMap(:,:,b), params, struct('dataFolder',expDir,'avgWindow',window));
     
     % The diffMap approach will tend to find the same object in two consecutive windows. So now we need 
     % to go through the list of found spots and keep only those that weren't found previously. 
