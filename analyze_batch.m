@@ -326,7 +326,7 @@ for a=1:length(dirList)
                     imwrite(avgImage,[nd2Dir filesep params.imageName '_' color 'avg.tif'],'tiff');
                     
                     % Actually do the spot counting
-                    gridData(index(b)) = spotcount_ps(color, avgImage, params, gridData(index(b)));
+                    gridData = spotcount_ps(color, avgImage, params, gridData, index(b));
                     
                     % Extract and save intensity traces for found spots
                     gridData(index(b)) = extractIntensityTraces(color, thisImage, params, gridData(index(b)));

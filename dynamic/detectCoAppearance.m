@@ -108,7 +108,7 @@ for b = 1:ndiffs
     %% Probabilistic Segmentation
     waitbar((b-1)/ndiffs,wb);
     % Run PS and put data in a temporary structure (foundSpots)
-    psResults = spotcount_ps(baitChannel, diffMap(:,:,b), params, struct('dataFolder',expDir,'avgWindow',window));
+    psResults = spotcount_ps(baitChannel, diffMap(:,:,b), params, struct('dataFolder',expDir,'avgWindow',window), 1);
     
     % The diffMap approach will tend to find the same object in two consecutive windows. So now we need 
     % to go through the list of found spots and keep only those that weren't found previously. 
@@ -225,7 +225,7 @@ for c = 1:dynData.([baitChannel 'SpotCount'])
     if isnumeric(dynData.([baitChannel 'SpotData'])(c).appearTime)
         
         if isnumeric(dynData.([preyChannel 'SpotData'])(c).appearTime) &&... 
-           abs( dynData.([baitChannel 'SpotData'])(c).appearTime - dynData.([preyChannel 'SpotData'])(c).appearTime ) <= 4 
+           abs( dynData.([baitChannel 'SpotData'])(c).appearTime - dynData.([preyChannel 'SpotData'])(c).appearTime ) <= 4 %Spots appearing within 4 frames of each other are considered simultaneous
             
             dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = true;
         else

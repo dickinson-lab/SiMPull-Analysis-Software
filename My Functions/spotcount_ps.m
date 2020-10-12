@@ -4,7 +4,7 @@
 % segmentation algorithm coded by Jacques Boisvert, Jonas Dorn and Paul
 % Maddox.
 
-function outStruct = spotcount_ps(channel, avgImage, params, outStruct)                   
+function gridData = spotcount_ps(channel, avgImage, params, gridData, index)                   
     [ymax, xmax] = size(avgImage);
 
     % Spot detection with probabilistic segmentation
@@ -28,30 +28,30 @@ function outStruct = spotcount_ps(channel, avgImage, params, outStruct)
     %Saves the results
     
     % Check for previously-existing spots
-    if isfield(outStruct, [channel 'SpotCount'])
-        existingSpots = outStruct.([channel 'SpotCount']);
+    if isfield(gridData(index), [channel 'SpotCount'])
+        existingSpots = gridData(index).([channel 'SpotCount']);
     else
         %Make fields in gridData to hold the results
-        outStruct.([channel 'SpotData']) = struct('spotLocation',[],...
+        gridData(index).([channel 'SpotData']) = struct('spotLocation',[],...
                                                   'intensityTrace',[]);
-        outStruct.([channel 'SpotCount']) = 0;
+        gridData(index).([channel 'SpotCount']) = 0;
         existingSpots = 0;
     end
     
-    if existingSpots > 0 && nPeaks > 0
+    if ~isempty(existingSpots) && existingSpots > 0 && nPeaks > 0
         
         % If our data structure already has some spots, add the new ones to the end of the list
         peakCell = mat2cell(peakLocations,ones(nPeaks,1));
         % I couldn't figure out how to do this assignment on one line
         temp = struct('spotLocation',peakCell);
-        [ outStruct( existingSpots+1 : existingSpots+nPeaks).spotLocation ] = temp.spotLocation;
-        outStruct.([channel 'SpotCount']) = existingSpots + nPeaks;
+        [ gridData(index).([channel 'SpotData'])( existingSpots+1 : existingSpots+nPeaks).spotLocation ] = temp.spotLocation;
+        gridData(index).([channel 'SpotCount']) = existingSpots + nPeaks;
     
     elseif nPeaks > 0
         
         %Otherwise, just put the new data in place 
         peakCell = mat2cell(peakLocations,ones(nPeaks,1));
-        outStruct.([channel 'SpotData']) = struct('spotLocation',peakCell,...
+        gridData(index).([channel 'SpotData']) = struct('spotLocation',peakCell,...
                                                   'intensityTrace',[]);
-        outStruct.([channel 'SpotCount']) = nPeaks;
+        gridData(index).([channel 'SpotCount']) = nPeaks;
     end
