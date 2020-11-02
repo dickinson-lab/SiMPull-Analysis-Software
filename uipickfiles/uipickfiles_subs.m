@@ -331,8 +331,8 @@ classdef uipickfiles_subs
             icon1_path = fullfile(prefdir,'uipickfiles_folder_icon.png');
             icon2_path = fullfile(prefdir,'uipickfiles_foldersc_icon.png');
             if ~(uipickfiles_subs.fdexist(icon1_path,'file') && uipickfiles_subs.fdexist(icon2_path,'file'))
-                success1 = generate_folder_icon(icon1_path);
-                success2 = generate_foldersc_icon(icon2_path);
+                success1 = uipickfiles_subs.generate_folder_icon(icon1_path);
+                success2 = uipickfiles_subs.generate_foldersc_icon(icon2_path);
                 if ~(success1 && success2)
                     fsdata.style = 2;
                 end
