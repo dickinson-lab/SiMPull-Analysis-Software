@@ -233,7 +233,7 @@ classdef uipickfiles_subs
             fclose(fid);
             imwrite(im,cmap,icon_path,'Transparency',[1 1 0])
         end
-        success = fdexist(icon_path,'file');
+        success = uipickfiles_subs.fdexist(icon_path,'file');
         end
 
         % --------------------
@@ -257,7 +257,7 @@ classdef uipickfiles_subs
             fclose(fid);
             imwrite(im,cmap,icon_path,'Transparency',[1 1 1 0])
         end
-        success = fdexist(icon_path,'file');
+        success = uipickfiles_subs.fdexist(icon_path,'file');
         end
 
         % --------------------
@@ -287,7 +287,7 @@ classdef uipickfiles_subs
             fclose(fid);
             imwrite(im,cmap,icon_path,'Transparency',[1 1 1 1 1 0 1 1 1])
         end
-        success = fdexist(icon_path,'file');
+        success = uipickfiles_subs.fdexist(icon_path,'file');
         end
 
         % --------------------
@@ -317,7 +317,7 @@ classdef uipickfiles_subs
             fclose(fid);
             imwrite(im,cmap,icon_path,'Transparency',[1 1 1 1 1 1 1 1 0 1])
         end
-        success = fdexist(icon_path,'file');
+        success = uipickfiles_subs.fdexist(icon_path,'file');
         end
 
         % --------------------
@@ -369,8 +369,8 @@ classdef uipickfiles_subs
             icon1_path = fullfile(prefdir,'uipickfiles_home_icon.png');
             icon2_path = fullfile(prefdir,'uipickfiles_logo_icon.png');
             if ~(uipickfiles_subs.fdexist(icon1_path,'file') && uipickfiles_subs.fdexist(icon2_path,'file'))
-                success1 = generate_house_icon(icon1_path);
-                success2 = generate_logo_icon(icon2_path);
+                success1 = uipickfiles_subs.generate_house_icon(icon1_path);
+                success2 = uipickfiles_subs.generate_logo_icon(icon2_path);
                 if ~(success1 && success2)
                     csdata.style = 2;
                 end
