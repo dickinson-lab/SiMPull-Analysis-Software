@@ -159,7 +159,7 @@ classdef uipickfiles_subs
         num_letters = length(letters);
         drives = cell(1,num_letters);
         for i = 1:num_letters
-            if fdexist([letters(i),':\'],'dir')
+            if uipickfiles_subs.fdexist([letters(i),':\'],'dir')
                 drives{i} = [letters(i),':'];
             end
         end

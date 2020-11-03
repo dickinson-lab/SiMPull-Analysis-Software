@@ -192,7 +192,7 @@ elseif iscellstr(prop.append) && isvector(prop.append)
 	dir_picks = repmat(cell2struct(cell(length(dir_fn),1),dir_fn(:)),...
 		num_items,1);
 	for item = 1:num_items
-		if fdexist(prop.append{item},'dir') && ...
+		if uipickfiles_subs.fdexist(prop.append{item},'dir') && ...
 				~any(strcmp(full_file_picks,prop.append{item}))
 			full_file_picks{item} = prop.append{item};
 			[unused,fn,ext] = fileparts(prop.append{item});
@@ -206,7 +206,7 @@ elseif iscellstr(prop.append) && isvector(prop.append)
 			end
 			dir_picks(item) = temp(thisdir);
 			dir_picks(item).name = prop.append{item};
-		elseif fdexist(prop.append{item},'file') && ...
+		elseif uipickfiles_subs.fdexist(prop.append{item},'file') && ...
 				~any(strcmp(full_file_picks,prop.append{item}))
 			full_file_picks{item} = prop.append{item};
 			[unused,fn,ext] = fileparts(prop.append{item});
@@ -932,10 +932,10 @@ setpref('uipickfiles','figure_position',fig_pos)
 		end
 		set(sort_cb,{'CData'},tri_icon(sort_state + 2)')
 		
-		fdir = filtered_dir(full_filter,re_filter,prop.redirs,...
-				@(x,c)file_sort(x,sort_state,c));
+		fdir = uipickfiles_subs.filtered_dir(full_filter,re_filter,prop.redirs,...
+				@(x,c)uipickfiles_subs.file_sort(x,sort_state,c));
 		filenames = {fdir.name}';
-		[filenames,fdir] = annotate_file_names(filenames,fdir,fsdata);
+		[filenames,fdir] = uipickfiles_subs.annotate_file_names(filenames,fdir,fsdata);
 		set(dir_popup,'String',path_cell,'Value',length(path_cell))
 		if length(path_cell) > 1
 			up_dir_but.Enable = 'on';
@@ -958,7 +958,7 @@ setpref('uipickfiles','figure_position',fig_pos)
 		if ispc && value == 1
 			current_dir = '';
 			full_filter = filter;
-			drives = getdrives(network_volumes);
+			drives = uipickfiles_subs.getdrives(network_volumes);
 			num_drives = length(drives);
 			temp = tempname;
 			mkdir(temp)
@@ -998,7 +998,7 @@ setpref('uipickfiles','figure_position',fig_pos)
 		if ispc && value == 1
 			current_dir = '';
 			full_filter = filter;
-			drives = getdrives(network_volumes);
+			drives = uipickfiles_subs.getdrives(network_volumes);
 			num_drives = length(drives);
 			temp = tempname;
 			mkdir(temp)
@@ -1007,16 +1007,16 @@ setpref('uipickfiles','figure_position',fig_pos)
 			fdir = repmat(dir_temp(1),num_drives,1);
 			[fdir.name] = deal(drives{:});
 		else
-			current_dir = cell2path(path_cell);
+			current_dir = uipickfiles_subs.cell2path(path_cell);
 % 			history = update_history(history,current_dir,now,history_size);
 % 			make_history_cm(csdata)
 			full_filter = fullfile(current_dir,filter);
-			fdir = filtered_dir(full_filter,re_filter,prop.redirs,...
-				@(x,c)file_sort(x,sort_state,c));
+			fdir = uipickfiles_subs.filtered_dir(full_filter,re_filter,prop.redirs,...
+				@(x,c)uipickfiles_subs.file_sort(x,sort_state,c));
 		end
 		filenames = {fdir.name}';
 		selected = find(strcmp(filenames,container));
-		[filenames,fdir] = annotate_file_names(filenames,fdir,fsdata);
+		[filenames,fdir] = uipickfiles_subs.annotate_file_names(filenames,fdir,fsdata);
 		set(dir_popup,'String',path_cell,'Value',length(path_cell))
 		if length(path_cell) > 1
 			up_dir_but.Enable = 'on';
@@ -1040,7 +1040,7 @@ setpref('uipickfiles','figure_position',fig_pos)
 		proposed_path_cell(ddots) = [];
 		proposed_path = cell2path(proposed_path_cell);
 		% Check for existance of folder.
-		if ~fdexist(proposed_path,'dir')
+		if ~uipickfiles_subs.fdexist(proposed_path,'dir')
 			fig.Pointer = 'arrow';
 			uiwait(errordlg(['Folder "',proposed_path,...
 				'" does not exist.'],'','modal'))
@@ -1051,13 +1051,13 @@ setpref('uipickfiles','figure_position',fig_pos)
 % 		make_history_cm(csdata)
 		full_filter = fullfile(current_dir,filter);
 		[path_cell,new_network_vol] = path2cell(current_dir);
-		if fdexist(new_network_vol,'dir')
+		if uipickfiles_subs.fdexist(new_network_vol,'dir')
 			network_volumes = unique([network_volumes,{new_network_vol}]);
 		end
-		fdir = filtered_dir(full_filter,re_filter,prop.redirs,...
-				@(x,c)file_sort(x,sort_state,c));
+		fdir = uipickfiles_subs.filtered_dir(full_filter,re_filter,prop.redirs,...
+				@(x,c)uipickfiles_subs.file_sort(x,sort_state,c));
 		filenames = {fdir.name}';
-		[filenames,fdir] = annotate_file_names(filenames,fdir,fsdata);
+		[filenames,fdir] = uipickfiles_subs.annotate_file_names(filenames,fdir,fsdata);
 		set(dir_popup,'String',path_cell,'Value',length(path_cell))
 		if length(path_cell) > 1
 			up_dir_but.Enable = 'on';
@@ -1158,10 +1158,10 @@ setpref('uipickfiles','figure_position',fig_pos)
 			set([filter_ed,refilter_ed],'Enable','on')
 		end
 		full_filter = fullfile(current_dir,filter);
-		fdir = filtered_dir(full_filter,re_filter,prop.redirs,...
-				@(x,c)file_sort(x,sort_state,c));
+		fdir = uipickfiles_subs.filtered_dir(full_filter,re_filter,prop.redirs,...
+				@(x,c)uipickfiles_subs.file_sort(x,sort_state,c));
 		filenames = {fdir.name}';
-		[filenames,fdir] = annotate_file_names(filenames,fdir,fsdata);
+		[filenames,fdir] = uipickfiles_subs.annotate_file_names(filenames,fdir,fsdata);
 		set(navlist,'String',filenames,'Value',[])
 		addbut.Enable = 'off';
 		fig.Pointer = 'arrow';
@@ -1173,10 +1173,10 @@ setpref('uipickfiles','figure_position',fig_pos)
 		value = refilterdirs.Value;
 		prop.redirs = value;
 		full_filter = fullfile(current_dir,filter);
-		fdir = filtered_dir(full_filter,re_filter,prop.redirs,...
-				@(x,c)file_sort(x,sort_state,c));
+		fdir = uipickfiles_subs.filtered_dir(full_filter,re_filter,prop.redirs,...
+				@(x,c)uipickfiles_subs.file_sort(x,sort_state,c));
 		filenames = {fdir.name}';
-		[filenames,fdir] = annotate_file_names(filenames,fdir,fsdata);
+		[filenames,fdir] = uipickfiles_subs.annotate_file_names(filenames,fdir,fsdata);
 		set(navlist,'String',filenames,'Value',[])
 		addbut.Enable = 'off';
 		fig.Pointer = 'arrow';
@@ -1216,10 +1216,10 @@ setpref('uipickfiles','figure_position',fig_pos)
 		fig.Pointer = 'watch';
 		drawnow
 		re_filter = refilter_ed.String;
-		fdir = filtered_dir(full_filter,re_filter,prop.redirs,...
-				@(x,c)file_sort(x,sort_state,c));
+		fdir = uipickfiles_subs.filtered_dir(full_filter,re_filter,prop.redirs,...
+				@(x,c)uipickfiles_subs.file_sort(x,sort_state,c));
 		filenames = {fdir.name}';
-		[filenames,fdir] = annotate_file_names(filenames,fdir,fsdata);
+		[filenames,fdir] = uipickfiles_subs.annotate_file_names(filenames,fdir,fsdata);
 		set(navlist,'String',filenames,'Value',[])
 		addbut.Enable = 'off';
 		fig.Pointer = 'arrow';
@@ -1269,11 +1269,11 @@ setpref('uipickfiles','figure_position',fig_pos)
 % 		history = update_history(history,current_dir,now,history_size);
 % 		make_history_cm(csdata)
 		full_filter = fullfile(current_dir,filter);
-		path_cell = path2cell(current_dir);
-		fdir = filtered_dir(full_filter,re_filter,prop.redirs,...
-				@(x,c)file_sort(x,sort_state,c));
+		path_cell = uipickfiles_subs.path2cell(current_dir);
+		fdir = uipickfiles_subs.filtered_dir(full_filter,re_filter,prop.redirs,...
+				@(x,c)uipickfiles_subs.file_sort(x,sort_state,c));
 		filenames = {fdir.name}';
-		[filenames,fdir] = annotate_file_names(filenames,fdir,fsdata);
+		[filenames,fdir] = uipickfiles_subs.annotate_file_names(filenames,fdir,fsdata);
 		set(dir_popup,'String',path_cell,'Value',length(path_cell))
 		if length(path_cell) > 1
 			up_dir_but.Enable = 'on';
@@ -1298,7 +1298,7 @@ setpref('uipickfiles','figure_position',fig_pos)
 	end
 
 	function clear_history(varargin)
-		history = update_history(history(1),'',[],history_size);
+		history = uipickfiles_subs.update_history(history(1),'',[],history_size);
 		make_history_cm(csdata)
 	end
 
@@ -1313,7 +1313,7 @@ setpref('uipickfiles','figure_position',fig_pos)
 			return
 		end
 		history_size = result;
-		history = update_history(history,'',[],history_size);
+		history = uipickfiles_subs.update_history(history,'',[],history_size);
 		make_history_cm(csdata)
 		setpref('uipickfiles','history_size',history_size)
 	end
