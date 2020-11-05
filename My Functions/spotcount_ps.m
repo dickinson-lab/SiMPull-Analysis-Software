@@ -47,11 +47,12 @@ function gridData = spotcount_ps(channel, avgImage, params, gridData, index)
         [ gridData(index).([channel 'SpotData'])( existingSpots+1 : existingSpots+nPeaks).spotLocation ] = temp.spotLocation;
         gridData(index).([channel 'SpotCount']) = existingSpots + nPeaks;
     
-    elseif nPeaks > 0
+    else
         
         %Otherwise, just put the new data in place 
         peakCell = mat2cell(peakLocations,ones(nPeaks,1));
         gridData(index).([channel 'SpotData']) = struct('spotLocation',peakCell,...
                                                   'intensityTrace',[]);
         gridData(index).([channel 'SpotCount']) = nPeaks;
+
     end

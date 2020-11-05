@@ -9,7 +9,7 @@
 %% Set up
 
 % Ask user for image folders
-imgDir = uipickfiles('Prompt','Select directoris containing image files to analyze','Type',{'Directory'});
+imgDir = uipickfiles('Prompt','Select directories containing image files to analyze','Type',{'Directory'});
 
 % Options dialog box
 [Answer,Cancelled] = dynamicChannelInfoDlg(imgDir{1});

@@ -11,7 +11,7 @@ function [dataStruct] = extractIntensityTraces(channel, rawImage, params, dataSt
     %Subtract local background by measuring a larger box (Ted's method).
     
     %Get number of spots
-    nPeaks = length(dataStruct.([channel 'SpotData']));
+    nPeaks = dataStruct.([channel 'SpotCount']);
     
     %Check for logical index input
     if nargin == 4
