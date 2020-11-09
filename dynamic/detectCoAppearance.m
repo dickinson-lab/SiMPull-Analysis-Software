@@ -120,7 +120,7 @@ for b = 1:ndiffs
         [foundSpots] = {psResults.([baitChannel 'SpotData']).spotLocation}';
         for c = 1:psResults.([baitChannel 'SpotCount'])
             query = cell2mat(foundSpots(c));
-            if ~isempty(lastFoundSpots{1}) % This If statement protects against errors when no spots were found in the previous frame.
+            if ~isempty(lastFoundSpots) && ~isempty(lastFoundSpots{1}) % This If statement protects against errors when no spots were found in the previous frame.
                 match = find(cellfun(@(x) sum(abs(x-query))<3, lastFoundSpots)); %Peaks <3 pixels from a previously-found peak are ignored
             else
                 match = [];
