@@ -10,8 +10,16 @@ function dataStruct = findAppearanceTimes(dataStruct, channel)
         %Detect Changepoints
         traj = dataStruct.([channel 'SpotData'])(a).intensityTrace;
         tmax = length(traj);
-
-        [nSteps, changepoint_pos, bayes_factors] = cpdetect_c('Gaussian', single(traj), logodds);
+        try
+            [nSteps, changepoint_pos, bayes_factors] = cpdetect_c('Gaussian', single(traj), logodds);
+        catch Err
+            warning([Err.message ' for trace ' num2str(a)]);
+            dataStruct.([channel 'SpotData'])(a).changepoints = [];
+            dataStruct.([channel 'SpotData'])(a).steplevels = [];
+            dataStruct.([channel 'SpotData'])(a).stepstdev = [];
+            dataStruct.([channel 'SpotData'])(a).appearTime = 'Analysis Failed';
+            continue
+        end
         changepoint_pos = changepoint_pos(1:nSteps);
         bayes_factors = bayes_factors(1:nSteps);
         changepoints = horzcat(changepoint_pos, bayes_factors);
@@ -30,7 +38,7 @@ function dataStruct = findAppearanceTimes(dataStruct, channel)
             if b>nSteps
                 changepoint = tmax;
             else 
-                changepoint = changepoints(b,1);
+                changepoint = dataStruct.([channel 'SpotData'])(a).changepoints(b,1);
             end
             if changepoint == 0
                 continue
@@ -90,7 +98,7 @@ function dataStruct = findAppearanceTimes(dataStruct, channel)
         if ~foundAppearance
             dataStruct.([channel 'SpotData'])(a).appearTime = 'Not found';
         end
-
+    
     end % of loop over all spots / traces
 
 end

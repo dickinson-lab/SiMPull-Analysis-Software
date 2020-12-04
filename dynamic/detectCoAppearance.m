@@ -193,54 +193,56 @@ params.RegistrationData = regData; %Save Registration info
 
 % Pull intensity traces for the prey
 % Figure out x indices - opposite logic to the code above to get the opposite half
-[ymax, xmax, tmax] = size(stackObj);
-if strcmp(BaitPos, 'Right')
-    xmin = 1;
-    xmax = xmax/2;
-elseif strcmp(BaitPos, 'Left')
-    xmin = xmax/2 + 1;
-end
-nWindows = dynData.([baitChannel 'SpotData'])(end).appearedInWindow;
-for e = 1:nWindows
-    waitbar((e-1)/nWindows,wb);
-    % Load the appropriate portion of the image into memory
-    if e==1
-        % The first time through the loop, we just want the first 500 frames
-        subStack = stackObj(:,xmin:xmax,1:500);
-    else
-        % On subsequent iterations, shift the portion of the image in memory by 1 window
-        startTime = (e-1) * window + 451;
-        endTime = min(e * window + 450, tmax);
-        subStack = cat(3, subStack(:,:,window+1:end), stackObj(:,xmin:xmax,startTime:endTime));
+if dynData.([baitChannel 'SpotCount']) > 0 %This if statement prevents crashing if no spots were found
+    [ymax, xmax, tmax] = size(stackObj);
+    if strcmp(BaitPos, 'Right')
+        xmin = 1;
+        xmax = xmax/2;
+    elseif strcmp(BaitPos, 'Left')
+        xmin = xmax/2 + 1;
     end
-    index = e==cell2mat({dynData.([baitChannel 'SpotData']).appearedInWindow});
-    [dynData.([preyChannel 'SpotData'])(index).appearedInWindow] = deal(e);
-    dynData = extractIntensityTraces(preyChannel, subStack, params, dynData, index);
-end
-% Look for spot appearances in the prey channel
-dynData = findAppearanceTimes(dynData, preyChannel);
-
-% Find spots that appear at the same time
-for c = 1:dynData.([baitChannel 'SpotCount'])
-    if isnumeric(dynData.([baitChannel 'SpotData'])(c).appearTime)
-        
-        if isnumeric(dynData.([preyChannel 'SpotData'])(c).appearTime) &&... 
-           abs( dynData.([baitChannel 'SpotData'])(c).appearTime - dynData.([preyChannel 'SpotData'])(c).appearTime ) <= 4 %Spots appearing within 4 frames of each other are considered simultaneous
-            
-            dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = true;
+    nWindows = dynData.([baitChannel 'SpotData'])(end).appearedInWindow;
+    for e = 1:nWindows
+        waitbar((e-1)/nWindows,wb);
+        % Load the appropriate portion of the image into memory
+        if e==1
+            % The first time through the loop, we just want the first 500 frames
+            subStack = stackObj(:,xmin:xmax,1:500);
         else
-            dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = false;
+            % On subsequent iterations, shift the portion of the image in memory by 1 window
+            startTime = (e-1) * window + 451;
+            endTime = min(e * window + 450, tmax);
+            subStack = cat(3, subStack(:,:,window+1:end), stackObj(:,xmin:xmax,startTime:endTime));
         end
-        
-    else
-        dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = NaN;
+        index = e==cell2mat({dynData.([baitChannel 'SpotData']).appearedInWindow});
+        [dynData.([preyChannel 'SpotData'])(index).appearedInWindow] = deal(e);
+        dynData = extractIntensityTraces(preyChannel, subStack, params, dynData, index);
     end
-        
-end
+    % Look for spot appearances in the prey channel
+    dynData = findAppearanceTimes(dynData, preyChannel);
 
-% Tally results
-dynData.([baitChannel 'AppearanceFound']) = sum( ~isnan([ dynData.([baitChannel 'SpotData']).(['appears_w_' preyChannel]) ]) ) ;
-dynData.([baitChannel preyChannel 'CoAppearing']) = sum([ dynData.([baitChannel 'SpotData']).(['appears_w_' preyChannel]) ], 'omitnan');
+    % Find spots that appear at the same time
+    for c = 1:dynData.([baitChannel 'SpotCount'])
+        if isnumeric(dynData.([baitChannel 'SpotData'])(c).appearTime)
+
+            if isnumeric(dynData.([preyChannel 'SpotData'])(c).appearTime) &&... 
+               abs( dynData.([baitChannel 'SpotData'])(c).appearTime - dynData.([preyChannel 'SpotData'])(c).appearTime ) <= 4 %Spots appearing within 4 frames of each other are considered simultaneous
+
+                dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = true;
+            else
+                dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = false;
+            end
+
+        else
+            dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = NaN;
+        end
+
+    end
+
+    % Tally results
+    dynData.([baitChannel 'AppearanceFound']) = sum( ~isnan([ dynData.([baitChannel 'SpotData']).(['appears_w_' preyChannel]) ]) ) ;
+    dynData.([baitChannel preyChannel 'CoAppearing']) = sum([ dynData.([baitChannel 'SpotData']).(['appears_w_' preyChannel]) ], 'omitnan');
+end
 
 %% Save data
 save([expDir filesep imgName '.mat'], 'dynData','params');
