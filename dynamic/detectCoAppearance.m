@@ -104,6 +104,7 @@ diffMap = diff(windowedStack,1,3); % "1" for first derivative, "3" for third dim
 
 lastFoundSpots = {};
 [~,~,ndiffs] = size(diffMap);
+dyndata = struct();
 for b = 1:ndiffs
     %% Probabilistic Segmentation
     waitbar((b-1)/ndiffs,wb);
