@@ -22,7 +22,7 @@ function varargout = trace_inspector_GUI(varargin)
 
 % Edit the above text to modify the response to help trace_inspector_GUI
 
-% Last Modified by GUIDE v2.5 01-Apr-2014 10:37:42
+% Last Modified by GUIDE v2.5 17-Dec-2020 07:45:41
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -318,8 +318,12 @@ newfig1 = figure('Units','pixels','Position',[(handles.screenSize(3)-figureWidth
 copyobj(handles.axes1, newfig1);
 copyobj(handles.axes2, newfig1);
 
-[outfile,outpath] = uiputfile('plot.png','Save File Name');
-export_fig([outpath filesep outfile],newfig1,'-png','-transparent');
+[outfile,outpath] = uiputfile('plot.pdf','Save File Name');
+if verLessThan('matlab','9.8')
+    export_fig([outpath filesep outfile],newfig1,'-pdf','-png','-transparent');
+else
+    exportgraphics(newfig1,[outpath filesep outfile]);
+end
 close(newfig1);
 
 
@@ -343,5 +347,3 @@ handles = updatePlot(b, handles);
 
 % Update handles structure
 guidata(hObject, handles);
-
-
