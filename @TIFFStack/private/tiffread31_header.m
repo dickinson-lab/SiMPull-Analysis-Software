@@ -41,7 +41,7 @@ TIF.file_name = file_name;
 
 %% --- Read byte order: II = little endian, MM = big endian
 
-bos = fread(TIF.file, 2, '*char');
+bos = fread(TIF.file, 2, 'uchar=>char');
 if ( strcmp(bos', 'II') )
    TIF.ByteOrder = 'ieee-le';       % Little-endian format
    INFO.ByteOrder = 'little-endian';

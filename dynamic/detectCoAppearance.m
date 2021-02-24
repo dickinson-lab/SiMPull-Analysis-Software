@@ -67,6 +67,11 @@ else
     error('Incorrect number of input arguments given. Call detectCoAppearance(imgFilesCellArray, DialogBoxAnswers, regData) to provide parameters, or call with no arguments to raise dialog boxes.');
 end
 
+% Save parameters for future use
+params.LeftChannel = LeftChannel;
+params.RightChannel = RightChannel;
+params.BaitPos = BaitPos;
+
 %% Load images
 wb = waitbar(0,'Loading Images...','Name',strrep(['Analyzing Experiment ' expDir],'_','\_'));
 warning('off'); %Prevent unnecessary warnings from libtiff
@@ -97,7 +102,11 @@ elseif strcmp(BaitPos, 'Right')
     xmin = xmax/2 + 1;
 end
 
+%Calculate and save windowed average image
 windowedStack = windowMean(stackObj,window,BaitPos); 
+saveastiff(windowedStack, [expDir filesep imgName '_baitAvg.tif']);
+
+%Make difference map
 diffMap = diff(windowedStack,1,3); % "1" for first derivative, "3" for third dimension
 % Note that since the first diff we take is between the first and second windows, spots appearing 
 % during the first few frames (early in the first window) might be missed. This is ok for now. 
@@ -172,10 +181,10 @@ dynData.([preyChannel 'SpotData']) = struct('spotLocation',[]);
 index = true(dynData.([baitChannel 'SpotCount']),1);
 for d = 1:dynData.([baitChannel 'SpotCount'])
     if strcmp(Answer.BaitPos, 'Left')
-        % Forward affine transformation if bait channel is on the right
+        % Inverse affine transformation if bait channel is on the left
         preySpotLocation = round( transformPointsInverse(regData.Transformation, dynData.([baitChannel 'SpotData'])(d).spotLocation) );
     else
-        % Inverse affine transformation if bait channel is on the left
+        % Forward affine transformation if bait channel is on the right
         preySpotLocation = round( transformPointsForward(regData.Transformation, dynData.([baitChannel 'SpotData'])(d).spotLocation) );
     end
     if preySpotLocation(1) < 5 || preySpotLocation(1) > (xmax/2)-5 || preySpotLocation(2) < 5 || preySpotLocation(2) > ymax-5

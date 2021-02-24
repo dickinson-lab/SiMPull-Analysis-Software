@@ -39,7 +39,7 @@ end
 % Do the averaging
 nMeans = floor(tmax/window); %Here floor is used to average only windows that fit evenly into the image length
 avgImg = zeros(ymax,xmax-xmin+1,nMeans);
-progress = waitbar(0,'Calculating windowed average (this may take a while)');
+progress = waitbar(0,'Calculating windowed average...');
 for a = 1:nMeans
     waitbar((a-1)/nMeans,progress);
     avgImg(:,:,a) = mean(img(:,xmin:xmax, ( (a-1)*window + 1 ) : a*window ), 3);
