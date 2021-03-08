@@ -98,18 +98,28 @@ params.pixelSize = pixelSize;
 if strcmp(BaitPos, 'Left')
     xmin = 1;
     xmax = xmax/2;
+    preyPos = 'Right';
 elseif strcmp(BaitPos, 'Right')
     xmin = xmax/2 + 1;
+    preyPos = 'Left';
 end
 
 %Calculate and save windowed average image
 windowedStack = windowMean(stackObj,window,BaitPos); 
-saveastiff(windowedStack, [expDir filesep imgName '_baitAvg.tif']);
+saveastiff(uint16(windowedStack), [expDir filesep imgName '_baitAvg.tif']);
 
-%Make difference map
+%Make and save difference map
 diffMap = diff(windowedStack,1,3); % "1" for first derivative, "3" for third dimension
 % Note that since the first diff we take is between the first and second windows, spots appearing 
 % during the first few frames (early in the first window) might be missed. This is ok for now. 
+saveastiff(uint16(diffMap), [expDir filesep imgName '_baitDiff.tif']);
+
+%Make and save prey channel images for later visualization
+preyAvg = windowMean(stackObj,window,preyPos);
+saveastiff(uint16(preyAvg), [expDir filesep imgName '_preyAvg.tif']); 
+preyDiff = diff(preyAvg,1,3);
+saveastiff(uint16(preyDiff), [expDir filesep imgName '_preyDiff.tif']);
+clear preyAvg preyDiff
 
 lastFoundSpots = {};
 [~,~,ndiffs] = size(diffMap);
