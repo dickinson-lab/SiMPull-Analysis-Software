@@ -14,19 +14,29 @@ for a = 1:lastWindow
     coAppearing(a) = sum(cellfun(@(x) x==true, colocData(index)));
     
 end
+
 pctColoc = 100 * (coAppearing ./ baitsCounted);
 
 % Calculate moving (weighted) mean
-x = 1:lastWindow;
 baitTrend = movsum(baitsCounted,trendWindow,'omitnan');
 preyTrend = movsum(coAppearing,trendWindow,'omitnan');
 colocTrend = 100 * (preyTrend ./ baitTrend);
 
 % Plot
 figure
-plot(x,pctColoc,'o')
+xlabel('Time (sec)')
+x = (2.5*[1:lastWindow]);
+yyaxis right
+ylabel('Number of Bait Spots')
+set(gca,'ycolor','0.65,0.65,0.65')
 hold on
-plot(x,colocTrend,'-')
-
+plot(x,baitsCounted,'-','LineWidth',0.5,'Color','0.90,0.90,0.905')
+yyaxis left
+ylabel('Percent Co-Appearance')
+set(gca,'ycolor','k')
+hold on
+plot(x,pctColoc,'o','MarkerSize',2.5,'Color','k')
+hold on
+plot(x,colocTrend,'-','LineWidth',1,'Color','k')
 end
 
