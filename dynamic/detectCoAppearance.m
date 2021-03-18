@@ -105,14 +105,14 @@ elseif strcmp(BaitPos, 'Right')
 end
 
 %Calculate and save windowed average image
-windowedStack = windowMean(stackObj,window,BaitPos); 
-saveastiff(uint16(windowedStack), [expDir filesep imgName '_baitAvg.tif']);
+baitAvg = windowMean(stackObj,window,BaitPos); 
+saveastiff(uint16(baitAvg), [expDir filesep imgName '_baitAvg.tif']);
 
 %Make and save difference map
-diffMap = diff(windowedStack,1,3); % "1" for first derivative, "3" for third dimension
+baitDiff = diff(baitAvg,1,3); % "1" for first derivative, "3" for third dimension
 % Note that since the first diff we take is between the first and second windows, spots appearing 
 % during the first few frames (early in the first window) might be missed. This is ok for now. 
-saveastiff(uint16(diffMap), [expDir filesep imgName '_baitDiff.tif']);
+saveastiff(uint16(baitDiff), [expDir filesep imgName '_baitDiff.tif']);
 
 %Make and save prey channel images for later visualization
 preyAvg = windowMean(stackObj,window,preyPos);
@@ -122,23 +122,27 @@ saveastiff(uint16(preyDiff), [expDir filesep imgName '_preyDiff.tif']);
 clear preyAvg preyDiff
 
 lastFoundSpots = {};
-[~,~,ndiffs] = size(diffMap);
-dyndata = struct();
+[~,~,ndiffs] = size(baitDiff);
 for b = 1:ndiffs
     %% Probabilistic Segmentation
     waitbar((b-1)/ndiffs,wb);
-    % Run PS and put data in a temporary structure (foundSpots)
-    psResults = spotcount_ps(baitChannel, diffMap(:,:,b), params, struct('dataFolder',expDir,'avgWindow',window), 1);
-    
-    % The diffMap approach will tend to find the same object in two consecutive windows. So now we need 
+    % Run PS for both the difference and average images
+    psDiffResults = spotcount_ps(baitChannel, baitDiff(:,:,b), params, struct('dataFolder',expDir,'avgWindow',window), 1);
+    psAvgResults = spotcount_ps(baitChannel, baitAvg(:,:,b), params, struct('dataFolder',expDir,'avgWindow',window), 1);
+    % Save the number of bait spots per window of the average image
+    dynData.([baitChannel 'AvgCount'])(b) = psAvgResults.([baitChannel 'SpotCount']);
+    % To avoid double counting, the bait spots per window of the difference image is calculated later
+    dynData.([baitChannel 'DiffCount'])(b) = 0;
+    % The baitDiff approach will tend to find the same object in two consecutive windows. So now we need 
     % to go through the list of found spots and keep only those that weren't found previously. 
     if b==1 %...unless this is the first time through the loop
-        dynData = psResults;
+        dynData = psDiffResults;
         [dynData.([baitChannel 'SpotData']).appearedInWindow] = deal(b); %Save info about when these spots appeared
-        [lastFoundSpots] = {psResults.([baitChannel 'SpotData']).spotLocation}'; %Save foundSpots for the next iteration of the loop
+        %Put PS data in a temporary structure foundSpots (by default, lastFoundSpots in first loop iteration)
+        [lastFoundSpots] = {psDiffResults.([baitChannel 'SpotData']).spotLocation}'; %Save foundSpots for the next iteration of the loop
     else
-        [foundSpots] = {psResults.([baitChannel 'SpotData']).spotLocation}';
-        for c = 1:psResults.([baitChannel 'SpotCount'])
+        [foundSpots] = {psDiffResults.([baitChannel 'SpotData']).spotLocation}';
+        for c = 1:psDiffResults.([baitChannel 'SpotCount'])
             query = cell2mat(foundSpots(c));
             if ~isempty(lastFoundSpots) && ~isempty(lastFoundSpots{1}) % This If statement protects against errors when no spots were found in the previous frame.
                 match = find(cellfun(@(x) sum(abs(x-query))<3, lastFoundSpots)); %Peaks <3 pixels from a previously-found peak are ignored
@@ -146,8 +150,10 @@ for b = 1:ndiffs
                 match = [];
             end
             if isempty(match) %If we didn't find a match, that means it's a new spot. Add it to the main data structure
-                psResults.([baitChannel 'SpotData'])(c).appearedInWindow = b; %Save info about when this spot appeared
-                dynData.([baitChannel 'SpotData'])(end+1) = psResults.([baitChannel 'SpotData'])(c);         
+                psDiffResults.([baitChannel 'SpotData'])(c).appearedInWindow = b; %Save info about when this spot appeared
+                dynData.([baitChannel 'SpotData'])(end+1) = psDiffResults.([baitChannel 'SpotData'])(c);
+                %Each time a new spot in the difference image is added to SpotData, count and save to bait spots for that window
+                dynData.([baitChannel 'DiffCount'])(b) = dynData.([baitChannel 'DiffCount'])(b) + 1;
             end
         end
         lastFoundSpots = foundSpots; %Save the list of spots found this time to compare to the next time through the loop
@@ -172,6 +178,7 @@ for b = 1:ndiffs
     % Get intensity traces
     dynData = extractIntensityTraces(baitChannel, subStack, params, dynData);   
 end
+% Count the total number of bait spots across difference images
 [dynData.([baitChannel 'SpotCount']),~] = size(dynData.([baitChannel 'SpotData']));
 
 % Detect up-steps in intensity
