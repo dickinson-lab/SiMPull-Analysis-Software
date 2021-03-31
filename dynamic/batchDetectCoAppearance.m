@@ -32,7 +32,9 @@ regData = registerImages(rightImg, leftImg);
 statusbar = waitbar(0);
 for a = 1:length(imgDir)
     waitbar((a-1)/length(imgDir),statusbar,strrep(['Analyzing Experiment ' imgDir{a}],'_','\_'));
-    d = uipickfiles_subs.filtered_dir([imgDir{a} filesep '*.tif'],'',false,@(x,c)uipickfiles_subs.file_sort(x,[1 0 0],c)); % See comments in uipickfiles_subs for syntax here
+    % The imgFile struct lists only .ome.tif files such that difference and average images are excluded. This filtering intentionally accomdates images saved through micromanager which adds ome tags to tif files. 
+    % Should another software be used during data acquisition, the uipickfiles syntax should be altered. 
+    d = uipickfiles_subs.filtered_dir([imgDir{a} filesep '*.ome.tif'],'',false,@(x,c)uipickfiles_subs.file_sort(x,[1 0 0],c)); % See comments in uipickfiles_subs for syntax here
     imgFile = arrayfun(@(x) [x.folder filesep x.name], d, 'UniformOutput', false);
     
     detectCoAppearance(imgFile, Answer, regData);
