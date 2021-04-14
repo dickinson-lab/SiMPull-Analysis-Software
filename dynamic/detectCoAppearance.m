@@ -103,36 +103,69 @@ elseif strcmp(BaitPos, 'Right')
     xmin = xmax/2 + 1;
     preyPos = 'Left';
 end
+% Save image size
+params.imageY_X = [ymax, xmax/2];
 
-%Calculate and save windowed average image
-baitAvg = windowMean(stackObj,window,BaitPos); 
-saveastiff(uint16(baitAvg), [expDir filesep imgName '_baitAvg.tif']);
-
-%Make and save difference map
+% Calculate windowed average and difference images
+baitAvg = windowMean(stackObj,window,BaitPos);
 baitDiff = diff(baitAvg,1,3); % "1" for first derivative, "3" for third dimension
 % Note that since the first diff we take is between the first and second windows, spots appearing 
-% during the first few frames (early in the first window) might be missed. This is ok for now. 
-saveastiff(uint16(baitDiff), [expDir filesep imgName '_baitDiff.tif']);
+% during the first few frames (early in the first window) might be missed. This is ok for now.
 
-%Make and save prey channel images for later visualization
-preyAvg = windowMean(stackObj,window,preyPos);
-saveastiff(uint16(preyAvg), [expDir filesep imgName '_preyAvg.tif']); 
+% Calculate windowed prey channel images for later visualization
+preyAvg = windowMean(stackObj,window,preyPos); 
 preyDiff = diff(preyAvg,1,3);
-saveastiff(uint16(preyDiff), [expDir filesep imgName '_preyDiff.tif']);
+
+%% Save average and difference images for the bait and prey channels 
+% Check if data have already been processed. If so, check if the value of 'window' has changed.
+newAvg = false;
+if exist([expDir filesep imgName '.mat'], 'file')
+    existingData = load([expDir filesep imgName '.mat'], 'dynData');
+    % If a different number of windows were used previously, make newAvg flag true for next step
+    if existingData.dynData.avgWindow ~= window
+        newAvg = true;
+    end
+    clear existingData
+end
+
+[~,~,ndiffs] = size(baitDiff); 
+% Check if any windowed average and difference images exist before saving
+if exist([expDir filesep imgName '_baitAvg.tif'], 'file')||exist([expDir filesep imgName '_baitDiff.tif'], 'file')||exist([expDir filesep imgName '_preyAvg.tif'], 'file')||exist([expDir filesep imgName '_preyDiff.tif'], 'file')
+    if newAvg % If averaging window has been changed, delete all existing files
+       warning('off','all');
+       delete ([expDir filesep imgName '_baitAvg.tif']);
+       delete ([expDir filesep imgName '_baitDiff.tif']);
+       delete ([expDir filesep imgName '_preyAvg.tif']);
+       delete ([expDir filesep imgName '_preyDiff.tif']); 
+       % Save bait and prey channel difference images with new averaging window
+       for w=1:ndiffs
+           imwrite(uint16(baitDiff(:,:,w)),[expDir filesep imgName '_baitDiff.tif'],'tif','WriteMode','append');
+           imwrite(uint16(preyDiff(:,:,w)),[expDir filesep imgName '_preyDiff.tif'],'tif','WriteMode','append');
+       end
+       % Save bait and prey channel average images
+       for w=1:ndiffs+1
+           imwrite(uint16(baitAvg(:,:,w)),[expDir filesep imgName '_baitAvg.tif'],'tif','WriteMode','append');
+           imwrite(uint16(preyAvg(:,:,w)),[expDir filesep imgName '_preyAvg.tif'],'tif','WriteMode','append');
+       end
+    end
+else % Save if no images yet exist
+    for w=1:ndiffs
+        imwrite(uint16(baitDiff(:,:,w)),[expDir filesep imgName '_baitDiff.tif'],'tif','WriteMode','append');
+        imwrite(uint16(preyDiff(:,:,w)),[expDir filesep imgName '_preyDiff.tif'],'tif','WriteMode','append');
+    end
+    for w=1:ndiffs+1
+        imwrite(uint16(baitAvg(:,:,w)),[expDir filesep imgName '_baitAvg.tif'],'tif','WriteMode','append');
+        imwrite(uint16(preyAvg(:,:,w)),[expDir filesep imgName '_preyAvg.tif'],'tif','WriteMode','append');
+    end
+end
 clear preyAvg preyDiff
 
 lastFoundSpots = {};
-[~,~,ndiffs] = size(baitDiff);
 for b = 1:ndiffs
     %% Probabilistic Segmentation
     waitbar((b-1)/ndiffs,wb);
-    % Run PS for both the difference and average images
+    % Run PS for the difference images
     psDiffResults = spotcount_ps(baitChannel, baitDiff(:,:,b), params, struct('dataFolder',expDir,'avgWindow',window), 1);
-    psAvgResults = spotcount_ps(baitChannel, baitAvg(:,:,b), params, struct('dataFolder',expDir,'avgWindow',window), 1);
-    % Save the number of bait spots per window of the average image
-    dynData.([baitChannel 'AvgCount'])(b) = psAvgResults.([baitChannel 'SpotCount']);
-    % To avoid double counting, the bait spots per window of the difference image is calculated later
-    dynData.([baitChannel 'DiffCount'])(b) = 0;
     % The baitDiff approach will tend to find the same object in two consecutive windows. So now we need 
     % to go through the list of found spots and keep only those that weren't found previously. 
     if b==1 %...unless this is the first time through the loop
@@ -152,13 +185,11 @@ for b = 1:ndiffs
             if isempty(match) %If we didn't find a match, that means it's a new spot. Add it to the main data structure
                 psDiffResults.([baitChannel 'SpotData'])(c).appearedInWindow = b; %Save info about when this spot appeared
                 dynData.([baitChannel 'SpotData'])(end+1) = psDiffResults.([baitChannel 'SpotData'])(c);
-                %Each time a new spot in the difference image is added to SpotData, count and save to bait spots for that window
-                dynData.([baitChannel 'DiffCount'])(b) = dynData.([baitChannel 'DiffCount'])(b) + 1;
             end
         end
         lastFoundSpots = foundSpots; %Save the list of spots found this time to compare to the next time through the loop
     end
-    
+clear baitAvg baitDiff    
 %% Extract intensity traces and find the actual time of spot appearance
     % Intensity extraction
     % Doing this in the same loop  as PS allows pulling only the part of the trace we actually care about - 
@@ -198,6 +229,7 @@ dynData.([preyChannel 'SpotData']) = struct('spotLocation',[]);
 index = true(dynData.([baitChannel 'SpotCount']),1);
 for d = 1:dynData.([baitChannel 'SpotCount'])
     if strcmp(Answer.BaitPos, 'Left')
+        
         % Inverse affine transformation if bait channel is on the left
         preySpotLocation = round( transformPointsInverse(regData.Transformation, dynData.([baitChannel 'SpotData'])(d).spotLocation) );
     else
@@ -263,7 +295,6 @@ if dynData.([baitChannel 'SpotCount']) > 0 %This if statement prevents crashing 
         else
             dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = NaN;
         end
-
     end
 
     % Tally results
