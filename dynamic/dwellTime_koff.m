@@ -25,12 +25,13 @@ preyStruct = dynData.([preyChannel 'SpotData'])(index); % We only need the data 
 
 % Count up observations of prey disappearance
 % n is the number of complexes observed
-% n_off and n_on are what we measure from the data. 
+% n_off and n_bound are what we measure from the data. 
 % n_off is the number of times we observed the prey protein disappearing.
 % n_bound is the number of times we observed the prey protein staying bound (not disappearing). 
 n = 0;
 n_off = 0;
 n_bound = 0;
+noDisappearanceStep = 0;
 for a = 1:length(preyStruct)
     % Find the appearance and disappearance times for this prey
     appearanceStep = 0;
@@ -63,6 +64,7 @@ for a = 1:length(preyStruct)
     % it may necessitate re-processing the data to extract longer intensity traces. 
     if ~disappearanceStep
         warning(['Prey molecule ' num2str(a) ' remained bound throughout the intesity trace. If this occurs frequently, you may need to adjust your data processing settings.']);
+        noDisappearanceStep = noDisappearanceStep + 1;
         n_bound = n_bound + (length(preyStruct(a).intensityTrace) - preyStruct(a).changepoints(appearanceStep,1));
     else        
         n_off = n_off + 1; 
@@ -78,6 +80,7 @@ P(3,1) = betaincinv(0.025, 1+n_off, 1+n_bound, 'lower'); %Lower bound of confide
 
 % Calculate koff
 k_obs = -log(1-P);
-
+% Display the number of prey molecules for which no n_off was found
+disp(['Number of prey molecules that remained bound throughout their intensity traces: ' num2str(noDisappearanceStep)]);
 end
 
