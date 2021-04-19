@@ -193,8 +193,7 @@ for b = 1:ndiffs
             end
         end
         lastFoundSpots = foundSpots; %Save the list of spots found this time to compare to the next time through the loop
-    end
-clear baitAvg baitDiff    
+    end   
 %% Extract intensity traces and find the actual time of spot appearance
     % Intensity extraction
     % Doing this in the same loop  as PS allows pulling only the part of the trace we actually care about - 
@@ -214,6 +213,7 @@ clear baitAvg baitDiff
     % Get intensity traces
     dynData = extractIntensityTraces(baitChannel, subStack, params, dynData);   
 end
+clear baitAvg baitDiff 
 % Count the total number of bait spots across difference images
 [dynData.([baitChannel 'SpotCount']),~] = size(dynData.([baitChannel 'SpotData']));
 
