@@ -69,12 +69,12 @@ for f=1:length(files)
         % Save images
         [~,~,ndiffs] = size(baitDiff);
         for w=1:ndiffs
-            imwrite(uint16(baitDiff(:,:,w)),[expDir filesep imgName '_baitDiff.tif'],'tif','WriteMode','append','Compression','none');
-            imwrite(uint16(preyDiff(:,:,w)),[expDir filesep imgName '_preyDiff.tif'],'tif','WriteMode','append','Compression','none');
+            imwrite(uint16(baitDiff(:,:,w)),[files{f} filesep sampleLabel '_baitDiff.tif'],'tif','WriteMode','append','Compression','none');
+            imwrite(uint16(preyDiff(:,:,w)),[files{f} filesep sampleLabel '_preyDiff.tif'],'tif','WriteMode','append','Compression','none');
         end
         for w=1:ndiffs+1
-            imwrite(uint16(baitAvg(:,:,w)),[expDir filesep imgName '_baitAvg.tif'],'tif','WriteMode','append','Compression','none');
-            imwrite(uint16(preyAvg(:,:,w)),[expDir filesep imgName '_preyAvg.tif'],'tif','WriteMode','append','Compression','none');
+            imwrite(uint16(baitAvg(:,:,w)),[files{f} filesep sampleLabel '_baitAvg.tif'],'tif','WriteMode','append','Compression','none');
+            imwrite(uint16(preyAvg(:,:,w)),[files{f} filesep sampleLabel '_preyAvg.tif'],'tif','WriteMode','append','Compression','none');
         end
     end
     close (message);
