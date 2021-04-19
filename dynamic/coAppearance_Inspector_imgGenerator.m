@@ -24,8 +24,10 @@ for f=1:length(files)
         params.BaitChannel = params.([params.BaitPos 'Channel']);
         if strcmp(params.BaitPos,'Right')
             params.PreyChannel = params.LeftChannel;
+            preyPos = 'Left';
         else
             params.PreyChannel = params.RightChannel;
+            preyPos = 'Right';
         end
     end
     baitChannel = params.BaitChannel;
@@ -56,11 +58,12 @@ for f=1:length(files)
             % If there's just a single TIFF file, it's simpler
             stackObj = TIFFStack(imgFile{1});
         end
+        [ymax, xmax, tmax] = size(stackObj);
         % Calculate windowed average and difference images
-        baitAvg = windowMean(stackObj,dynData.window,params.BaitPos);
+        baitAvg = windowMean(stackObj,dynData.avgWindow,params.BaitPos);
         baitDiff = diff(baitAvg,1,3);
         
-        preyAvg = windowMean(stackObj,dynData.window,params.preyPos); 
+        preyAvg = windowMean(stackObj,dynData.avgWindow,preyPos); 
         preyDiff = diff(preyAvg,1,3);
         
         % Save images
