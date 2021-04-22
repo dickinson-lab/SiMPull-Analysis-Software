@@ -9,9 +9,14 @@ function dataStruct = findAppearanceTimes(dataStruct, channel)
     for a = 1:ntraces
         %Detect Changepoints
         traj = dataStruct.([channel 'SpotData'])(a).intensityTrace;
-        [dataStruct.([channel 'SpotData'])(a), error] = find_changepoints_c(traj,logodds);
+        %[dataStruct.([channel 'SpotData'])(a), error] = find_changepoints_c(traj,logodds);
+        [results, error] = find_changepoints_c(traj,logodds);
+        nSteps = results.nSteps;
+        dataStruct.([channel 'SpotData'])(a).changepoints = results.changepoints;
+        dataStruct.([channel 'SpotData'])(a).steplevels = results.steplevels;
+        dataStruct.([channel 'SpotData'])(a).stepstdev = results.stepstdev;
         if error
-            dataStruct([channel 'SpotData'])(a).appearTime = 'Analysis Failed';
+            dataStruct.([channel 'SpotData'])(a).appearTime = 'Analysis Failed';
             continue
         end
 
