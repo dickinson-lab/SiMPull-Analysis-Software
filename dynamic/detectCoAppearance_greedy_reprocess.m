@@ -6,7 +6,7 @@
 % is meant for re-processing existing data (so code to read images and find spots is
 % not included). 
 
-function dynData = detectCoAppearance_greedy_reprocess
+function dynData = detectCoAppearance_greedy_reprocess()
     % Get data file from user
     [fileName, expDir] = uigetfile('*.mat','Choose .mat file to re-process',pwd);
     
