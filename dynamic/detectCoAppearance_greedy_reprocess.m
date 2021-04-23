@@ -35,6 +35,29 @@ function dynData = detectCoAppearance_greedy_reprocess()
     baitChannel = params.BaitChannel;
     preyChannel = params.PreyChannel;
     
+    % Optionally re-detect changepoints
+    answer = questdlg('Do you want to re-detect changepoints or just re-count co-appearance?','Type of analysis','Changepoints','Just co-appearance','Just co-appearance');
+    if strcmp(answer,'Changepoints')
+        %Re-find appearance times for the bait channel
+        dynData = findAppearanceTimes(dynData, baitChannel);
+        
+        %Detect Changepoints in the prey channel
+        wb = waitbar(0,['Finding changepoints in the ' preyChannel ' channel']);
+        for d = 1:dynData.([baitChannel 'SpotCount'])
+            waitbar((d-1)/dynData.([baitChannel 'SpotCount']),wb);
+            traj = dynData.([preyChannel 'SpotData'])(d).intensityTrace;
+            [results, error] = find_changepoints_c(traj,2);
+            dynData.([preyChannel 'SpotData'])(d).changepoints = results.changepoints;
+            dynData.([preyChannel 'SpotData'])(d).steplevels = results.steplevels;
+            dynData.([preyChannel 'SpotData'])(d).stepstdev = results.stepstdev;
+            if error
+                dynData.([preyChannel 'SpotData'])(d).appearTime = 'Analysis Failed';
+                continue
+            end
+        end
+        close(wb);
+    end
+    
     for c = 1:dynData.([baitChannel 'SpotCount'])
         
         %Look for an upstep at the appearance time

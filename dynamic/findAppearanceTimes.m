@@ -4,9 +4,12 @@
 function dataStruct = findAppearanceTimes(dataStruct, channel)
     ntraces = length(dataStruct.([channel 'SpotData']));
     logodds = 2; %Adjustable parameter
+    wb = waitbar(0,['Finding appearance times for the ' channel ' channel']);
     
     %Count steps
     for a = 1:ntraces
+        waitbar((a-1)/ntraces,wb);
+        
         %Detect Changepoints
         traj = dataStruct.([channel 'SpotData'])(a).intensityTrace;
         %[dataStruct.([channel 'SpotData'])(a), error] = find_changepoints_c(traj,logodds);
@@ -42,6 +45,6 @@ function dataStruct = findAppearanceTimes(dataStruct, channel)
         end
     
     end % of loop over all spots / traces
-
+    close(wb);
 end
 

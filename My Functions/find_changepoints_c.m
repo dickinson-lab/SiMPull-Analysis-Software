@@ -1,5 +1,6 @@
 function [resultStruct,error] = find_changepoints_c(traj,logodds)
-    resultStruct = struct('changepoints',[],...
+    resultStruct = struct('nSteps',[],...
+                          'changepoints',[],...
                           'steplevels',[],...
                           'stepstdev',[]);
 
@@ -38,35 +39,38 @@ function [resultStruct,error] = find_changepoints_c(traj,logodds)
         resultStruct.steplevels(b) = level;
         resultStruct.stepstdev(b) = stdev;
 
-        %Throw out steps that are (erroneously) detected when intensity is close to 0
-        if (level-stdev) < 0
-            if b == 1 
-                % If the first segment has intensity < stDev, it might just mean we have a step up; go to the next iteration
-                % of the loop to check the second segment.
-                b = 2; 
-                lastchangepoint = changepoint+1; %"+1" just keeps the segments from overlapping
-                continue
-            elseif b == 2 && resultStruct.steplevels(1) < resultStruct.stepstdev(1) 
-                % Steps at beginning of trajectory - this code only runs if the first two segments of the trajectory have intensity < stDev
-                nSteps = nSteps-1;
-                resultStruct.changepoints(1,:) = [];
-                b = 1; % After eliminating the first step, we need to go back to the beginning and check the new (longer) first segment
-                continue
-            else
-                % Steps at end of trajectory
-                nSteps = b-1;
-                subtraj = traj(lastchangepoint:end);
-                level = mean(subtraj);
-                resultStruct.steplevels(b) = level;
-                resultStruct.changepoints(b:end,:) = [];
-                break
-            end
-        end
-
         lastchangepoint = changepoint+1; %"+1" just keeps the segments from overlapping
         b = b+1;
     end
     
+    %Throw out steps that are (erroneously) detected when intensity is close to 0
+    c=1;
+    while c <= nSteps
+        if abs(resultStruct.steplevels(c)) < resultStruct.stepstdev(c) && abs(resultStruct.steplevels(c+1)) < resultStruct.stepstdev(c+1) %If both this segment and the one following have near-zero intensity, we ignore this step
+            %Erase the step
+            nSteps = nSteps-1;
+            resultStruct.changepoints(c,:) = [];
+            resultStruct.steplevels(c) = [];
+            resultStruct.stepstdev(c) = [];
+            %Recalculate level & stdev for the new merged segment
+            if c == 1 %if we've eliminated the first step
+                segmentStart = 1;
+            else
+                segmentStart = resultStruct.changepoints(c-1,1) + 1; % The previous changepoint; "+1" just keeps the segments from overlapping
+            end
+            if c > nSteps %if we've eliminated the last step
+                segmentEnd = tmax;
+            else
+                segmentEnd = resultStruct.changepoints(c,1); % The next changepoint - it's "c" not "c+1" because we already eliminated the current changepoint
+            end
+            subtraj = traj(segmentStart:segmentEnd);
+            resultStruct.steplevels(c) = mean(subtraj);
+            resultStruct.stepstdev(c) = std(subtraj);
+        end    
+        c = c+1;
+    end
+    
+    resultStruct.nSteps = nSteps;
     error = false;
 end
 
