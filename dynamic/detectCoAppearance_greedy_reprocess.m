@@ -6,9 +6,24 @@
 % is meant for re-processing existing data (so code to read images and find spots is
 % not included). 
 
-function dynData = detectCoAppearance_greedy_reprocess()
-    % Get data file from user
-    [fileName, expDir] = uigetfile('*.mat','Choose .mat file to re-process',pwd);
+% Arguments: If called with no arguments, this function queries the user to get the location of the file 
+% to be re-processed and to ask whether to re-detect changepoints. This information can also be provided
+% with the functional call (to allow batch processing) by calling 
+% detectCoAppearance_greedy_reprocess(fileName,expDir,reDetect)
+
+function dynData = detectCoAppearance_greedy_reprocess(varargin)
+    if nargin == 0
+        % Get data file from user
+        [fileName, expDir] = uigetfile('*.mat','Choose .mat file to re-process',pwd);
+        % Ask whether to re-detect changepoints
+        reDetect = questdlg('Do you want to re-detect changepoints or just re-count co-appearance?','Type of analysis','Changepoints','Just co-appearance','Just co-appearance');
+    elseif nargin == 3
+        fileName = varargin{1};
+        expDir = varargin{2};
+        reDetect = varargin{3};
+    else
+        errorDlg('Wrong number of input arguments');
+    end
     
     load([expDir filesep fileName]);
     
@@ -35,9 +50,7 @@ function dynData = detectCoAppearance_greedy_reprocess()
     baitChannel = params.BaitChannel;
     preyChannel = params.PreyChannel;
     
-    % Optionally re-detect changepoints
-    answer = questdlg('Do you want to re-detect changepoints or just re-count co-appearance?','Type of analysis','Changepoints','Just co-appearance','Just co-appearance');
-    if strcmp(answer,'Changepoints')
+    if strcmp(reDetect,'Changepoints')
         %Re-find appearance times for the bait channel
         dynData = findAppearanceTimes(dynData, baitChannel);
         
