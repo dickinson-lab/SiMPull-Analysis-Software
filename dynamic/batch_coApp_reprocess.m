@@ -11,9 +11,9 @@ reDetect = questdlg('Do you want to re-detect changepoints or just re-count co-a
 statusbar = waitbar(0);
 for a = 1:length(matFiles)
     % Get image name and root directory
-    slash = strfind(matFiles{1},filesep);
-    fileName = matFiles{1}(slash(end)+1:end); 
-    expDir = matFiles{1}(1:slash(end));
+    slash = strfind(matFiles{a},filesep);
+    fileName = matFiles{a}(slash(end)+1:end); 
+    expDir = matFiles{a};
     
     waitbar((a-1)/length(matFiles),statusbar,strrep(['Reprocessing ' fileName],'_','\_'));
     
