@@ -17,15 +17,15 @@ function dynData = detectCoAppearance_greedy_reprocess(varargin)
         [fileName, expDir] = uigetfile('*.mat','Choose .mat file to re-process',pwd);
         % Ask whether to re-detect changepoints
         reDetect = questdlg('Do you want to re-detect changepoints or just re-count co-appearance?','Type of analysis','Changepoints','Just co-appearance','Just co-appearance');
+        load([expDir filesep fileName]);
     elseif nargin == 3
         fileName = varargin{1};
         expDir = varargin{2};
         reDetect = varargin{3};
+        load([expDir filesep fileName '.mat']);
     else
         errorDlg('Wrong number of input arguments');
     end
-    
-    load([expDir filesep fileName]);
     
     %Check for necessary parameters, get from dialog box if missing
     if ~isfield(params, 'BaitPos')
