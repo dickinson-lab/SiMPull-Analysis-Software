@@ -4,11 +4,11 @@ function [resultStruct,error] = find_changepoints_c(traj,logodds)
                           'steplevels',[],...
                           'stepstdev',[]);
 
-    tmax = length(traj);
+    tmax = length(traj); 
     try
         [nSteps, changepoint_pos, bayes_factors] = cpdetect_c('Gaussian', single(traj), logodds);
     catch Err
-        warning([Err.message ' for trace ' num2str(a)]);
+        warning(Err.message);
         error = true;
         return
     end
