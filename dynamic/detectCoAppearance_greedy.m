@@ -301,9 +301,19 @@ if dynData.([baitChannel 'SpotCount']) > 0 %This if statement prevents crashing 
         %Look for an upstep at the appearance time
         if isnumeric(dynData.([baitChannel 'SpotData'])(c).appearTime)
             baitAppearTime = dynData.([baitChannel 'SpotData'])(c).appearTime;
-            preyStepTimes = dynData.([preyChannel 'SpotData'])(c).changepoints(:,1);
             
-            if any( abs(baitAppearTime - preyStepTimes) <= 4) %Spots appearing within 4 frames of each other are considered simultaneous
+            % Make sure there is a step to be tested 
+            if ~isempty(dynData.([preyChannel 'SpotData'])(c).changepoints)
+                preyStepTimes = dynData.([preyChannel 'SpotData'])(c).changepoints(:,1) + dynData.avgWindow * (dynData.([preyChannel 'SpotData'])(c).appearedInWindow - 1);
+            else
+                % If there are no steps in the prey channel, we're done - it can't co-appear
+                dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = false;
+                continue 
+            end
+            matchingStep = find( abs(baitAppearTime - preyStepTimes) <= 4 );  %Spots appearing within 4 frames of each other are considered simultaneous
+            
+            if ~isempty(matchingStep) && dynData.([preyChannel 'SpotData'])(c).steplevels(max(matchingStep)+1) > dynData.([preyChannel 'SpotData'])(c).steplevels(min(matchingStep)) % && the intensity has to increase (otherwise it's not an appearance event)
+                                                                                                                                                                                     % The "min" and "max" avoid crashing when more than one step matches.
                 dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = true;
             else
                 dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = false;
