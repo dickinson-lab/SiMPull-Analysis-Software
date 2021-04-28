@@ -239,8 +239,12 @@ classdef TIFFStack < handle
             [oStack.TIF, oStack.HEADER, sInfo] = tiffread31_header(strFilename);
             oStack.TIF_tr31 = oStack.TIF;
             
-            % - Detect a ImageJ fake BigTIFF stack
-            [bIsImageJBigStack, bIsImageJHyperStack, vnStackDims, vnInterleavedIJFrameDims] = IsImageJBigStack(tiffread31_readtags(oStack.TIF_tr31, oStack.HEADER, 1), numel(oStack.HEADER));
+            % - Detect a ImageJ fake BigTIFF stack - disabled 4/26/2021 by DJD to improve speed
+            % [bIsImageJBigStack, bIsImageJHyperStack, vnStackDims, vnInterleavedIJFrameDims] = IsImageJBigStack(tiffread31_readtags(oStack.TIF_tr31, oStack.HEADER, 1), numel(oStack.HEADER));
+            bIsImageJBigStack = false;
+            bIsImageJHyperStack = false;
+            vnStackDims = [];
+            vnInterleavedFrameDims = [];
             
             % - Handle ImageJ big stacks with MappedTensor
             if (bIsImageJBigStack)

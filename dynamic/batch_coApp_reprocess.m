@@ -20,3 +20,5 @@ for a = 1:length(matFiles)
     % Reprocess
     detectCoAppearance_greedy_reprocess(fileName,expDir,reDetect);
 end
+
+close(statusbar)
