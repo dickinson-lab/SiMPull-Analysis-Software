@@ -3,7 +3,7 @@
 %% Set up
 
 % Ask user for image folders
-matFiles = uipickfiles('Prompt','Select directories containing image files to analyze','Type',{'*.mat'});
+matFiles = uipickfiles('Prompt','Select data files to analyze','Type',{'*.mat'});
 
 % Ask whether to re-do changepoint detection
 reDetect = questdlg('Do you want to re-detect changepoints or just re-count co-appearance?','Type of analysis','Changepoints','Just co-appearance','Just co-appearance');
