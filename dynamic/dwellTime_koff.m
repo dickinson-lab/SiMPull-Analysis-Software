@@ -55,9 +55,7 @@ for a = 1:length(matFiles)
     waitbar((a-1)/length(matFiles),statusbar,strrep(['Calculating k_off for ' fileName],'_','\_'));
     
     % Pull out co-appearing spots - that's all we're interested in for this calculation
-    index = [dynData.([BaitChannel 'SpotData']).(['appears_w_' PreyChannel])];
-    index(isnan(index)) = 0; % Replace NaN's with zeros
-    index = logical(index); % Convert to logical
+    index = cellfun(@(x) ~isempty(x) && ~isnan(x) && x==true, {dynData.([BaitChannel 'SpotData']).appears_w_FarRed});
     baitStruct = dynData.([BaitChannel 'SpotData'])(index); 
     preyStruct = dynData.([PreyChannel 'SpotData'])(index); 
     
