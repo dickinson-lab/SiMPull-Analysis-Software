@@ -6,7 +6,7 @@ for f=1:length(files)
     matFile = uipickfiles_subs.filtered_dir([files{f} filesep '*.mat'],'',false,@(x,c)uipickfiles_subs.file_sort(x,[1 0 0],c));
     sampleName = arrayfun(@(x) [x.folder filesep x.name], matFile, 'UniformOutput', false);
     [~,sampleLabel,~] = fileparts(sampleName{1}); message = msgbox(['Working on ' sampleLabel]);
-    load([sampleName{1}]);
+    load([sampleName{2}]);
     
     %%Check for necessary parameters, get from dialog box if missing
     if ~isfield(params, 'BaitPos')
@@ -20,15 +20,13 @@ for f=1:length(files)
             params.BaitPos = BaitPos;
         end
     end
-    if ~isfield(params,'BaitChannel')
-        params.BaitChannel = params.([params.BaitPos 'Channel']);
-        if strcmp(params.BaitPos,'Right')
-            params.PreyChannel = params.LeftChannel;
-            preyPos = 'Left';
-        else
-            params.PreyChannel = params.RightChannel;
-            preyPos = 'Right';
-        end
+    params.BaitChannel = params.([params.BaitPos 'Channel']);
+    if strcmp(params.BaitPos,'Right')
+        params.PreyChannel = params.LeftChannel;
+        preyPos = 'Left';
+    else
+        params.PreyChannel = params.RightChannel;
+        preyPos = 'Right';
     end
     baitChannel = params.BaitChannel;
     preyChannel = params.PreyChannel;
