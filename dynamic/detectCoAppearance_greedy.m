@@ -241,7 +241,7 @@ for d = 1:dynData.([baitChannel 'SpotCount'])
         % Forward affine transformation if bait channel is on the right
         preySpotLocation = round( transformPointsForward(regData.Transformation, dynData.([baitChannel 'SpotData'])(d).spotLocation) );
     end
-    if preySpotLocation(1) < 5 || preySpotLocation(1) > (xmax/2)-5 || preySpotLocation(2) < 5 || preySpotLocation(2) > ymax-5
+    if preySpotLocation(1) < 5 || preySpotLocation(1) > (xmax - xmin + 1)-5 || preySpotLocation(2) < 5 || preySpotLocation(2) > ymax-5
         index(d) = false; %Ignore this spot if it doesn't map within the prey image or is too close to the edge
     else
         dynData.([preyChannel 'SpotData'])(d,1).spotLocation = preySpotLocation; %Add this location to the places to check for prey
