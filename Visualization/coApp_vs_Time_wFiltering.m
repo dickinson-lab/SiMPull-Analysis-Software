@@ -14,11 +14,11 @@ colors = jet(length(files));
 
 % Manual entry of seconds elapsed since lysis entered in precisely the order in which files were selected earlier (ascending numerical order)
 % Uncommented based on which dataset is being analyzed
-% offSet = [11,12,6,7,6,8,5,5,8,150,21,14,11,16,70,37,13,20,13,15,24,11,10,10,10,12,7,26,18,18,25,20,10,13]; % mNG::Halo
- offSet = [11,12,6,7,6,8,5,5,8,150,21,14,11,16,70,37,13,20,13,15,24,11,10,10,10,12,7,26,18,18,25,20,10,13]; % aPKC/PAR-6
+ offSet = [40,9,5,5,10,10,10,11,11,100,25,16,17,10,120,10,26,27,25,30]; % mNG::Halo
+% offSet = [11,12,6,7,6,8,5,5,8,150,21,14,11,16,70,37,13,20,13,15,24,11,10,10,10,12,7,26,18,18,25,20,10,13]; % aPKC/PAR-6
 
 % Manualy set based on desired filters
-blinkerFilter = false;
+blinkerFilter = true;
 lowDensityFilter = true;
 highDensityFilter = true;
 
@@ -26,8 +26,8 @@ highDensityFilter = true;
 wb = waitbar(0,['Makin a plot']);
 
 % Initiate figures
-coApp_vs_TimePlot = figure('Name','aPKC/PAR-6','NumberTitle','off'); title('Co-Appearance Over Time'); xlabel('Seconds After Lysis'); ylabel('Percent Co-Appearance');
-coApp_vs_TimePlotTrends = figure('Name','aPKC/PAR-6','NumberTitle','off'); title('Co-Appearance Over Time'); xlabel('Seconds After Lysis'); ylabel('Percent Co-Appearance');
+coApp_vs_TimePlot = figure('Name','Control (mNG::Halo)','NumberTitle','off'); title('Co-Appearance Over Time'); xlabel('Seconds After Lysis'); ylabel('Percent Co-Appearance');
+coApp_vs_TimePlotTrends = figure('Name','Control (mNG::Halo)','NumberTitle','off'); title('Co-Appearance Over Time'); xlabel('Seconds After Lysis'); ylabel('Percent Co-Appearance');
 
 % Create empty vectors to store data across samples
 totalxAxis = []; 
@@ -39,8 +39,13 @@ for f=1:length(files)
     fileName = files{f}(slash(end)+1:end);
     waitbar((f-1)/length(files),wb);
     
-    if exist([expDir filesep fileName '_greedyPlus.mat'])
+    if exist([expDir filesep fileName '_greedyPlus_reReg.mat'])
+        load([expDir filesep fileName '_greedyPlus_reReg.mat'])
+    elseif exist([expDir filesep fileName '_greedyPlus.mat'])
         load([expDir filesep fileName '_greedyPlus.mat'])
+    elseif exist([expDir filesep fileName '_greedyCoApp_reReg.mat'])
+        load([expDir filesep fileName '_greedyCoApp_reReg.mat']);
+        density = load([expDir filesep fileName '_forDensity.mat']);
     else
         load([expDir filesep fileName '_greedyCoApp.mat']);
         density = load([expDir filesep fileName '_forDensity.mat']);
@@ -132,22 +137,22 @@ for f=1:length(files)
     clear density dBDensity aBDensity aPDensity baitsCounted coAppearing pctCoApp coAppTrend
 end
 
-% % Sort x-axis values from low to high and align it with the co-appearance percentage at each time point to find the median trend line
-% [xAxisSorted,sortOrder]=sort(totalxAxis);
-% pctCoAppSorted = totalpctCoApp(sortOrder);
-% 
-% for a=1:ceil(max(xAxisSorted)/trendWindow)
-%     low = (a-1)*trendWindow;
-%     high = a*trendWindow;
-%     sortIndex = (low<xAxisSorted) & (xAxisSorted<high) & pctCoAppSorted ~= 0 & ~isnan(pctCoAppSorted);
-%     pctCoAppMedian(a) = median(pctCoAppSorted(sortIndex));
-% end
-% x = 0:trendWindow:max(totalxAxis);
-% figure(coApp_vs_TimePlot); hold on;
-% plot(x,pctCoAppMedian,'-','Color', 'k','LineWidth',2);
+% Sort x-axis values from low to high and align it with the co-appearance percentage at each time point to find the median trend line
+[xAxisSorted,sortOrder]=sort(totalxAxis);
+pctCoAppSorted = totalpctCoApp(sortOrder);
 
-savefig(coApp_vs_TimePlot,'Z:\Sarikaya_Sena\Exp28\CoApp_vs_Time\aPKC_PAR6\HighFilter8.fig')
-savefig(coApp_vs_TimePlotTrends,'Z:\Sarikaya_Sena\Exp28\CoApp_vs_Time\aPKC_PAR6\HighFilter8trends.fig')
+for a=1:ceil(max(xAxisSorted)/trendWindow)
+    low = (a-1)*trendWindow;
+    high = a*trendWindow;
+    sortIndex = (low<xAxisSorted) & (xAxisSorted<high) & pctCoAppSorted ~= 0 & ~isnan(pctCoAppSorted);
+    pctCoAppMedian(a) = median(pctCoAppSorted(sortIndex));
+end
+x = 0:trendWindow:max(totalxAxis);
+figure(coApp_vs_TimePlot); hold on;
+plot(x,pctCoAppMedian,'-','Color', 'k','LineWidth',2);
+
+savefig(coApp_vs_TimePlot,'Z:\Sarikaya_Sena\Exp26\coApp_vs_Time_blinkerFilter.fig')
+savefig(coApp_vs_TimePlotTrends,'Z:\Sarikaya_Sena\Exp26\coApp_vs_Time_blinkerFilter_trends.fig')
 
 close(wb)
 
