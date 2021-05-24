@@ -1,4 +1,4 @@
-xfunction detectCoAppearance_greedy(varargin)
+function detectCoAppearance_greedy(varargin)
 %  This program is for analyzing SiMPull data in which the binidng of bait
 %  proteins to the coverslip is monitored in real time following cell
 %  lysis. 
