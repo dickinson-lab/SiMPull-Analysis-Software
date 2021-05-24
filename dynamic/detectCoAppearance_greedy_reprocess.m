@@ -17,12 +17,45 @@ function dynData = detectCoAppearance_greedy_reprocess(varargin)
         [fileName, expDir] = uigetfile('*.mat','Choose .mat file to re-process',pwd);
         % Ask whether to re-detect changepoints
         reDetect = questdlg('Do you want to re-detect changepoints or just re-count co-appearance?','Type of analysis','Changepoints','Just co-appearance','Just co-appearance');
+        
+        % Ask whether to re-register
+        reReg = questdlg('Do you want to redo image registration?','Registration','Yes','No','Yes');
+
+        if strcmp(reReg,'Yes')
+            % Registration dialog box
+            [Answer,Cancelled] = dvRegisterDlg(expDir);
+            if Cancelled 
+                return
+            else
+                v2struct(Answer);
+            end
+
+            % Image registration
+            warning('off'); %Prevent unnecessary warnings from libtiff
+            regImg = TIFFStack(regFile);
+            subImg = regImg(:,:,RegWindow1:RegWindow2);
+            avgImg = mean(subImg, 3);
+            [~, xmax] = size(avgImg);
+            leftImg = avgImg(:,1:(xmax/2));
+            rightImg = avgImg(:,(xmax/2)+1:xmax);
+            regData = registerImages(rightImg, leftImg);
+        end
+        
         load([expDir filesep fileName]);
+        
     elseif nargin == 3
         fileName = varargin{1};
         expDir = varargin{2};
         reDetect = varargin{3};
-        load([expDir filesep fileName '.mat']);
+        reReg = 'No';
+        load([expDir filesep fileName]);
+    elseif nargin == 5
+        fileName = varargin{1};
+        expDir = varargin{2};
+        reDetect = varargin{3};
+        reReg = varargin{4};
+        regData = varargin{5};
+        load([expDir filesep fileName]);
     else
         errorDlg('Wrong number of input arguments');
     end
@@ -50,11 +83,101 @@ function dynData = detectCoAppearance_greedy_reprocess(varargin)
     baitChannel = params.BaitChannel;
     preyChannel = params.PreyChannel;
     
+    %% Re-find appearance times for the bait channel
     if strcmp(reDetect,'Changepoints')
-        %Re-find appearance times for the bait channel
         dynData = findAppearanceTimes(dynData, baitChannel);
+    end
+    
+    %% Re-pull traces from the prey channel with new registration, if applicable
+    if strcmp(reReg,'Yes')
+        % Load images
+        wb = waitbar(0,'Loading Images...','Name',strrep(['Analyzing Experiment ' expDir],'_','\_'));
         
-        %Detect Changepoints in the prey channel
+        warning('off'); %Prevent unnecessary warnings from libtiff
+        d = uipickfiles_subs.filtered_dir([expDir filesep '*.ome.tif'],'',false,@(x,c)uipickfiles_subs.file_sort(x,[1 0 0],c)); % See comments in uipickfiles_subs for syntax here
+        imgFile = arrayfun(@(x) [x.folder filesep x.name], d, 'UniformOutput', false);
+        if length(imgFile) > 1 %if the diretory contains multiple files
+            nFiles = length(imgFile);
+            stackOfStacks = cell(nFiles,1);
+            % Each file will be loaded as a TIFFStack object, then concatenated together.
+            % Order is determined by the user via uipickfiles
+            for a = 1:nFiles
+                stackOfStacks{a} = TIFFStack(imgFile{a});
+            end
+            stackObj = TensorStack(3, stackOfStacks{:});
+        else
+            % If there's just a single TIFF file, it's simpler
+            stackObj = TIFFStack(imgFile{1});
+        end
+        
+        % Find co-appearing spots in the prey channel
+        % First, copy the locations of the bait spots into the new prey struct
+        waitbar(0,wb,'Finding co-appearing prey spots...');
+        dynData.([preyChannel 'SpotData']) = struct('spotLocation',[]);
+        index = true(dynData.([baitChannel 'SpotCount']),1);
+        % Figure out what portion of the image we're going to work with and set x indices accordingly
+        [ymax, xmax, ~] = size(stackObj);
+        if strcmp(params.BaitPos, 'Left')
+            xmin = 1;
+            xmax = xmax/2;
+        elseif strcmp(params.BaitPos, 'Right')
+            xmin = xmax/2 + 1;
+        end       
+        for d = 1:dynData.([baitChannel 'SpotCount'])
+            if strcmp(params.BaitPos, 'Left')
+
+                % Inverse affine transformation if bait channel is on the left
+                preySpotLocation = round( transformPointsInverse(regData.Transformation, dynData.([baitChannel 'SpotData'])(d).spotLocation) );
+            else
+                % Forward affine transformation if bait channel is on the right
+                preySpotLocation = round( transformPointsForward(regData.Transformation, dynData.([baitChannel 'SpotData'])(d).spotLocation) );
+            end
+            if preySpotLocation(1) < 5 || preySpotLocation(1) > (xmax - xmin + 1)-5 || preySpotLocation(2) < 5 || preySpotLocation(2) > ymax-5
+                index(d) = false; %Ignore this spot if it doesn't map within the prey image or is too close to the edge
+            else
+                dynData.([preyChannel 'SpotData'])(d,1).spotLocation = preySpotLocation; %Add this location to the places to check for prey
+            end
+        end
+        % Ignore spots that are too close to the edge
+        dynData.([baitChannel 'SpotData']) = dynData.([baitChannel 'SpotData'])(index);
+        dynData.([preyChannel 'SpotData']) = dynData.([preyChannel 'SpotData'])(index);
+        [dynData.([baitChannel 'SpotCount']),~] = size(dynData.([baitChannel 'SpotData'])); %Count how many bait spots are left
+
+        params.RegistrationData = regData; %Save Registration info
+
+
+        % Pull intensity traces for the prey
+        % Figure out x indices - opposite logic to the code above to get the opposite half
+        if dynData.([baitChannel 'SpotCount']) > 0 %This if statement prevents crashing if no spots were found
+            [ymax, xmax, tmax] = size(stackObj);
+            if strcmp(params.BaitPos, 'Right')
+                xmin = 1;
+                xmax = xmax/2;
+            elseif strcmp(params.BaitPos, 'Left')
+                xmin = xmax/2 + 1;
+            end
+            nWindows = dynData.([baitChannel 'SpotData'])(end).appearedInWindow;
+            for e = 1:nWindows
+                waitbar((e-1)/nWindows,wb);
+                % Load the appropriate portion of the image into memory
+                if e==1
+                    % The first time through the loop, we just want the first 500 frames
+                    subStack = stackObj(:,xmin:xmax,1:500);
+                else
+                    % On subsequent iterations, shift the portion of the image in memory by 1 window
+                    startTime = (e-1) * dynData.avgWindow + 451;
+                    endTime = min(e * dynData.avgWindow + 450, tmax);
+                    subStack = cat(3, subStack(:,:,dynData.avgWindow+1:end), stackObj(:,xmin:xmax,startTime:endTime));
+                end
+                index = e==cell2mat({dynData.([baitChannel 'SpotData']).appearedInWindow});
+                [dynData.([preyChannel 'SpotData'])(index).appearedInWindow] = deal(e);
+                dynData = extractIntensityTraces(preyChannel, subStack, params, dynData, index);
+            end
+        end
+    end
+    
+    %% Detect Changepoints in the prey channel
+    if strcmp(reDetect,'Changepoints') || strcmp(reReg,'Yes')
         wb = waitbar(0,['Finding changepoints in the ' preyChannel ' channel']);
         for d = 1:dynData.([baitChannel 'SpotCount'])
             waitbar((d-1)/dynData.([baitChannel 'SpotCount']),wb);
@@ -106,7 +229,11 @@ function dynData = detectCoAppearance_greedy_reprocess(varargin)
 
     %% Save data
     imgName = fileName(1 : strfind(fileName,'.mat')-1);
-    save([expDir filesep imgName '_greedyCoApp.mat'], 'dynData','params');
+    if strcmp(reReg,'Yes')
+        save([expDir filesep imgName '_reReg.mat'], 'dynData','params');
+    else
+        save([expDir filesep imgName '_greedyCoApp.mat'], 'dynData','params');
+    end
 
 end
 
