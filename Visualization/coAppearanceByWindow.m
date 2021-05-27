@@ -10,8 +10,8 @@ baitsCounted = zeros(1, lastWindow);
 coAppearing = zeros(1,lastWindow);
 for a = 1:lastWindow
     index = cell2mat({dynData.([baitChannel 'SpotData']).appearedInWindow}) == a;
-    baitsCounted(a) = sum(~cellfun(@isnan, colocData(index)));
-    coAppearing(a) = sum(cellfun(@(x) x==true, colocData(index)));
+    baitsCounted(a) = sum(~cellfun(@(x) isempty(x) || isnan(x), colocData(index)));
+    coAppearing(a) = sum(cellfun(@(x) ~isempty(x) && x==true, colocData(index)));
     
 end
 

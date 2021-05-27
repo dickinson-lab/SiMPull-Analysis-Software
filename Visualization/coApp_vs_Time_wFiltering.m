@@ -14,13 +14,15 @@ colors = jet(length(files));
 
 % Manual entry of seconds elapsed since lysis entered in precisely the order in which files were selected earlier (ascending numerical order)
 % Uncommented based on which dataset is being analyzed
- offSet = [40,9,5,5,10,10,10,11,11,100,25,16,17,10,120,10,26,27,25,30]; % mNG::Halo
+offSet = zeros(length(files),1); % Ignore offsets
+% offSet = [40,9,5,5,10,10,10,11,11,100,25,16,17,10,120,10,26,27,25,30]; % mNG::Halo
 % offSet = [11,12,6,7,6,8,5,5,8,150,21,14,11,16,70,37,13,20,13,15,24,11,10,10,10,12,7,26,18,18,25,20,10,13]; % aPKC/PAR-6
 
 % Manualy set based on desired filters
 blinkerFilter = true;
-lowDensityFilter = true;
-highDensityFilter = true;
+lowDensityFilter = false;
+highDensityFilter = false;
+lateAppearanceFilter = true;
 
 % Sanity check
 wb = waitbar(0,['Makin a plot']);
@@ -59,15 +61,26 @@ for f=1:length(files)
     
     % Calculate % co-appearance and density for bait and prey molecules appearing and present in each time window for current sample    
     colocData = {dynData.([baitChannel 'SpotData']).(['appears_w_' preyChannel])};
+    nspots = length(colocData);
     lastWindow = max(cell2mat({dynData.([baitChannel 'SpotData']).appearedInWindow}));
-    % Remove blinking molecules if filtering in this way
+    
+    % Remove blinking and late-appearing molecules based on user selection above
     if blinkerFilter == true
         blinker = cellfun(@(x) isnumeric(x) && ~isnan(x) && length(x)==1 && x<2500, {dynData.([baitChannel 'SpotData']).nFramesSinceLastApp});
+    end
+    if lateAppearanceFilter
+        late = false(1,nspots);
+        for b = 1:nspots
+            late(b) = isnumeric(dynData.([baitChannel 'SpotData'])(b).appearTime) && dynData.([baitChannel 'SpotData'])(b).appearTime > 50 * (dynData.([baitChannel 'SpotData'])(b).appearedInWindow + 1);
+        end
     end
     for a = 1:lastWindow
         index = cell2mat({dynData.([baitChannel 'SpotData']).appearedInWindow}) == a;
         if blinkerFilter == true
            index = index & ~blinker;
+        end
+        if lateAppearanceFilter
+            index = index & ~late;
         end
         baitsCounted(a) = sum(~cellfun(@(x) isempty(x)||isnan(x), colocData(index)));
         coAppearing(a) = sum(cellfun(@(x) ~isempty(x) && x==true, colocData(index)));
