@@ -127,7 +127,7 @@ newAvg = false;
 if exist([expDir filesep imgName '.mat'], 'file')
     existingData = load([expDir filesep imgName '.mat'], 'dynData');
     % If a different number of windows were used previously, make newAvg flag true for next step
-    if existingData.avgWindow ~= window
+    if existingData.dynData.avgWindow ~= window
         newAvg = true;
     end
     clear existingData
