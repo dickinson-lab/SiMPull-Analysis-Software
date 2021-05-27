@@ -1,4 +1,4 @@
-xfunction detectCoAppearance_greedy(varargin)
+function detectCoAppearance_greedy(varargin)
 %  This program is for analyzing SiMPull data in which the binidng of bait
 %  proteins to the coverslip is monitored in real time following cell
 %  lysis. 
@@ -127,7 +127,7 @@ newAvg = false;
 if exist([expDir filesep imgName '.mat'], 'file')
     existingData = load([expDir filesep imgName '.mat'], 'dynData');
     % If a different number of windows were used previously, make newAvg flag true for next step
-    if existingData.dynData.avgWindow ~= window
+    if existingData.avgWindow ~= window
         newAvg = true;
     end
     clear existingData
