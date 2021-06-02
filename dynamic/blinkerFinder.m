@@ -34,8 +34,8 @@ for f=1:length(files)
                     dynData.([baitChannel 'SpotData'])(a).nFramesSinceLastApp = NaN;
                 else
                     dynData.([baitChannel 'SpotData'])(a).nFramesSinceLastApp = dynData.([baitChannel 'SpotData'])(a).appearTime - dynData.([baitChannel 'SpotData'])(b).appearTime;
-                    found = 1;  % After recording nFramesSinceLastApp, break out of the while loop by changing the flag to indicate a spotLocation has been found so that the next iteration of the for loop can begin
                 end
+                found = 1;  % After recording nFramesSinceLastApp, break out of the while loop by changing the flag to indicate a spotLocation has been found so that the next iteration of the for loop can begin
             else
                 b = b-1;        % If bait appearance 'b' did not appear at the spotLocation of bait appearance 'a', check the location of the bait apperance prior to 'b'
             end

@@ -6,7 +6,7 @@ function coAppearanceByWindow_editedForFigureMaking(dynData, baitChannel, preyCh
 % Get data and apply filters
 colocData = {dynData.([baitChannel 'SpotData']).(['appears_w_' preyChannel])};
 % Manualy set based on desired filters
-blinkerFilter = true;
+blinkerFilter = false;
 lateAppearanceFilter = true;
 nspots = length(colocData);
 filterIndex = true(1,nspots);
