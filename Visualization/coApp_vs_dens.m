@@ -20,7 +20,7 @@ colors = jet(length(files));
 % User decides meanInterval 
 opts.Interpreter = 'tex';
 answer = inputdlg('\fontsize{10}How many intervals would you like to divide the max density per sample for percent co-appearance vs density trend line?',...
-    'trendWindow',[1 35],{'35'},opts);
+    'trendWindow',[1 35],{'21'},opts);
 meanInterval = str2double(answer);
 
 % Manually set based on desired filtering
@@ -42,15 +42,20 @@ aPcumulativeDensity = [];
 for f=1:length(files)
     slash = strfind(files{f},filesep);
     expDir = files{f};
-    fileName = files{f}(slash(end)+1:end); 
+    fileName = files{f}(slash(end)+1:end);
     
-    % Uncommented for plots displaying data only from 5 mW 638 nm laser power experiments
-    if contains(fileName, controlExps)
-        continue
-    end
+%     % Uncommented for plots displaying data only from 5 mW 638 nm laser power experiments
+%     if contains(fileName, controlExps)
+%         continue
+%     end
     
-    if exist([expDir filesep fileName '_greedyPlus.mat'])
+    if exist([expDir filesep fileName '_greedyPlus_reReg.mat'])
+        load([expDir filesep fileName '_greedyPlus_reReg.mat'])
+    elseif exist([expDir filesep fileName '_greedyPlus.mat'])
         load([expDir filesep fileName '_greedyPlus.mat'])
+    elseif exist([expDir filesep fileName '_greedyCoApp_reReg.mat'])
+        load([expDir filesep fileName '_greedyCoApp_reReg.mat']);
+        density = load([expDir filesep fileName '_forDensity.mat']);
     else
         load([expDir filesep fileName '_greedyCoApp.mat']);
         density = load([expDir filesep fileName '_forDensity.mat']);
@@ -193,7 +198,7 @@ x = 0:aPdensityWindow:max(aPcumulativeDensity); x(1) = [];
 figure(aPplot); hold on;
 plot(x,aPpctCoAppMean,'-','Color','k','LineWidth',1.5)
 
-savefig(dBplot,'Z:\Sarikaya_Sena\Exp28\CoApp_vs_dens\LowFilter5mW\AppearingBait.fig');
-savefig(dPplot,'Z:\Sarikaya_Sena\Exp28\CoApp_vs_dens\LowFilter5mW\AppearingPrey.fig');
-savefig(aBplot,'Z:\Sarikaya_Sena\Exp28\CoApp_vs_dens\LowFilter5mW\PresentBait.fig');
-savefig(aPplot,'Z:\Sarikaya_Sena\Exp28\CoApp_vs_dens\LowFilter5mW\PresentPrey.fig');
+savefig(dBplot,'Z:\Sarikaya_Sena\Exp28\coApp_vs_dens\LowFilter\AppearingBait.fig');
+savefig(dPplot,'Z:\Sarikaya_Sena\Exp28\coApp_vs_dens\LowFilter\AppearingPrey.fig');
+savefig(aBplot,'Z:\Sarikaya_Sena\Exp28\coApp_vs_dens\LowFilter\PresentBait.fig');
+savefig(aPplot,'Z:\Sarikaya_Sena\Exp28\coApp_vs_dens\LowFilter\PresentPrey.fig');
