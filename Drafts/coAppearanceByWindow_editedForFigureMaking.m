@@ -6,12 +6,23 @@ function coAppearanceByWindow_editedForFigureMaking(dynData, baitChannel, preyCh
 % Get data and apply filters
 colocData = {dynData.([baitChannel 'SpotData']).(['appears_w_' preyChannel])};
 % Manualy set based on desired filters
-blinkerFilter = false;
+blinkerFilter = true;
 lateAppearanceFilter = true;
 nspots = length(colocData);
 filterIndex = true(1,nspots);
 if blinkerFilter == true
-    blinker = cellfun(@(x) isnumeric(x) && ~isnan(x) && length(x)==1 && x<2500, {dynData.([baitChannel 'SpotData']).nFramesSinceLastApp});
+    tic
+    blinker = cellfun(@(x) isnumeric(x) && length(x)==1 && ~isnan(x) && x<2500, {dynData.([baitChannel 'SpotData']).nFramesSinceLastApp});
+    toc
+    tic
+    blinker = false(1,nspots);
+    for b = 1:nspots
+        blinker(b) = isnumeric(dynData.([baitChannel 'SpotData'])(b).nFramesSinceLastApp) &&...
+                     length(dynData.([baitChannel 'SpotData'])(b).nFramesSinceLastApp) ==1 &&...
+                     ~isnan(dynData.([baitChannel 'SpotData'])(b).nFramesSinceLastApp) &&...
+                     dynData.([baitChannel 'SpotData'])(b).nFramesSinceLastApp < 2500 ;
+    end
+    toc
     filterIndex = filterIndex & ~blinker;
 end
 if lateAppearanceFilter
