@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 function dynData = detectCoAppearance_greedy(varargin)
-=======
-function detectCoAppearance_greedy(varargin)
->>>>>>> 5c35b321a477729488c68ee2c2030b0f299b9a51
+
 %  This program is for analyzing SiMPull data in which the binidng of bait
 %  proteins to the coverslip is monitored in real time following cell
 %  lysis. 
