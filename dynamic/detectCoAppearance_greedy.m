@@ -1,4 +1,4 @@
-xfunction detectCoAppearance_greedy(varargin)
+function dynData = detectCoAppearance_greedy(varargin)
 %  This program is for analyzing SiMPull data in which the binidng of bait
 %  proteins to the coverslip is monitored in real time following cell
 %  lysis. 
@@ -224,7 +224,7 @@ dynData = findAppearanceTimes(dynData, baitChannel);
 % We don't do spot detection for the prey channel; 
 % instead, just copy the positions of spots found in the bait channel and apply a registration correction.
 % At the same time, identify and ignore bait spots that are so close to the edge that they aren't visible in the prey channel
-waitbar(0,wb,'Finding co-appearing prey spots...');
+waitbar(0,wb,'Getting prey intensity traces...');
 if strcmp(BaitPos, 'Left')
     preyChannel = RightChannel;
 else
@@ -286,6 +286,7 @@ if dynData.([baitChannel 'SpotCount']) > 0 %This if statement prevents crashing 
     % Find spots that appear at the same time. Here a "greedy" algorithm is
     % used that counts any up-step in prey intensity coincinding with bait appearance as a co-appearance
     % event, regardless of whether it's the first up-step in the prey channel
+    waitbar(0,wb,'Finding prey co-appearance events...');
     for c = 1:dynData.([baitChannel 'SpotCount'])
         %Detect Changepoints
         traj = dynData.([preyChannel 'SpotData'])(c).intensityTrace;
