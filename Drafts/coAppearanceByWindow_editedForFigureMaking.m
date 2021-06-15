@@ -52,7 +52,7 @@ ylabel('Density of molecules detected with 488 nm laser')
 %ylabel('Number of molecules detected with 488 nm laser')
 set(gca,'ycolor','0.65,0.65,0.65')
 hold on
-plot(x,(baitsCounted ./ (600*600*(110^2))),'-','LineWidth',0.5,'Color','0.90,0.90,0.905')
+plot(x,(baitsCounted ./ (600*600*(.110^2))),'-','LineWidth',0.5,'Color','0.90,0.90,0.905')
 %plot(x,baitsCounted,'-','LineWidth',0.5,'Color','0.90,0.90,0.905')
 yyaxis left
 ylabel('Percent Co-Appearance')
