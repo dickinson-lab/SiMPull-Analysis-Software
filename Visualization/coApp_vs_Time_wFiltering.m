@@ -14,14 +14,14 @@ colors = jet(length(files));
 
 % Manual entry of seconds elapsed since lysis entered in precisely the order in which files were selected earlier (ascending numerical order)
 % Uncommented based on which dataset is being analyzed
-%offSet = zeros(length(files),1); % Ignore offsets
+% offSet = zeros(length(files),1); % Ignore offsets
 % offSet = [40,9,5,5,10,10,10,11,11,100,25,16,17,10,120,10,26,27,25,30]; % mNG::Halo
 % offSet = [11,12,6,7,6,8,5,5,8,150,21,14,11,16,70,37,13,20,13,15,24,11,10,10,10,12,7,26,18,18,25,20,10,13]; % aPKC/PAR-6
-offSet = [15,15,22,14,16];
+offSet = [15,15,22,14,16]; %aPKC/PAR-6, my data
 
 % Manualy set based on desired filters
 blinkerFilter = true;
-lowDensityFilter = false;
+lowDensityFilter = true;
 highDensityFilter = false;
 lateAppearanceFilter = true;
 
@@ -67,7 +67,7 @@ for f=1:length(files)
     
     % Remove blinking and late-appearing molecules based on user selection above
     if blinkerFilter == true
-        blinker = cellfun(@(x) isnumeric(x) && ~isnan(x) && length(x)==1 && x<2500, {dynData.([baitChannel 'SpotData']).nFramesSinceLastApp});
+        blinker = cellfun(@(x) isnumeric(x) && length(x)==1 && ~isnan(x) && x<2500, {dynData.([baitChannel 'SpotData']).nFramesSinceLastApp});
     end
     if lateAppearanceFilter
         late = false(1,nspots);
@@ -97,12 +97,12 @@ for f=1:length(files)
 %     end
     
     % Stupid thing I have to do because I made a mistake in the processing step for some samples
-%     if aBDensity(1) == 0
-%         aBDensity(1) = NaN;
-%     end
-%     if aPDensity(1) == 0
-%         aPDensity(1) = NaN;
-%     end
+    if aBDensity(1) == 0
+        aBDensity(1) = NaN;
+    end
+    if aPDensity(1) == 0
+        aPDensity(1) = NaN;
+    end
 
     % Calculate mean trend for sample
     baitTrend = movsum(baitsCounted,trendWindow,'omitnan');
@@ -132,12 +132,12 @@ for f=1:length(files)
     x = bsxfun(@plus, x, offSet(f));
     
     % Set plot markers according to experiment
-    if contains(fileName, lowLaserExps)
-        marker = 's';
-        lineMarker = '--';
-    else
+    if contains(fileName, controlExps)
         marker = 'o';
         lineMarker = '-';
+    elseif contains(fileName, lowLaserExps)
+        marker = 's';
+        lineMarker = '--';
     end
     
     % Plot sample

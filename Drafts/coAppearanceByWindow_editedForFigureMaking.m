@@ -11,18 +11,7 @@ lateAppearanceFilter = true;
 nspots = length(colocData);
 filterIndex = true(1,nspots);
 if blinkerFilter == true
-    tic
     blinker = cellfun(@(x) isnumeric(x) && length(x)==1 && ~isnan(x) && x<2500, {dynData.([baitChannel 'SpotData']).nFramesSinceLastApp});
-    toc
-    tic
-    blinker = false(1,nspots);
-    for b = 1:nspots
-        blinker(b) = isnumeric(dynData.([baitChannel 'SpotData'])(b).nFramesSinceLastApp) &&...
-                     length(dynData.([baitChannel 'SpotData'])(b).nFramesSinceLastApp) ==1 &&...
-                     ~isnan(dynData.([baitChannel 'SpotData'])(b).nFramesSinceLastApp) &&...
-                     dynData.([baitChannel 'SpotData'])(b).nFramesSinceLastApp < 2500 ;
-    end
-    toc
     filterIndex = filterIndex & ~blinker;
 end
 if lateAppearanceFilter
@@ -63,7 +52,7 @@ ylabel('Density of molecules detected with 488 nm laser')
 %ylabel('Number of molecules detected with 488 nm laser')
 set(gca,'ycolor','0.65,0.65,0.65')
 hold on
-plot(x,(baitsCounted ./ (600*600*(110^2))),'-','LineWidth',0.5,'Color','0.90,0.90,0.905')
+plot(x,(baitsCounted ./ (600*600*(.110^2))),'-','LineWidth',0.5,'Color','0.90,0.90,0.905')
 %plot(x,baitsCounted,'-','LineWidth',0.5,'Color','0.90,0.90,0.905')
 yyaxis left
 ylabel('Percent Co-Appearance')

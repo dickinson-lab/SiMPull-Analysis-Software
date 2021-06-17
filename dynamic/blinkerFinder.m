@@ -10,11 +10,14 @@ for f=1:length(files)
     slash = strfind(files{f},filesep);
     expDir = files{f};
     fileName = files{f}(slash(end)+1:end); 
-    if exist([expDir filesep fileName '_greedyPlus.mat'])
-        load([expDir filesep fileName '_greedyPlus.mat'])
+    if exist([expDir filesep fileName '_greedyCoApp_reReg.mat'])
+        loadedFile = [expDir filesep fileName '_greedyCoApp_reReg.mat'];
+    elseif exist([expDir filesep fileName '_greedyPlus.mat'])
+        loadedFile = [expDir filesep fileName '_greedyPlus.mat'];
     else
-        load([expDir filesep fileName '_greedyCoApp.mat']);
+        loadedFile = [expDir filesep fileName '_greedyCoApp.mat'];
     end 
+    load(loadedFile)
 
     % Isolate the bait spotLocation information from dynData
     baitSpotLocation = cell2mat({dynData.([baitChannel 'SpotData']).spotLocation}');
@@ -47,10 +50,6 @@ for f=1:length(files)
     end
     
     % Save updated mat file for this sample
-    if exist([expDir filesep fileName '_greedyPlus.mat'])
-        save([expDir filesep fileName '_greedyPlus.mat'], 'dynData','params')
-    else
-        save([expDir filesep fileName '_greedyCoApp.mat'],'dynData','params');
-    end
+    save(loadedFile, 'dynData','params')
 end
 close(wb)
