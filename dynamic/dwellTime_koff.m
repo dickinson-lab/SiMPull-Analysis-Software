@@ -81,11 +81,11 @@ for a = 1:length(matFiles)
     %% Display the results
     disp(['Results for ' fileName ':']);
     disp(['Analyzed data for ' num2str(n) ' co-appearing spots']);
-    disp(['Prey channel k_obs = ' num2str(k_obs(2,1))]);
+    disp(['Prey channel k_obs = ' num2str(k_obs(2)) ' (' num2str(k_obs(3)) ', ' num2str(k_obs(1)) ')']);
     disp([ num2str(baitNoDisappearance) ' bait molecules that remained bound throughout their intensity traces' ]);
     disp([ num2str(preyNoDisappearance) ' prey molecules that remained bound throughout their intensity traces' ]);
     disp([ num2str(sum(~index2)) ' bait and prey molecules disappeared simultaneously']);
-    disp('');
+    disp(newline);
     
     %Save 
     waitbar((a-1)/length(matFiles),statusbar,strrep(['Saving ' fileName],'_','\_'));
