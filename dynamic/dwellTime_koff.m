@@ -118,7 +118,7 @@ function [dwellTime, noDisappearance] = calculateDwellTime(spotData)
             % Here we find the disappearance time by looking for the intensity to return to its initial value.  
             % This has both the advantage and the imitation that it ignores any complicated photobleaching or 
             % photophysical behavior. 
-            if ( spotData.steplevels(b+1) - spotData.steplevels(appearanceStep) ) < spotData.stepstdev(b+1)
+            if ( ( spotData.steplevels(b+1) - spotData.steplevels(appearanceStep) ) < spotData.stepstdev(b+1) ) || ( spotData.steplevels(b+1) - spotData.steplevels(1) ) < spotData.stepstdev(b+1)
                 disappearanceStep = b;
             end
         end
