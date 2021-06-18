@@ -18,8 +18,15 @@
 % analyzed are 1:1 heterodimers.  It is not designed to deal with oligomers
 % and will give strange results if data from an oligomeric complex is analyzed.
 
+% Optional filter for to exclude traces with too many bait steps: this avoids analyzing 
+% nonsensical traces in dense regions of the data. Set to 0 to disable. 
+maxBaitSteps = 4;
+
 % Ask user for data files
 matFiles = uipickfiles('Prompt','Select data files to analyze','Type',{'*.mat'});
+
+% Summary structure for results - this facilitates copying into Excel
+summary = struct('Sample_name',[],'k_obs_lower',[],'k_obs',[],'k_obs_upper',[],'n',[],'non_disappearing',[]);
 
 statusbar = waitbar(0);
 for a = 1:length(matFiles)
@@ -34,33 +41,43 @@ for a = 1:length(matFiles)
     load([expDir filesep fileName]);
     BaitChannel = params.BaitChannel; %Extract channel info - this is just for code readability
     PreyChannel = params.PreyChannel;
-    
-    % Count non-disappearing spots - if this is a large number, we might need to re-process data to pull longer intensity traces
-    baitNoDisappearance = 0;
-    preyNoDisappearance = 0;
-    
+         
     waitbar((a-1)/length(matFiles),statusbar,strrep(['Finding Dwell Times for ' fileName],'_','\_'));
     %% Loop over spots, find dwell times for each
     for c = 1:length(dynData.([BaitChannel 'SpotData']))     
-        % Bait channel
-        [dynData.([BaitChannel 'SpotData'])(c).dwellTime, dynData.([BaitChannel 'SpotData'])(c).noDisappearance] = calculateDwellTime(dynData.([BaitChannel 'SpotData'])(c));
-        baitNoDisappearance = baitNoDisappearance + dynData.([BaitChannel 'SpotData'])(c).noDisappearance;
-        
-        % Prey channel
-        [dynData.([PreyChannel 'SpotData'])(c).dwellTime, dynData.([PreyChannel 'SpotData'])(c).noDisappearance] = calculateDwellTime(dynData.([PreyChannel 'SpotData'])(c));
-        preyNoDisappearance = preyNoDisappearance + dynData.([PreyChannel 'SpotData'])(c).noDisappearance;
+        [nBaitSteps, ~] = size(dynData.([BaitChannel 'SpotData'])(c).changepoints);
+        if maxBaitSteps && nBaitSteps > maxBaitSteps
+            %Skip analyzing this trace if it's too complicated
+            dynData.([BaitChannel 'SpotData'])(c).dwellTime = NaN;
+            dynData.([BaitChannel 'SpotData'])(c).noDisappearance = NaN;
+            dynData.([PreyChannel 'SpotData'])(c).dwellTime = NaN;
+            dynData.([PreyChannel 'SpotData'])(c).noDisappearance = NaN;
+        else
+            %Otherwise, continue
+            % Bait channel
+            [dynData.([BaitChannel 'SpotData'])(c).dwellTime, dynData.([BaitChannel 'SpotData'])(c).noDisappearance] = calculateDwellTime(dynData.([BaitChannel 'SpotData'])(c));
+
+            % Prey channel
+            [dynData.([PreyChannel 'SpotData'])(c).dwellTime, dynData.([PreyChannel 'SpotData'])(c).noDisappearance] = calculateDwellTime(dynData.([PreyChannel 'SpotData'])(c));
+        end
     end
     
     %% Use the dwell time information to calculate k_off
     waitbar((a-1)/length(matFiles),statusbar,strrep(['Calculating k_off for ' fileName],'_','\_'));
     
     % Pull out co-appearing spots - that's all we're interested in for this calculation
-    index = cellfun(@(x) ~isempty(x) && ~isnan(x) && x==true, {dynData.([BaitChannel 'SpotData']).(['appears_w_' PreyChannel])});
+    nonSkippedIndex = ~cellfun(@isnan, {dynData.([BaitChannel 'SpotData']).dwellTime});
+    coAppIndex = cellfun(@(x) ~isempty(x) && ~isnan(x) && x==true, {dynData.([BaitChannel 'SpotData']).(['appears_w_' PreyChannel])});
+    index = nonSkippedIndex & coAppIndex;
     baitStruct = dynData.([BaitChannel 'SpotData'])(index); 
     preyStruct = dynData.([PreyChannel 'SpotData'])(index); 
     
+    % Count non-disappearing spots - if this is a large number, we might need to re-process data to pull longer intensity traces
+    baitNoDisappearance = sum(cell2mat({baitStruct.noDisappearance}));
+    preyNoDisappearance = sum(cell2mat({preyStruct.noDisappearance}));
+    
     % Count up the number of spots observed and the number of observations of the complex remaining intact 
-    n = dynData.([BaitChannel PreyChannel 'CoAppearing']); % n is the number of complexes observed
+    n = sum(index); % Number of complexes analyzed
     n_bound = sum(cell2mat({preyStruct.dwellTime})); % n_bound is the number of times we observed the prey protein staying bound (not disappearing). 
     
     % Count the number of prey protein disappearances.  We only count cases where 
@@ -86,6 +103,14 @@ for a = 1:length(matFiles)
     disp([ num2str(preyNoDisappearance) ' prey molecules that remained bound throughout their intensity traces' ]);
     disp([ num2str(sum(~index2)) ' bait and prey molecules disappeared simultaneously']);
     disp(newline);
+    
+    %Add results to summary structure
+    summary(a).Sample_name = fileName;
+    summary(a).k_obs_lower = k_obs(3);
+    summary(a).k_obs = k_obs(2);
+    summary(a).k_obs_upper = k_obs(1);
+    summary(a).n = n;
+    summary(a).non_disappearing = preyNoDisappearance; 
     
     %Save 
     waitbar((a-1)/length(matFiles),statusbar,strrep(['Saving ' fileName],'_','\_'));
