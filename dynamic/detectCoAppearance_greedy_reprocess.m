@@ -16,7 +16,7 @@ function dynData = detectCoAppearance_greedy_reprocess(varargin)
         % Get data file from user
         [fileName, expDir] = uigetfile('*.mat','Choose .mat file to re-process',pwd);
         % Ask whether to re-detect changepoints
-        reDetect = questdlg('Do you want to re-detect changepoints or just re-count co-appearance?','Type of analysis','Changepoints','Just co-appearance','Just co-appearance');
+        reDetect = questdlg('Do you want to re-detect changepoints or just re-count co-appearance?','Type of analysis','Re-count Changepoints','Re-count co-appearance','Re-count co-appearance');
         
         % Ask whether to re-register
         reReg = questdlg('Do you want to redo image registration?','Registration','Yes','No','Yes');
@@ -84,7 +84,7 @@ function dynData = detectCoAppearance_greedy_reprocess(varargin)
     preyChannel = params.PreyChannel;
     
     %% Re-find appearance times for the bait channel
-    if strcmp(reDetect,'Changepoints')
+    if strcmp(reDetect,'Re-count Changepoints')
         dynData = findAppearanceTimes(dynData, baitChannel);
     end
     
@@ -177,7 +177,7 @@ function dynData = detectCoAppearance_greedy_reprocess(varargin)
     end
     
     %% Detect Changepoints in the prey channel
-    if strcmp(reDetect,'Changepoints') || strcmp(reReg,'Yes')
+    if strcmp(reDetect,'Re-count Changepoints') || strcmp(reReg,'Yes')
         wb = waitbar(0,['Finding changepoints in the ' preyChannel ' channel']);
         for d = 1:dynData.([baitChannel 'SpotCount'])
             waitbar((d-1)/dynData.([baitChannel 'SpotCount']),wb);

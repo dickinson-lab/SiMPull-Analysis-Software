@@ -43,6 +43,8 @@ function [dataStruct] = extractIntensityTraces(channel, rawImage, params, dataSt
     lgBoxArea = (2*lgBoxRad + 1)^2;
     areaDiff =  lgBoxArea - smBoxArea; 
     
+    [~,~,tmax] = size(rawImage);
+    
     %Calculate the background and perform the subtraction
     for e = 1:nPeaks
         % Skip this spot if instructed by calling function
@@ -51,7 +53,7 @@ function [dataStruct] = extractIntensityTraces(channel, rawImage, params, dataSt
         end
         
         % Check if we already have an intensity trace for this spot; if so, we don't need to calculate it again. 
-        if isfield(dataStruct.([channel 'SpotData']), 'intensityTrace') && ~isempty(dataStruct.([channel 'SpotData'])(e).intensityTrace)
+        if isfield(dataStruct.([channel 'SpotData']), 'intensityTrace') && ~isempty(dataStruct.([channel 'SpotData'])(e).intensityTrace) && length(dataStruct.([channel 'SpotData'])(e).intensityTrace) == tmax 
             continue
         end
         % Otherwise, go ahead

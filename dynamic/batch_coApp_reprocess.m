@@ -5,8 +5,14 @@
 % Ask user for image folders
 matFiles = uipickfiles('Prompt','Select data files to analyze','Type',{'*.mat'});
 
-% Ask whether to re-do changepoint detection
-reDetect = questdlg('Do you want to re-detect changepoints or just re-count co-appearance?','Type of analysis','Changepoints','Just co-appearance','Just co-appearance');
+% Ask what to do
+mode = questdlg('What kind of re-processing do you want to do?','Type of analysis','Re-count Changepoints','Re-count co-appearance','Get Longer Traces','Get Longer Traces');
+
+if strcmp(mode,'Get Longer Traces')
+    % Ask for desired new trace length
+    answer = inputdlg('Enter desired fluorescence intensity trace length','Trace Length',1,{'1000'});
+    traceLength = str2double(answer);
+end
 
 % Ask whether to re-register
 reReg = questdlg('Do you want to redo image registration?','Registration','Yes','No','Yes');
@@ -40,10 +46,14 @@ for a = 1:length(matFiles)
     waitbar((a-1)/length(matFiles),statusbar,strrep(['Reprocessing ' fileName],'_','\_'));
     
     % Reprocess
-    if strcmp(reReg,'Yes')
-        detectCoAppearance_greedy_reprocess(fileName,expDir,reDetect,reReg,regData);
+    if strcmp(mode,'Get Longer Traces')
+        getLongerIntensityTraces(fileName,expDir,traceLength);
     else
-        detectCoAppearance_greedy_reprocess(fileName,expDir,reDetect);
+        if strcmp(reReg,'Yes')
+            detectCoAppearance_greedy_reprocess(fileName,expDir,mode,reReg,regData);
+        else
+            detectCoAppearance_greedy_reprocess(fileName,expDir,mode);
+        end
     end
 end
 
