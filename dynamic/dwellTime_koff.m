@@ -68,7 +68,8 @@ for a = 1:length(matFiles)
     % Pull out co-appearing spots - that's all we're interested in for this calculation
     nonSkippedIndex = ~cellfun(@isnan, {dynData.([BaitChannel 'SpotData']).dwellTime});
     coAppIndex = cellfun(@(x) ~isempty(x) && ~isnan(x) && x==true, {dynData.([BaitChannel 'SpotData']).(['appears_w_' PreyChannel])});
-    index = nonSkippedIndex & coAppIndex;
+    hasStepIndex = ~cellfun(@isnan, {dynData.([PreyChannel 'SpotData']).dwellTime});
+    index = nonSkippedIndex & coAppIndex & hasStepIndex;
     baitStruct = dynData.([BaitChannel 'SpotData'])(index); 
     preyStruct = dynData.([PreyChannel 'SpotData'])(index); 
     
