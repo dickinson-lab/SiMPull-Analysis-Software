@@ -5,51 +5,18 @@ function dataStruct = count_steps_c(dataStruct, channel)
     
     %Count steps
     for a = 1:ntraces
+        
         %Detect Changepoints
         traj = dataStruct.([channel 'SpotData'])(a).intensityTrace;
-        tmax = length(traj);
-
-        [nSteps, changepoint_pos, bayes_factors] = cpdetect_c('Gaussian', single(traj), logodds);
-        changepoint_pos = changepoint_pos(1:nSteps);
-        bayes_factors = bayes_factors(1:nSteps);
-        changepoints = horzcat(changepoint_pos, bayes_factors);
-        if ~isempty(changepoints) 
-            changepoints = sortrows(changepoints, 1);
-        end
-        
-        dataStruct.([channel 'SpotData'])(a).changepoints = changepoints;
-        dataStruct.([channel 'SpotData'])(a).allchangepoints = changepoints;
-        
-        %Extract the signal levels at each step
-        dataStruct.([channel 'SpotData'])(a).steplevels = [];
-        dataStruct.([channel 'SpotData'])(a).stepstdev = [];
-        lastchangepoint = 1;
-        for b = 1:nSteps+1
-            if b>nSteps
-                changepoint = tmax;
-            else 
-                changepoint = changepoints(b,1);
-            end
-            if changepoint == 0
-                continue
-            end
-            subtraj = traj(lastchangepoint:changepoint);
-            level = mean(subtraj);
-            stdev = std(subtraj);
-            dataStruct.([channel 'SpotData'])(a).steplevels(b) = level;
-            dataStruct.([channel 'SpotData'])(a).stepstdev(b) = stdev;
-            
-            %Throw out steps that are (erroneously) detected after the spot has bleached to 0
-            if (level-stdev) < 0
-                nSteps = b-1; 
-                subtraj = traj(lastchangepoint:end);
-                level = mean(subtraj);
-                dataStruct.([channel 'SpotData'])(a).steplevels(b) = level;
-                dataStruct.([channel 'SpotData'])(a).changepoints(b:end,:) = [];
-                break
-            end
-            
-            lastchangepoint = changepoint+1; %"+1" just keeps the segments from overlapping
+        %[dataStruct.([channel 'SpotData'])(a), error] = find_changepoints_c(traj,logodds);
+        [results, error] = find_changepoints_c(traj,logodds);
+        nSteps = results.nSteps;
+        dataStruct.([channel 'SpotData'])(a).changepoints = results.changepoints;
+        dataStruct.([channel 'SpotData'])(a).steplevels = results.steplevels;
+        dataStruct.([channel 'SpotData'])(a).stepstdev = results.stepstdev;
+        if error
+            dataStruct.([channel 'SpotData'])(a).appearTime = 'Analysis Failed';
+            continue
         end
         
         %Reject trajectories that don't show stepwise photobleaching

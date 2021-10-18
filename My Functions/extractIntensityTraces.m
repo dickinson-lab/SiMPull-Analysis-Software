@@ -53,7 +53,7 @@ function [dataStruct] = extractIntensityTraces(channel, rawImage, params, dataSt
         end
         
         % Check if we already have an intensity trace for this spot; if so, we don't need to calculate it again. 
-        if isfield(dataStruct.([channel 'SpotData']), 'intensityTrace') && ~isempty(dataStruct.([channel 'SpotData'])(e).intensityTrace) && length(dataStruct.([channel 'SpotData'])(e).intensityTrace) == tmax 
+        if isfield(dataStruct.([channel 'SpotData']), 'intensityTrace') && ~isempty(dataStruct.([channel 'SpotData'])(e).intensityTrace) && length(dataStruct.([channel 'SpotData'])(e).intensityTrace) >= tmax 
             continue
         end
         % Otherwise, go ahead
