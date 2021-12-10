@@ -1,4 +1,5 @@
-function detectCoAppearance(varargin)
+function dynData = detectCoAppearance(varargin)
+
 %  This program is for analyzing SiMPull data in which the binidng of bait
 %  proteins to the coverslip is monitored in real time following cell
 %  lysis. 
@@ -7,6 +8,10 @@ function detectCoAppearance(varargin)
 %  identify spots that appear in the bait channel during an acquisiton.  
 %  Then, those spots are analyzed to determine their time of appearance 
 %  and whether spots in a prey channel co-appear. 
+%
+%  Any up-step in prey intensity coincinding with bait appearance is 
+%  counted as a co-appearance event, regardless of whether it's the 
+%  first up-step in the prey channel.
 %
 %  This function can be run in two modes.  If called with no arguments, the
 %  user is asked to select files to analyze and set options; this works well 
@@ -219,7 +224,7 @@ dynData = findAppearanceTimes(dynData, baitChannel);
 % We don't do spot detection for the prey channel; 
 % instead, just copy the positions of spots found in the bait channel and apply a registration correction.
 % At the same time, identify and ignore bait spots that are so close to the edge that they aren't visible in the prey channel
-waitbar(0,wb,'Finding co-appearing prey spots...');
+waitbar(0,wb,'Getting prey intensity traces...');
 if strcmp(BaitPos, 'Left')
     preyChannel = RightChannel;
 else
@@ -236,7 +241,7 @@ for d = 1:dynData.([baitChannel 'SpotCount'])
         % Forward affine transformation if bait channel is on the right
         preySpotLocation = round( transformPointsForward(regData.Transformation, dynData.([baitChannel 'SpotData'])(d).spotLocation) );
     end
-    if preySpotLocation(1) < 5 || preySpotLocation(1) > (xmax - xmin + 1)-5 || preySpotLocation(2) < 5 || preySpotLocation(2) > ymax-5
+    if preySpotLocation(1) < 6 || preySpotLocation(1) > (xmax - xmin + 1)-5 || preySpotLocation(2) < 6 || preySpotLocation(2) > ymax-5
         index(d) = false; %Ignore this spot if it doesn't map within the prey image or is too close to the edge
     else
         dynData.([preyChannel 'SpotData'])(d,1).spotLocation = preySpotLocation; %Add this location to the places to check for prey
@@ -277,16 +282,39 @@ if dynData.([baitChannel 'SpotCount']) > 0 %This if statement prevents crashing 
         [dynData.([preyChannel 'SpotData'])(index).appearedInWindow] = deal(e);
         dynData = extractIntensityTraces(preyChannel, subStack, params, dynData, index);
     end
-    % Look for spot appearances in the prey channel
-    dynData = findAppearanceTimes(dynData, preyChannel);
 
-    % Find spots that appear at the same time
+    % Find spots that appear at the same time. Here a "greedy" algorithm is
+    % used that counts any up-step in prey intensity coincinding with bait appearance as a co-appearance
+    % event, regardless of whether it's the first up-step in the prey channel
+    waitbar(0,wb,'Finding prey co-appearance events...');
     for c = 1:dynData.([baitChannel 'SpotCount'])
+        %Detect Changepoints
+        traj = dynData.([preyChannel 'SpotData'])(c).intensityTrace;
+        [results, error] = find_changepoints_c(traj,2);
+        dynData.([preyChannel 'SpotData'])(c).changepoints = results.changepoints;
+        dynData.([preyChannel 'SpotData'])(c).steplevels = results.steplevels;
+        dynData.([preyChannel 'SpotData'])(c).stepstdev = results.stepstdev;
+        if error
+            dynData.([preyChannel 'SpotData'])(c).appearTime = 'Analysis Failed';
+            continue
+        end
+        
+        %Look for an upstep at the appearance time
         if isnumeric(dynData.([baitChannel 'SpotData'])(c).appearTime)
-
-            if isnumeric(dynData.([preyChannel 'SpotData'])(c).appearTime) &&... 
-               abs( dynData.([baitChannel 'SpotData'])(c).appearTime - dynData.([preyChannel 'SpotData'])(c).appearTime ) <= 4 %Spots appearing within 4 frames of each other are considered simultaneous
-
+            baitAppearTime = dynData.([baitChannel 'SpotData'])(c).appearTime;
+            
+            % Make sure there is a step to be tested 
+            if ~isempty(dynData.([preyChannel 'SpotData'])(c).changepoints)
+                preyStepTimes = dynData.([preyChannel 'SpotData'])(c).changepoints(:,1) + dynData.avgWindow * (dynData.([preyChannel 'SpotData'])(c).appearedInWindow - 1);
+            else
+                % If there are no steps in the prey channel, we're done - it can't co-appear
+                dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = false;
+                continue 
+            end
+            matchingStep = find( abs(baitAppearTime - preyStepTimes) <= 4 );  %Spots appearing within 4 frames of each other are considered simultaneous
+            
+            if ~isempty(matchingStep) && dynData.([preyChannel 'SpotData'])(c).steplevels(max(matchingStep)+1) > dynData.([preyChannel 'SpotData'])(c).steplevels(min(matchingStep)) % && the intensity has to increase (otherwise it's not an appearance event)
+                                                                                                                                                                                     % The "min" and "max" avoid crashing when more than one step matches.
                 dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = true;
             else
                 dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = false;
@@ -300,6 +328,10 @@ if dynData.([baitChannel 'SpotCount']) > 0 %This if statement prevents crashing 
     % Tally results
     dynData.([baitChannel 'AppearanceFound']) = sum( ~isnan([ dynData.([baitChannel 'SpotData']).(['appears_w_' preyChannel]) ]) ) ;
     dynData.([baitChannel preyChannel 'CoAppearing']) = sum([ dynData.([baitChannel 'SpotData']).(['appears_w_' preyChannel]) ], 'omitnan');
+    
+    % Run blinkerFinder.m
+    dynData = blinkerFinder(dynData);
+    
 end
 
 %% Save data
