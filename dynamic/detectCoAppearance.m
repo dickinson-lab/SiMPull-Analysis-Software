@@ -334,6 +334,10 @@ if dynData.([baitChannel 'SpotCount']) > 0 %This if statement prevents crashing 
     
 end
 
+%% Plot and save coAppearance over time
+   coApp_vs_time = coAppearanceByWindow(dynData);
+   save([expDir filesep imgName '_coApp_vs_time.mat'], 'coApp_vs_time');
+
 %% Save data
 save([expDir filesep imgName '.mat'], 'dynData','params');
 close(wb)

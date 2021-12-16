@@ -1,7 +1,9 @@
 %Plots percent colocolization as a function of (windowed) appearance time
 %for dynamic SiMPull data.
 
-function coAppearanceByWindow(dynData, baitChannel, preyChannel, trendWindow)
+function coAppearanceByWindow(dynData)
+% Set an arbirtary trendWindow.
+trendWindow = 50;
 
 % Calculate % colocalization for molecules appearing in each time window
 colocData = {dynData.([baitChannel 'SpotData']).(['appears_w_' preyChannel])};
