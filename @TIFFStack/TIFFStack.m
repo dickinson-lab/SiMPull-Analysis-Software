@@ -244,7 +244,6 @@ classdef TIFFStack < handle
             bIsImageJBigStack = false;
             bIsImageJHyperStack = false;
             vnStackDims = [];
-            vnInterleavedFrameDims = [];
             
             % - Handle ImageJ big stacks with MappedTensor
             if (bIsImageJBigStack)
