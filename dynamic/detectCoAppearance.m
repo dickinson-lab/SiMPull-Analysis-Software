@@ -111,6 +111,7 @@ end
 % Save image size
 params.imageY_X = [ymax, xmax/2];
 
+
 % Calculate windowed average and difference images
 baitAvg = windowMean(stackObj,window,BaitPos);
 baitDiff = diff(baitAvg,1,3); % "1" for first derivative, "3" for third dimension
@@ -331,11 +332,15 @@ if dynData.([baitChannel 'SpotCount']) > 0 %This if statement prevents crashing 
     
     % Run blinkerFinder.m
     dynData = blinkerFinder(dynData);
-    
+
 end
 
 %% Plot and save coAppearance over time
-   coApp_vs_time = coAppearanceByWindow(dynData);
+   % Calculated time elapsed between embryo lysis and data acquisition and save in params
+   elapsedTime = getElapsedTime(expDir, imgName);
+   params.elapsedTime = elapsedTime;
+   % Create and save plot
+   coApp_vs_time = coAppearanceByWindow(dynData, params);
    save([expDir filesep imgName '_coApp_vs_time.mat'], 'coApp_vs_time');
 
 %% Save data
