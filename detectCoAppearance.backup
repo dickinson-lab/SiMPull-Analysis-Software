@@ -106,11 +106,7 @@ end
 dynData = blinkerFinder(dynData);
 
 %% Plot and save coAppearance over time
-% Calculated time elapsed between embryo lysis and data acquisition and save in params
-elapsedTime = getElapsedTime(expDir, imgName);
-params.elapsedTime = elapsedTime;
-% Create and save plot
-coApp_vs_time = coAppearanceByWindow(dynData, params);
+coApp_vs_time = coAppearanceByWindow(dynData);
 save([expDir filesep imgName '_coApp_vs_time.mat'], 'coApp_vs_time');
 
 %% Save data

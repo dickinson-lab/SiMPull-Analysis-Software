@@ -106,11 +106,7 @@ end
 dynData = blinkerFinder(dynData);
 
 %% Plot and save coAppearance over time
-% Calculated time elapsed between embryo lysis and data acquisition and save in params
-elapsedTime = getElapsedTime(expDir, imgName);
-params.elapsedTime = elapsedTime;
-% Create and save plot
-coApp_vs_time = coAppearanceByWindow(dynData, params);
+coApp_vs_time = coAppearanceByWindow(dynData);
 save([expDir filesep imgName '_coApp_vs_time.mat'], 'coApp_vs_time');
 
 %% Save data
@@ -118,6 +114,15 @@ save([expDir filesep imgName '.mat'], 'dynData','params');
 close(wb)
 end
 
+<<<<<<< HEAD
+=======
+
+% Calculate windowed average and difference images
+baitAvg = windowMean(stackObj,window,BaitPos);
+baitDiff = diff(baitAvg,1,3); % "1" for first derivative, "3" for third dimension
+% Note that since the first diff we take is between the first and second windows, spots appearing 
+% during the first few frames (early in the first window) might be missed. This is ok for now.
+>>>>>>> 6249185d0be1be450dd7b630d346dbb789c3d06e
 
 %% Functions for Individual Data Types
 
@@ -390,4 +395,24 @@ function dynData = findCoApp(dynData, baitChannel, preyChannel, wb)
     % Tally results
     dynData.([baitChannel 'AppearanceFound']) = sum( ~isnan([ dynData.([baitChannel 'SpotData']).(['appears_w_' preyChannel]) ]) ) ;
     dynData.([baitChannel preyChannel 'CoAppearing']) = sum([ dynData.([baitChannel 'SpotData']).(['appears_w_' preyChannel]) ], 'omitnan');
+<<<<<<< HEAD
 end
+=======
+    
+    % Run blinkerFinder.m
+    dynData = blinkerFinder(dynData);
+
+end
+
+%% Plot and save coAppearance over time
+   % Calculated time elapsed between embryo lysis and data acquisition and save in params
+   elapsedTime = getElapsedTime(expDir, imgName);
+   params.elapsedTime = elapsedTime;
+   % Create and save plot
+   coApp_vs_time = coAppearanceByWindow(dynData, params);
+   save([expDir filesep imgName '_coApp_vs_time.mat'], 'coApp_vs_time');
+
+%% Save data
+save([expDir filesep imgName '.mat'], 'dynData','params');
+close(wb)
+>>>>>>> 6249185d0be1be450dd7b630d346dbb789c3d06e
