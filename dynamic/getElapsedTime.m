@@ -37,19 +37,19 @@ while startTime == 0
     n = n+1;
 end
 
-%% Find lysis of time
+%% Find time of lysis
 finalShotTime = 0;
 s = 4;
 while finalShotTime == 0
     str = string(metaData{n,1});
     shotTime = contains(str,'Shot Times');
     while shotTime == 1
-        if contains((string(metaData{n+3,1})),'}')
+        if contains((string(metaData{n+3,1})),'}') % If no shots were recorded, three lines after the string "Shot Times" in the metadata, there will be a right curly bracket. If metadata format is altered in the future, the algorithm will have to changed.
             elapsedTime = 'No Shot Times Recorded';
             return
         end
-        str = string(metaData{n+s,1});
-        finalShotTime = contains(str,']');
+        str = string(metaData{n+s,1});  % If a single shot was fired, 4 lines after the string "Shot Times" in the metadata, there will be a right bracket. This is why "s" is set to 4 initially.
+        finalShotTime = contains(str,']'); % However, if the laser was fired more than once, thre will be another time stamp rather than a right bracket. The loop iterates until it finds a right bracket- the line after the final shot. If metadata format is altered in the future, the algorithm will have to changed.
         if finalShotTime
             str = string(metaData{(n+s)-1,1});
             str = split(str);
@@ -61,6 +61,7 @@ while finalShotTime == 0
     end
     n = n+1;
 end
+
 %% Calculate seconds elapsed between lysis and acquisition, if possible
 aquisitionTime= (aquisitionTime(2)*60) + aquisitionTime(3);
 lysisTime= (lysisTime(2)*60) + lysisTime(3);
