@@ -1,8 +1,7 @@
-% Plots percent colocolization as a function of (windowed) appearance time for dynamic SiMPull data. 
-% This function is not meant to be called by the user but rather by either detectCoAppearance.m or by batchCoApp_vs_time.m, 
-% but can be called by the user if dynData and params are loaded to the workspace.
+% Plots percent coAppearance as a function of (windowed) appearance time for dynamic SiMPull data. 
+% This function is not meant to be called by the user but rather by either detectCoAppearance.m or by batchCoApp_vs_time.m. 
 
-function coApp_vs_time = coApp_vs_time(dynData,params,expDir,imgName)
+function params = coApp_vs_time(dynData,params,expDir,imgName)
 % Adjustable parameter for how many 50 frame windows will be averaged for the trendline
 trendWindow = 50;
 
