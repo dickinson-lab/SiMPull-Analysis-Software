@@ -7,7 +7,7 @@ function coApp_vs_time = coApp_vs_time(dynData,params,expDir,imgName)
 trendWindow = 50;
 
 % Obtain bait and prey channel info from params variable
-baitChannel = params.baitChannel;
+baitChannel = params.BaitChannel;
 if strcmp(params.BaitPos, 'Left')
     preyChannel = params.RightChannel;
 else
@@ -38,11 +38,12 @@ imgData = read(img4size);
 [imgLength, width] = size(imgData);
 imgArea = imgLength * width * params.pixelSize^2;
 
+
 % Save image area in params for future use (ex. in coApp_vs_dens.m or coApp_vs_Time_Filtered)
 params.imgArea = imgArea;
 
 % Plot
-figure
+f = figure('visible', 'off'); % Prevent figure from populating while analysis is ongoing
 xlabel('Time (sec)')
 x = (2.5*[1:lastWindow]);
 yyaxis right
@@ -57,5 +58,10 @@ hold on
 plot(x,pctColoc,'o','MarkerSize',2.5,'Color','k')
 hold on
 plot(x,colocTrend,'-','LineWidth',1,'Color','k')
+
+% Save plot
+set(f, 'visible','on'); % Ensure that figure will be visible by default before saving
+savefig([expDir filesep imgName '_coApp_vs_time.fig']);
+close(f)
 end
 
