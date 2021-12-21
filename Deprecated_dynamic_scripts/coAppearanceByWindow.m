@@ -1,7 +1,7 @@
 %Plots percent colocolization as a function of (windowed) appearance time
 %for dynamic SiMPull data.
 
-function coAppearanceByWindow(dynData)
+function coAppearanceByWindow(dynData,params)
 % Set an arbirtary trendWindow.
 trendWindow = 50;
 

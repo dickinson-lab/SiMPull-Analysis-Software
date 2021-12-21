@@ -153,7 +153,7 @@ function [Answer, Cancelled] = dynamicChannelInfoDlg(expDir)
     Formats(14,1).unitsloc = 'bottomleft';
     Formats(14,1).enable = 'on';
     Formats(14,1).span = [1 4];
-    DefAns.pixelSize = 110;
+    DefAns.pixelSize = 113.5;
     
     Prompt(24,:) = {'',[],[]};
     Formats(15,1).type = 'text';
