@@ -110,7 +110,7 @@ dynData = blinkerFinder(dynData);
 elapsedTime = getElapsedTime(expDir, imgName);
 params.elapsedTime = elapsedTime;
 % Create and save plot
-coApp_vs_time = coApp_vs_time(dynData, params);
+coApp_vs_time = coApp_vs_time(dynData, params,expDir,imgName);
 save([expDir filesep imgName '_coApp_vs_time.mat'], 'coApp_vs_time');
 
 %% Save data
