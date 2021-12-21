@@ -17,6 +17,7 @@ function [avgImg] = windowMean(varargin)
 if nargin == 2
     img = varargin{1};
     window = varargin{2};
+    xyPortion = 'All';
 elseif nargin == 3
     img = varargin{1};
     window = varargin{2};
