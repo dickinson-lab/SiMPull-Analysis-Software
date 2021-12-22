@@ -43,8 +43,9 @@ params.imgArea = imgArea;
 
 % Plot
 f = figure('visible', 'off'); % Prevent figure from populating while analysis is ongoing
-xlabel('Time (sec)')
+xlabel('Time elapsed since lysis (sec)')
 x = (2.5*[1:lastWindow]);
+x = bsxfun(@plus, x, params.elapsedTime);
 yyaxis right
 ylabel('Density of Bait Spots')
 set(gca,'ycolor','0.65,0.65,0.65')
