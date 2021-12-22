@@ -5,32 +5,30 @@
 % aB = bait spot data using average images 
 % aP = prey spot data using average images 
 
-baitChannel = 'Green'; preyChannel = 'FarRed'; % These channel settings were a constant for the dataset this script was originally used on. In the future this part of the script should be channged to pull information from the params variable.
-
-% These variables are used to distinguish markers on the plot according to experimental condition.
-controlExps = {'Exp8_','Exp9_','Exp10_','Exp11_','Exp20_'}; %50 mW 638 nm laser
-lowLaserExps = {'Exp17_'};                                  %5 mW 638 nm laser
-
-% User selects the files desired in dataset
-files = uipickfiles('Prompt','Select directories containing .mat files with density information','Type',{'Directory'});
+% Ask user for data files
+matFiles = uipickfiles('Prompt','Select _forDensity.mat files.','Type',{'*_forDensity.mat'});
+statusbar = waitbar(0);
 
 % Generate a struct 'colors' containing a spectrum of unique colors to distinguish each sample in the dataset
-colors = jet(length(files));
+colors = jet(length(matFiles));
 
 % User decides meanInterval 
 opts.Interpreter = 'tex';
 answer = inputdlg('\fontsize{10}How many intervals would you like to divide the max density per sample for percent co-appearance vs density trend line?',...
-    'trendWindow',[1 35],{'21'},opts);
+    'trendWindow',[1 60],{'21'},opts);
 meanInterval = str2double(answer);
 
-% Manually set based on desired filtering
-lowDensityFilter = true;
+% User indicates if a low density filter will be applied
+opts.Interpreter = 'tex';
+answer = inputdlg('\fontsize{10}Exclude images with less than 5e-9 spots/nm^2 (i.e. apply a low density filter)? Type Y for "yes" or N for "no."',...
+    'lowDensityFilter',[1 60],{'Y'},opts);
+lowDensityFilter = contains(answer,'Y');
 
 % Initiate figures
-dBplot = figure('Name','Control Appearing Bait (mNG::Halo)','NumberTitle','off'); title('Control Appearing Bait (mNG::Halo)'); xlabel('Appearing Bait Density (spots/nm^2)'); ylabel('Percent Co-Appearance');
-dPplot = figure('Name','Control Appearing Prey (mNG::Halo)','NumberTitle','off'); title('Control Appearing Prey (mNG::Halo)'); xlabel('Appearing Prey Density (spots/nm^2)'); ylabel('Percent Co-Appearance');
-aBplot = figure('Name','Control Present Bait (mNG::Halo)','NumberTitle','off'); title('Control Present Bait (mNG::Halo)'); xlabel('Present Bait Density (spots/nm^2)'); ylabel('Percent Co-Appearance');
-aPplot = figure('Name','Control Present Prey (mNG::Halo)','NumberTitle','off'); title('Control Present Prey (mNG::Halo)'); xlabel('Present Prey Density (spots/nm^2)'); ylabel('Percent Co-Appearance');
+dBplot = figure('Name','Appearing Bait','NumberTitle','off','visible','off'); title('Appearing Bait'); xlabel('Appearing Bait Density (spots/nm^2)'); ylabel('Percent Co-Appearance');
+dPplot = figure('Name','Appearing Prey','NumberTitle','off','visible','off'); title('Appearing Prey'); xlabel('Appearing Prey Density (spots/nm^2)'); ylabel('Percent Co-Appearance');
+aBplot = figure('Name','Present Bait','NumberTitle','off','visible','off'); title('Present Bait'); xlabel('Present Bait Density (spots/nm^2)'); ylabel('Percent Co-Appearance');
+aPplot = figure('Name','Present Prey','NumberTitle','off','visible','off'); title('Present Prey'); xlabel('Present Prey Density (spots/nm^2)'); ylabel('Percent Co-Appearance');
 
 % Create empty vectors to store data across samples
 pctCoAppCumulative = [];
@@ -39,34 +37,32 @@ dPcumulativeDensity = [];
 aBcumulativeDensity = [];
 aPcumulativeDensity = [];
 
-for f=1:length(files)
-    slash = strfind(files{f},filesep);
-    expDir = files{f};
-    fileName = files{f}(slash(end)+1:end);
+for f = 1:length(matFiles)
+    % Get image name and root directory
+    slash = strfind(matFiles{f},filesep);
+    fileName = matFiles{f}(slash(end)+1:end); 
+    expDir = matFiles{f}(1:slash(end));
+   
+    % Load density data
+    density = load([expDir filesep fileName]);
     
-%     % Uncommented for plots displaying data only from 5 mW 638 nm laser power experiments
-%     if contains(fileName, controlExps)
-%         continue
-%     end
+    % Load appearing bait data 
+     remove = "_forDensity";
+     snipsnop = regexp(fileName,remove,'split');
+     fileName = snipsnop{1};
+     load([expDir filesep fileName '.mat']);
+     waitbar((f-1)/length(matFiles),statusbar,strrep(['Working on ' fileName],'_','\_'));
     
-    if exist([expDir filesep fileName '_greedyPlus_reReg.mat'])
-        load([expDir filesep fileName '_greedyPlus_reReg.mat'])
-    elseif exist([expDir filesep fileName '_greedyPlus.mat'])
-        load([expDir filesep fileName '_greedyPlus.mat'])
-    elseif exist([expDir filesep fileName '_greedyCoApp_reReg.mat'])
-        load([expDir filesep fileName '_greedyCoApp_reReg.mat']);
-        density = load([expDir filesep fileName '_forDensity.mat']);
+    % Obtain bait and prey channel info from params variable
+    baitChannel = params.BaitChannel;
+    if strcmp(params.BaitPos, 'Left')
+        preyChannel = params.RightChannel;
     else
-        load([expDir filesep fileName '_greedyCoApp.mat']);
-        density = load([expDir filesep fileName '_forDensity.mat']);
-    end   
-    message = msgbox(['Working on ' fileName]);
+        preyChannel = params.LeftChannel;
+    end
 
-    % Determine image area for density calculations
-    img4size = Tiff([files{f} filesep fileName '_baitAvg.tif'],'r');
-    imgData = read(img4size);
-    [imgLength, width] = size(imgData);
-    imgArea = imgLength * width * params.pixelSize^2;
+    % Pull image area from params variable
+    imgArea = params.imgArea;
     
     % Calculate % co-appearance and density for bait and prey molecules appearing and present in each time window for current sample    
     lastWindow = max(cell2mat({dynData.([baitChannel 'SpotData']).appearedInWindow}));
@@ -78,35 +74,11 @@ for f=1:length(files)
         dBDensity(a) = (sum(index))/imgArea;
     end
     pctCoApp = 100 * (coAppearing ./ baitsCounted);
-    if exist('density')
-        dPDensity = density.dynData.([preyChannel 'DiffCount']) ./ imgArea;
-        aBDensity = density.dynData.([baitChannel 'AvgCount']) ./ imgArea;
-        aPDensity = density.dynData.([preyChannel 'AvgCount']) ./ imgArea;
-    else
-        dPDensity = dynData.([preyChannel 'DiffCount']) ./imgArea;
-        aBDensity = dynData.([baitChannel 'AvgCount']) ./ imgArea;
-        aPDensity = dynData.([preyChannel 'AvgCount']) ./ imgArea;
-    end
+    dPDensity = density.dynData.([preyChannel 'DiffCount']) ./ imgArea;
+    aBDensity = density.dynData.([baitChannel 'AvgCount']) ./ imgArea;
+    aPDensity = density.dynData.([preyChannel 'AvgCount']) ./ imgArea;
         
-    % Stupid thing I have to do because I made a mistake in the processing step for some samples
-    if dPDensity(1) == 0
-        dPDensity(1) = NaN;
-    end
-    if aBDensity(1) == 0
-        aBDensity(1) = NaN;
-    end
-    if aPDensity(1) == 0
-        aPDensity(1) = NaN;
-    end
-    
-    % Set plot marker according to experiment
-    if contains(fileName, controlExps)
-        marker = 'o';
-    elseif contains(fileName, lowLaserExps)
-        marker = 's';
-    end
-    
-    % Filter out the appropriate windows if filtering by density
+    % Filter out the appropriate windows if excluding low densities
     if lowDensityFilter == true
         for a = 1:lastWindow
             if dBDensity(a) < 5e-9
@@ -129,11 +101,10 @@ for f=1:length(files)
     aPcumulativeDensity = [aPcumulativeDensity aPDensity];
     
     clear density dBDensity dPDensity aBDensity aPDensity baitsCounted coAppearing pctCoApp
-    close (message);
 end    
-
+close(statusbar)
 % Sort density from low to high and align it with the co-appearance percentage at each density for averaging 
-message = msgbox('Trying to find a trend...');
+message = msgbox('Calculating trendline...');
 
 [dBcumulativeDensitySorted,dB]=sort(dBcumulativeDensity);
 [dPcumulativeDensitySorted,dP]=sort(dPcumulativeDensity);
@@ -176,29 +147,25 @@ for a=1:meanInterval
     aPindex = (low<aPcumulativeDensitySorted) & (aPcumulativeDensitySorted<high);
     aPpctCoAppMean(a) = mean(aPpctCoAppSorted(aPindex),'omitnan');
 end
-close (message);
 
 % Plot dB data
 x = 0:dBdensityWindow:max(dBcumulativeDensity); x(1) = [];
-figure(dBplot); hold on;
+figure(dBplot,'visible','on'); hold on;
 plot(x,dBpctCoAppMean,'-','Color','k','LineWidth',1.5)
 
 % Plot dP data
 x = 0:dPdensityWindow:max(dPcumulativeDensity); x(1) = [];
-figure(dPplot); hold on;
+figure(dPplot,'visible','on'); hold on;
 plot(x,dPpctCoAppMean,'-','Color','k','LineWidth',1.5)
  
 % Plot aB data
 x = 0:aBdensityWindow:max(aBcumulativeDensity); x(1) = [];
-figure(aBplot); hold on;
+figure(aBplot,'visible','on'); hold on;
 plot(x,aBpctCoAppMean,'-','Color','k','LineWidth',1.5)
 
 % Plot aP data
 x = 0:aPdensityWindow:max(aPcumulativeDensity); x(1) = [];
-figure(aPplot); hold on;
+figure(aPplot,'visible','on'); hold on;
 plot(x,aPpctCoAppMean,'-','Color','k','LineWidth',1.5)
 
-savefig(dBplot,'Z:\Sarikaya_Sena\Exp28\coApp_vs_dens\LowFilter\AppearingBait.fig');
-savefig(dPplot,'Z:\Sarikaya_Sena\Exp28\coApp_vs_dens\LowFilter\AppearingPrey.fig');
-savefig(aBplot,'Z:\Sarikaya_Sena\Exp28\coApp_vs_dens\LowFilter\PresentBait.fig');
-savefig(aPplot,'Z:\Sarikaya_Sena\Exp28\coApp_vs_dens\LowFilter\PresentPrey.fig');
+close (message);
