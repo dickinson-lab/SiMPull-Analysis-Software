@@ -117,7 +117,7 @@ function [Answer, Cancelled] = dynamicChannelInfoDlg(expDir)
     Formats(11,1).required = 'on';
     Formats(11,1).size = [0 25];
     Formats(11,1).span = [1 4];
-    DefAns.regFile = expDir;
+    %DefAns.regFile = expDir;
 
     Prompt(19,:) = {'\fontsize{12}Frames to average for image registration:',[],[]};
     Formats(12,1).type = 'text';
@@ -147,7 +147,7 @@ function [Answer, Cancelled] = dynamicChannelInfoDlg(expDir)
     
     Prompt(23,:) = {'\fontsize{12}Pixel size (nm)','pixelSize',[]};
     Formats(14,1).type = 'edit';
-    Formats(14,1).format = 'integer';
+    Formats(14,1).format = 'float';
     Formats(14,1).limits = [1 inf];
     Formats(14,1).size = [25 25];
     Formats(14,1).unitsloc = 'bottomleft';

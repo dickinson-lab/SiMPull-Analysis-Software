@@ -32,7 +32,13 @@ function [dataStruct] = extractIntensityTraces(channel, rawImage, params, dataSt
     elseif (strcmp(channel, 'FarRed'))
         lambda = 655;
     else
-        error('Unexpected channel information given');
+        % If the calling function doesn't provide a channel color, assume a
+        % "middle" wavelength. This will matter only if the pixel size is
+        % unsually small. 
+        lambda = 550; 
+        if params.pixelSize < 100
+            warning('Warning: box size for intensity trace extraction may be incorrect due to the combination of pixel size and data type provided. If you see this message frequently, contact the developer for assistance or change your imaging conditions.');
+        end
     end
     
     %Based on the wavelength and the pixel size, calculate the size of box to use
