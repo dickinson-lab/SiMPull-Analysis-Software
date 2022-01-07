@@ -91,8 +91,12 @@ params.DataType = DataType;
 params.pixelSize = pixelSize;
 params.RegistrationData = regData; 
 if strcmp(DataType,'Composite Data')
+    if nChannels == 1 
+        error('Composite data should have more than one channel');
+    end
     params.nChannels = nChannels;
     params.baitChNum = baitChNum;
+    params.baitChannel = 'Bait';
     [imgName, dynData] = detCoApp_comp(expDir,imgFile,params);
 else
     params.LeftChannel = LeftChannel;
@@ -103,7 +107,7 @@ else
 end
 
 %% Run blinkerFinder.m
-dynData = blinkerFinder(dynData);
+dynData = blinkerFinder(dynData,params.baitChannel);
 
 %% Plot coAppearance over time
 % Calculated time elapsed between embryo lysis and data acquisition and save in params
@@ -121,8 +125,177 @@ end
 %% Functions for Individual Data Types
 
 %% Composite data (Images are ImageJ hyperstacks with multiple channels) 
-function dynData = detCoApp_comp(expDir,imgFile,params)
+function [imgName, dynData] = detCoApp_comp(expDir,imgFile,params)
+    %% Load images
+    wb = waitbar(0,'Loading Images...','Name',strrep(['Analyzing Experiment ' expDir],'_','\_'));
+    if length(imgFile) > 1 %if the user selected multiple files
+        nFiles = length(imgFile);
+        stackOfStacks = cell(nFiles,1);
+        % Each file will be loaded as a TIFFStack object, then concatenated together.
+        % Order is determined by the user via uipickfiles
+        for a = 1:nFiles
+            stackOfStacks{a} = TIFFStack(imgFile{a},[],params.nChannels);
+        end
+        stackObj = TensorStack(4, stackOfStacks{:});
+    else
+        % If there's just a single TIFF file, it's simpler
+        stackObj = TIFFStack(imgFile{1},[],params.nChannels);
+    end
+
+    %% Find difference peaks
+    waitbar(0,wb,'Finding bait protein appearances...');
+    % Figure out what portion of the image we're going to work with and set x indices accordingly
+    [ymax, xmax, ~, tmax] = size(stackObj);
+
+    % Save image size
+    params.imageY_X = [ymax, xmax];
+
+    % Calculate windowed average and difference images
+    avgImg = windowMean(stackObj,params.window);
+    diffImg = diff(avgImg,1,4); % "1" for first derivative, "4" for fourth (time) dimension
+    % Note that since the first diff we take is between the first and second windows, spots appearing 
+    % during the first few frames (early in the first window) might be missed. This is ok for now.
+
+    %% Save average and difference images
+    % Check if data have already been processed. If so, check if the value of 'window' has changed.
+    newAvg = false;
+    slash = strfind(imgFile{1},filesep);
+    imgName = imgFile{1}(slash(end)+1:strfind(imgFile{1},'.tif')-1); 
+    if exist([expDir filesep imgName '.mat'], 'file')
+        existingData = load([expDir filesep imgName '.mat'], 'dynData');
+        % If a different number of windows were used previously, make newAvg flag true for next step
+        if existingData.dynData.avgWindow ~= params.window
+            newAvg = true;
+        end
+        clear existingData
+    end
+
+    [~,~,~,ndiffs] = size(diffImg); 
+    % Check if any windowed average and difference images exist before saving
+    if exist([expDir filesep imgName '_avgImg.tif'], 'file')||exist([expDir filesep imgName '_diffImg.tif'], 'file')
+        if newAvg % If averaging window has been changed, delete all existing files
+           warning('off','all');
+           delete ([expDir filesep imgName '_avgImg.tif']);
+           delete ([expDir filesep imgName '_diffImg.tif']);
+           % Save difference images with new averaging window
+           for w=1:ndiffs
+               for v=1:params.nChannels
+                    imwrite(uint16(diffImg(:,:,v,w)),[expDir filesep imgName '_diffImg.tif'],'tif','WriteMode','append','Compression','none');
+               end
+           end
+           % Save average images
+           for w=1:ndiffs+1
+               for v=1:params.nChannels
+                   imwrite(uint16(avgImg(:,:,v,w)),[expDir filesep imgName '_avgImg.tif'],'tif','WriteMode','append','Compression','none');
+               end
+           end
+        end
+    else % Save if no images yet exist
+        for w=1:ndiffs
+            for v=1:params.nChannels
+                imwrite(uint16(diffImg(:,:,v,w)),[expDir filesep imgName '_diffImg.tif'],'tif','WriteMode','append','Compression','none');
+           end
+        end
+        for w=1:ndiffs+1
+            for v=1:params.nChannels
+                imwrite(uint16(avgImg(:,:,v,w)),[expDir filesep imgName '_avgImg.tif'],'tif','WriteMode','append','Compression','none');
+            end
+        end
+    end
+
+    %% Run PS on the bait channel
+    lastFoundSpots = {};
+    for b = 1:ndiffs
+        %% Probabilistic Segmentation
+        waitbar((b-1)/ndiffs,wb);
+        % Run PS for the difference images
+        psDiffResults = spotcount_ps('Bait', diffImg(:,:,params.baitChNum,b), params, struct('dataFolder',expDir,'avgWindow',params.window), 1);
+        
+        if b==1 %...unless this is the first time through the loop
+            dynData = psDiffResults;
+            [dynData.BaitSpotData.appearedInWindow] = deal(b); %Save info about when these spots appeared
+            %Put PS data in a temporary structure foundSpots (by default, lastFoundSpots in first loop iteration)
+            [lastFoundSpots] = {psDiffResults.BaitSpotData.spotLocation}'; %Save foundSpots for the next iteration of the loop
+        else
+            [dynData,lastFoundSpots] = filterLastFoundSpots(psDiffResults,dynData,lastFoundSpots,'Bait',b);
+        end
+        
+    %% Extract intensity traces and find the actual time of spot appearance
+        % Intensity extraction
+        % Doing this in the same loop  as PS allows pulling only the part of the trace we actually care about - 
+        % where the spot appeared.
+
+        % Load the appropriate portion of the image into memory - this makes trace extraction much faster.
+        if b==1
+            % The first time through the loop, we just want the first 500 frames
+            subStack = squeeze(stackObj(:,:,params.baitChNum,1:500));
+        else
+            % On subsequent iterations, shift the portion of the image in memory by 1 window
+            startTime = (b-1) * params.window + 451;
+            endTime = min(b * params.window + 450, tmax);
+            subStack = cat(3, subStack(:,:,params.window+1:end), squeeze(stackObj(:,:,params.baitChNum,startTime:endTime)));
+        end
+
+        % Get intensity traces
+        dynData = extractIntensityTraces('Bait', subStack, params, dynData);
+    end
+
+    % Count the total number of bait spots across difference images
+    [dynData.BaitSpotCount,~] = size(dynData.BaitSpotData);
+
+    % Detect up-steps in intensity
+    dynData = findAppearanceTimes(dynData, 'Bait');
     
+    %% Find co-appearing spots in each prey channel
+    % We don't do spot detection for the prey channel; 
+    % instead, just copy the positions of spots found in the bait channel and apply a registration correction.
+    % At the same time, identify and ignore bait spots that are so close to the edge that they aren't visible in the prey channel
+    waitbar(0,wb,'Getting prey intensity traces...');
+    for j = 1:params.nChannels
+        if j == params.baitChNum
+            continue %Skip the bait channel
+        end
+        preyChannel = ['preyCh' num2str(j)];
+        dynData.([preyChannel 'SpotData']) = struct('spotLocation',[]);
+        index = true(dynData.BaitSpotCount,1);
+        for d = 1:dynData.BaitSpotCount
+            % Inverse affine transformation to calculate the bait spot location within the prey image
+            preySpotLocation = round( transformPointsInverse(params.RegistrationData.Transformation, dynData.BaitSpotData(d).spotLocation) );
+            if preySpotLocation(1) < 6 || preySpotLocation(1) > xmax-5 || preySpotLocation(2) < 6 || preySpotLocation(2) > ymax-5
+                index(d) = false; %Ignore this spot if it doesn't map within the prey image or is too close to the edge
+            else
+                dynData.([preyChannel 'SpotData'])(d,1).spotLocation = preySpotLocation; %Add this location to the places to check for prey
+            end
+        end
+        % Ignore spots that are too close to the edge
+        dynData.BaitSpotData = dynData.BaitSpotData(index);
+        dynData.([preyChannel 'SpotData']) = dynData.([preyChannel 'SpotData'])(index);
+        [dynData.BaitSpotCount,~] = size(dynData.BaitSpotData); %Count how many bait spots are left
+    
+        % Pull intensity traces for the prey
+        if dynData.BaitSpotCount > 0 %This if statement prevents crashing if no spots were found
+            nWindows = dynData.BaitSpotData(end).appearedInWindow;
+            for e = 1:nWindows
+                waitbar((e-1)/nWindows,wb);
+                % Load the appropriate portion of the image into memory
+                if e==1
+                    % The first time through the loop, we just want the first 500 frames
+                    subStack = squeeze(stackObj(:,:,j,1:500));
+                else
+                    % On subsequent iterations, shift the portion of the image in memory by 1 window
+                    startTime = (e-1) * params.window + 451;
+                    endTime = min(e * params.window + 450, tmax);
+                    subStack = cat(3, subStack(:,:,params.window+1:end), squeeze(stackObj(:,:,j,startTime:endTime)) );
+                end
+                index = e==cell2mat({dynData.BaitSpotData.appearedInWindow});
+                [dynData.([preyChannel 'SpotData'])(index).appearedInWindow] = deal(e);
+                dynData = extractIntensityTraces(preyChannel, subStack, params, dynData, index);
+            end
+            
+            %% Find co-appearing spots
+            dynData = findCoApp(dynData, 'Bait', preyChannel, wb);
+        end
+    end
 end
 
 %% Dual-view data (side-by-side images)
@@ -215,14 +388,55 @@ function [imgName, dynData] = detCoApp_dv(expDir,imgFile,params)
     clear preyAvg preyDiff
 
     %% Run PS on the bait channel
-    dynData = PS_dynamicBait(expDir, stackObj, xmin, xmax, tmax, params.baitChannel, baitDiff, params, wb);
+    baitChannel = params.baitChannel;
+    [~,~,ndiffs] = size(baitDiff);
+    lastFoundSpots = {};
+    for b = 1:ndiffs
+        %% Probabilistic Segmentation
+        waitbar((b-1)/ndiffs,wb);
+        % Run PS for the difference images
+        psDiffResults = spotcount_ps(baitChannel, baitDiff(:,:,b), params, struct('dataFolder',expDir,'avgWindow',params.window), 1);
+        % The baitDiff approach will tend to find the same object in two consecutive windows. So now we need 
+        % to go through the list of found spots and keep only those that weren't found previously. 
+        if b==1 %...unless this is the first time through the loop
+            dynData = psDiffResults;
+            [dynData.([baitChannel 'SpotData']).appearedInWindow] = deal(b); %Save info about when these spots appeared
+            %Put PS data in a temporary structure foundSpots (by default, lastFoundSpots in first loop iteration)
+            [lastFoundSpots] = {psDiffResults.([baitChannel 'SpotData']).spotLocation}'; %Save foundSpots for the next iteration of the loop
+        else
+            [dynData,lastFoundSpots] = filterLastFoundSpots(psDiffResults,dynData,lastFoundSpots,baitChannel,b);
+        end   
+    %% Extract intensity traces and find the actual time of spot appearance
+        % Intensity extraction
+        % Doing this in the same loop  as PS allows pulling only the part of the trace we actually care about - 
+        % where the spot appeared.
+
+        % Load the appropriate portion of the image into memory - this makes trace extraction much faster.
+        if b==1
+            % The first time through the loop, we just want the first 500 frames
+            subStack = stackObj(:,xmin:xmax,1:500);
+        else
+            % On subsequent iterations, shift the portion of the image in memory by 1 window
+            startTime = (b-1) * params.window + 451;
+            endTime = min(b * params.window + 450, tmax);
+            subStack = cat(3, subStack(:,:,params.window+1:end), stackObj(:,xmin:xmax,startTime:endTime));
+        end
+
+        % Get intensity traces
+        dynData = extractIntensityTraces(baitChannel, subStack, params, dynData);   
+    end
+    clear baitAvg baitDiff 
+    % Count the total number of bait spots across difference images
+    [dynData.([baitChannel 'SpotCount']),~] = size(dynData.([baitChannel 'SpotData']));
+
+    % Detect up-steps in intensity
+    dynData = findAppearanceTimes(dynData, baitChannel);
     
     %% Find co-appearing spots in the prey channel
     % We don't do spot detection for the prey channel; 
     % instead, just copy the positions of spots found in the bait channel and apply a registration correction.
     % At the same time, identify and ignore bait spots that are so close to the edge that they aren't visible in the prey channel
     waitbar(0,wb,'Getting prey intensity traces...');
-    baitChannel = params.baitChannel;
     if strcmp(params.BaitPos, 'Left')
         preyChannel = params.RightChannel;
     else
@@ -281,67 +495,28 @@ function [imgName, dynData] = detCoApp_dv(expDir,imgFile,params)
         %% Find co-appearing spots
         dynData = findCoApp(dynData, baitChannel, preyChannel, wb);
     end
-end
+end  
 
 
-%% Functions for processing data - these can be reused as they are independent of data format
-function dynData = PS_dynamicBait(expDir, stackObj, xmin, xmax, tmax, baitChannel, baitDiff, params, wb)
-    [~,~,ndiffs] = size(baitDiff);
-    lastFoundSpots = {};
-    for b = 1:ndiffs
-        %% Probabilistic Segmentation
-        waitbar((b-1)/ndiffs,wb);
-        % Run PS for the difference images
-        psDiffResults = spotcount_ps(baitChannel, baitDiff(:,:,b), params, struct('dataFolder',expDir,'avgWindow',params.window), 1);
-        % The baitDiff approach will tend to find the same object in two consecutive windows. So now we need 
-        % to go through the list of found spots and keep only those that weren't found previously. 
-        if b==1 %...unless this is the first time through the loop
-            dynData = psDiffResults;
-            [dynData.([baitChannel 'SpotData']).appearedInWindow] = deal(b); %Save info about when these spots appeared
-            %Put PS data in a temporary structure foundSpots (by default, lastFoundSpots in first loop iteration)
-            [lastFoundSpots] = {psDiffResults.([baitChannel 'SpotData']).spotLocation}'; %Save foundSpots for the next iteration of the loop
+function [dynData,lastFoundSpots] = filterLastFoundSpots(psDiffResults,dynData,lastFoundSpots,baitChName,currentFrame)
+    % The baitDiff approach will tend to find the same object in two consecutive windows. So now we need 
+    % to go through the list of found spots and keep only those that weren't found previously. 
+    [foundSpots] = {psDiffResults.([baitChName 'SpotData']).spotLocation}';
+    for c = 1:psDiffResults.([baitChName 'SpotCount'])
+        query = cell2mat(foundSpots(c));
+        if ~isempty(lastFoundSpots) && ~isempty(lastFoundSpots{1}) % This If statement protects against errors when no spots were found in the previous frame.
+            match = find(cellfun(@(x) sum(abs(x-query))<3, lastFoundSpots)); %Peaks <3 pixels from a previously-found peak are ignored
         else
-            [foundSpots] = {psDiffResults.([baitChannel 'SpotData']).spotLocation}';
-            for c = 1:psDiffResults.([baitChannel 'SpotCount'])
-                query = cell2mat(foundSpots(c));
-                if ~isempty(lastFoundSpots) && ~isempty(lastFoundSpots{1}) % This If statement protects against errors when no spots were found in the previous frame.
-                    match = find(cellfun(@(x) sum(abs(x-query))<3, lastFoundSpots)); %Peaks <3 pixels from a previously-found peak are ignored
-                else
-                    match = [];
-                end
-                if isempty(match) %If we didn't find a match, that means it's a new spot. Add it to the main data structure
-                    psDiffResults.([baitChannel 'SpotData'])(c).appearedInWindow = b; %Save info about when this spot appeared
-                    dynData.([baitChannel 'SpotData'])(end+1) = psDiffResults.([baitChannel 'SpotData'])(c);
-                end
-            end
-            lastFoundSpots = foundSpots; %Save the list of spots found this time to compare to the next time through the loop
-        end   
-    %% Extract intensity traces and find the actual time of spot appearance
-        % Intensity extraction
-        % Doing this in the same loop  as PS allows pulling only the part of the trace we actually care about - 
-        % where the spot appeared.
-
-        % Load the appropriate portion of the image into memory - this makes trace extraction much faster.
-        if b==1
-            % The first time through the loop, we just want the first 500 frames
-            subStack = stackObj(:,xmin:xmax,1:500);
-        else
-            % On subsequent iterations, shift the portion of the image in memory by 1 window
-            startTime = (b-1) * params.window + 451;
-            endTime = min(b * params.window + 450, tmax);
-            subStack = cat(3, subStack(:,:,params.window+1:end), stackObj(:,xmin:xmax,startTime:endTime));
+            match = [];
         end
-
-        % Get intensity traces
-        dynData = extractIntensityTraces(baitChannel, subStack, params, dynData);   
+        if isempty(match) %If we didn't find a match, that means it's a new spot. Add it to the main data structure
+            psDiffResults.([baitChName 'SpotData'])(c).appearedInWindow = currentFrame; %Save info about when this spot appeared
+            dynData.([baitChName 'SpotData'])(end+1) = psDiffResults.([baitChName 'SpotData'])(c);
+        end
     end
-    clear baitAvg baitDiff 
-    % Count the total number of bait spots across difference images
-    [dynData.([baitChannel 'SpotCount']),~] = size(dynData.([baitChannel 'SpotData']));
-
-    % Detect up-steps in intensity
-    dynData = findAppearanceTimes(dynData, baitChannel);
+    lastFoundSpots = foundSpots; %Save the list of spots found this time to compare to the next time through the loop
 end
+
 
 function dynData = findCoApp(dynData, baitChannel, preyChannel, wb)
     % Find spots that appear at the same time. Here a "greedy" algorithm is
@@ -349,6 +524,7 @@ function dynData = findCoApp(dynData, baitChannel, preyChannel, wb)
     % event, regardless of whether it's the first up-step in the prey channel
     waitbar(0,wb,'Finding prey co-appearance events...');
     for c = 1:dynData.([baitChannel 'SpotCount'])
+        waitbar((c-1)/dynData.([baitChannel 'SpotCount']),wb);
         %Detect Changepoints
         traj = dynData.([preyChannel 'SpotData'])(c).intensityTrace;
         [results, error] = find_changepoints_c(traj,2);

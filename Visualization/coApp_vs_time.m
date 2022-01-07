@@ -6,7 +6,7 @@ function params = coApp_vs_time(dynData,params,expDir,imgName)
 trendWindow = 50;
 
 % Obtain bait and prey channel info from params variable
-baitChannel = params.BaitChannel;
+baitChannel = params.baitChannel;
 if strcmp(params.BaitPos, 'Left')
     preyChannel = params.RightChannel;
 else

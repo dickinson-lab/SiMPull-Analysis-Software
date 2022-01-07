@@ -1,5 +1,5 @@
 % This script broswes dynData and records the number of frames since the last appearance event that occured at a particular spotLocation
-function dynData = blinkerFinder(dynData)
+function dynData = blinkerFinder(dynData, baitChannel)
     % Isolate the bait spotLocation information from dynData
     baitSpotLocation = cell2mat({dynData.([baitChannel 'SpotData']).spotLocation}');
 
