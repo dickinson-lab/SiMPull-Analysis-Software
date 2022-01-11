@@ -24,7 +24,7 @@ Prompt(2,:) = {'  Input Data Type:','dataType',[]};
 Formats(2,1).type = 'list';
 Formats(2,1).format = 'text';
 Formats(2,1).style = 'radiobutton';
-Formats(2,1).items = {'Single-Channel TIFF' 'Dual-View TIFF' 'Nikon ND2'};
+Formats(2,1).items = {'Single-Channel TIFF' 'Dual-View TIFF' 'Composite TIFF' 'Nikon ND2'};
 Formats(2,1).size = [0 40];
 Formats(2,1).span = [1 5];  
 Formats(2,1).callback = @(~,~,h,~) updateEnabled(h); %UpdateEnabled is a custom function specific to this dialog box (with hard-coded values). Need to update if reformatting dialog box.
@@ -32,13 +32,13 @@ DefAns.dataType = 'Single-Channel TIFF';
 
 Prompt(3,:) = {'Pixel size (nm)','pixelSize',[]};
 Formats(2,6).type = 'edit';
-Formats(2,6).format = 'integer';
+Formats(2,6).format = 'float';
 Formats(2,6).limits = [1 inf];
-Formats(2,6).size = [25 25];
+Formats(2,6).size = [50 25];
 Formats(2,6).unitsloc = 'bottomleft';
 Formats(2,6).enable = 'on';
 Formats(2,6).span = [1 3];
-DefAns.pixelSize = 110;
+DefAns.pixelSize = 108.3;
 
 Prompt(4,:) = {'Enter Channel Information',[],[]};
 Formats(3,1).type = 'text';

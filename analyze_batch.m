@@ -11,7 +11,7 @@
 
 clear all
 close all
-
+warning off %Prevents unnecessary warnings loading TIFF files
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Adjustable parameters for spot detection are here                                         %
@@ -54,6 +54,8 @@ nChannels = sum(channelsPresent);
 dv = strcmp(dataType, 'Dual-View TIFF');
 dvPositions = {BlueDualViewPos GreenDualViewPos RedDualViewPos FarRedDualViewPos};
 dvPositions = dvPositions(channelsPresent);
+
+comp = strcmp(dataType, 'Composite TIFF');
 
 firstTime.Blue = BlueWindow1; clear BlueWindow1;
 firstTime.Green = GreenWindow1; clear GreenWindow1;
@@ -115,6 +117,54 @@ if dv && any(strcmp(dvPositions, 'Left')) && any(strcmp(dvPositions,'Right')) % 
         regData = registerImages(rightImg, leftImg);
         % We don't save the registration info here because it's saved as part of each individual file below.  
         % Instead we just hang on to the regData variable for later use.
+    end
+end
+
+%% Register Composite images
+if comp
+    %% Decide whether to use existing registration or do a new one
+    useExistingReg = false;
+    % Check if data have already been analyzed and if so, whether registration data exist
+    if exist([expDir filesep dirList{1} '.mat'], 'file')
+        existing = load([expDir filesep dirList{1} '.mat'], 'statsByColor');
+        if any(cell2mat(regexp(fieldnames(existing.statsByColor),'RegistrationData')))
+            %Ask the user whether to re-register or use existing
+            ans1 = questdlg('Image registration data appear to already exist for this dataset. What do you want to do?',...
+                            'Found Existing Registration',...   %Title
+                            'Do new registration',...           %Option 1
+                            'Use existing',...                  %Option 2
+                            'Use existing');                    %Default
+            if strcmp(ans1,'Use existing')
+                useExistingReg = true;
+            end
+        end
+    end
+    
+    %% Proceed with new image registration 
+    if ~useExistingReg
+        % Ask user if registration is required
+        ans2 = questdlg('Do your images require registration?',...
+                        'Image registration?',...   %Title
+                        'Yes','No','Yes');          %Options
+        if strcmp(ans2,'Yes') 
+            % Dialog box
+            [Answer,Cancelled] = dvRegisterDlg(expDir);
+            if Cancelled 
+                return
+            else
+                v2struct(Answer);
+            end
+    
+            % Open the image file, make an average image and perform 2D registration
+            regImg = TIFFStack(regFile,[],nChannels);
+            subImg = regImg(:,:,:,RegWindow1:RegWindow2);
+            avgImg = mean(subImg, 4);
+            for g = 2:nChannels 
+                regData(g) = registerImages( avgImg(:,:,g), avgImg(:,:,1) ); % Each channel is registered against channel 1
+            end
+            % We don't save the registration info here because it's saved as part of each individual file below.  
+            % Instead we just hang on to the regData variable for later use.
+        end
     end
 end
 
@@ -204,7 +254,7 @@ for a=1:length(dirList)
     if countSpots
         %% Set up
         % Figure out how many stage positions we have
-        if strcmp(dataType, 'Nikon ND2')
+        if strcmp(dataType, 'Nikon ND2') || strcmp(dataType, 'Composite TIFF')
             nPositions = length(fileList);
         else
             posNames = cellfun(@(x) regexp(x,'_?[0-9\-]+.tif','split'), {fileList.name}, 'UniformOutput', false); %The regexp finds the wavelength designator at the end of each file name
@@ -270,7 +320,7 @@ for a=1:length(dirList)
                     imwrite(avgImage,[nd2Dir filesep params.imageName '_' color 'avg.tif'],'tiff');
                     
                     % Actually do the spot counting
-                    gridData(index(b)) = spotcount_ps(color, avgImage, params, gridData(index(b)));
+                    gridData = spotcount_ps(color, avgImage, params, gridData, index(b));
                     
                     % Extract and save intensity traces for found spots
                     gridData(index(b)) = extractIntensityTraces(color, thisImage, params, gridData(index(b)));
@@ -278,9 +328,45 @@ for a=1:length(dirList)
                 end %Loop i over channels
                 
             end %Loop b over images 
+        
+        elseif strcmp(dataType, 'Composite TIFF')
+        %% This section is for composite TIFF files %%    
+            %% Loop through each image (state position) in the dataset
+            for b = 1:nPositions
+                imageName = fileList(b).name;
+                % Load Image
+                imObj = TIFFStack([nd2Dir filesep fileList(b).name],[],nChannels);
+                [ymax,xmax,~,tmax] = size(imObj);
+                gridData(index(b)).imageSize = [ymax xmax];
+                params.imageName = imageName(1:(length(imageName)-4));
+                gridData(index(b)).imageName = params.imageName;
+                
+                %% Perform spot counting for each channel of this image
+                for i = 1:nChannels 
+                    color = channels{i};                    
+                    waitbar( (b-1)/nPositions, spotwb, ['Finding ' color ' Spots in image ' strrep(imageName,'_','\_') '...'] );
                     
+                    % Load the appropriate portion of the image into memory
+                    thisImage = squeeze(imObj(:,:,i,:));
+
+                    % Generate average image for spot counting
+                    params.firstTime = firstTime.(color);
+                    params.lastTime = lastTime.(color);
+                    avgImage = averageImage(thisImage, color, params);
+                    %Save average image for later reference
+                    imwrite(avgImage,[nd2Dir filesep params.imageName '_' color 'avg.tif'],'tiff');
+                    
+                    % Actually do the spot counting
+                    gridData = spotcount_ps(color, avgImage, params, gridData, index(b));
+                    
+                    % Extract and save intensity traces for found spots
+                    gridData(index(b)) = extractIntensityTraces(color, thisImage, params, gridData(index(b)));
+                    
+                end %Loop i over channels
+            end %Loop b over images 
+
         else 
-        %% This section is for TIFF files %%
+        %% This section is for single-channel and dual-view TIFF files %%
             %% Loop over Channels first
             for i = 1:nChannels
                 %Figure out which files we need to load
@@ -335,7 +421,7 @@ for a=1:length(dirList)
                 
             end % Loop i over channels
             
-        end % If statement for nd2 vs. tiff files 
+        end % If statement for data type
         close(spotwb)
 
         %% Calculate summary statistics and save results
@@ -361,6 +447,23 @@ for a=1:length(dirList)
                     statsByColor.([color 'RegistrationData']) = regData;
                 else
                     % Otherwise, create an empty registration structure (this also applies to the fixed (left) image)
+                    statsByColor.([color 'RegistrationData']) = struct('Transformation', affine2d,...
+                                                                       'RegisteredImage',[],...
+                                                                       'SpatialRefObj',imref2d([ymax xmax]));
+                end
+            elseif comp
+                if useExistingReg
+                    % If we're going to use existing registration data, load and copy it
+                    % Note: This step will fail if the first sample in the dataset had registration data that the user asked to
+                    % reuse, but registration data is missing for other samples. However, that would only happen if the user 
+                    % has done something very strange. 
+                    existing = load([expDir filesep dirList{a} '.mat'], 'statsByColor');
+                    statsByColor.([color 'RegistrationData']) = existing.statsByColor.([color 'RegistrationData']);
+                elseif exist('regData','var') && j ~= 1 
+                    % Or if we did registration above, save this new registration info
+                    statsByColor.([color 'RegistrationData']) = regData(j);
+                else
+                    % Otherwise, create an empty registration structure (this also applies to the fixed (first) image)
                     statsByColor.([color 'RegistrationData']) = struct('Transformation', affine2d,...
                                                                        'RegisteredImage',[],...
                                                                        'SpatialRefObj',imref2d([ymax xmax]));
