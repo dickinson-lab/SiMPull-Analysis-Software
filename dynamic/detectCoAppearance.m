@@ -196,6 +196,7 @@ function [imgName, dynData] = detCoApp_comp(expDir,imgFile,params)
                    imwrite(uint16(avgImg(:,:,v,w)),[expDir filesep imgName '_Ch' num2str(v) '_avgImg.tif'],'tif','WriteMode','append','Compression','none');
                end
            end
+        end
     else % Save if no images yet exist
         for v = 1:params.nChannels
            % Save difference images
