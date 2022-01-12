@@ -20,6 +20,7 @@ else
 end
 
 % Image registration
+params.regFile = regFile; % Save the name of the image used for registration
 regImg = TIFFStack(regFile);
 subImg = regImg(:,:,RegWindow1:RegWindow2);
 avgImg = mean(subImg, 3);
