@@ -50,6 +50,7 @@ if nargin == 0
     end
     
     % Image registration
+    params.regFile = regFile; % Save the name of the image used for registration
     if strcmp(DataType,'Composite Data')
         % Register composite images
         regImg = TIFFStack(regFile,[],nChannels);
@@ -160,7 +161,8 @@ function [imgName, dynData] = detCoApp_comp(expDir,imgFile,params)
     % Check if data have already been processed. If so, check if the value of 'window' has changed.
     newAvg = false;
     slash = strfind(imgFile{1},filesep);
-    imgName = imgFile{1}(slash(end)+1:strfind(imgFile{1},'.tif')-1); 
+    imgName = imgFile{1}(slash(end)+1:strfind(imgFile{1},'.tif')-1);
+    imgName = imgName(1:find(imgName=='_',1,'last')-1);
     if exist([expDir filesep imgName '.mat'], 'file')
         existingData = load([expDir filesep imgName '.mat'], 'dynData');
         % If a different number of windows were used previously, make newAvg flag true for next step
@@ -260,7 +262,7 @@ function [imgName, dynData] = detCoApp_comp(expDir,imgFile,params)
         index = true(dynData.BaitSpotCount,1);
         for d = 1:dynData.BaitSpotCount
             % Inverse affine transformation to calculate the bait spot location within the prey image
-            preySpotLocation = round( transformPointsInverse(params.RegistrationData.Transformation, dynData.BaitSpotData(d).spotLocation) );
+            preySpotLocation = round( transformPointsInverse(params.RegistrationData(j).Transformation, dynData.BaitSpotData(d).spotLocation) );
             if preySpotLocation(1) < 6 || preySpotLocation(1) > xmax-5 || preySpotLocation(2) < 6 || preySpotLocation(2) > ymax-5
                 index(d) = false; %Ignore this spot if it doesn't map within the prey image or is too close to the edge
             else
