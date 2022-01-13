@@ -63,49 +63,46 @@ else % If data source is dual-view images...
     colocTrend = 100 * (preyTrend ./ baitTrend);
 end
 
-    % Determine image area for density calculations
-    warning('off'); % Prevent unecessary Tiff library warnings from populating Command Window
-    img4size = Tiff(params.regFile,'r');
-    imgData = read(img4size);
-    [imgLength, width] = size(imgData);
-    imgArea = imgLength * width * params.pixelSize^2;
+% Determine image area for density calculations
+imgLength = params.imageY_X(1,1);
+width = params.imageY_X(1,2);
+imgArea = imgLength * width * params.pixelSize^2;
 
+% Save image area in params for future use (ex. in coApp_vs_dens.m or coApp_vs_Time_Filtered)
+params.imgArea = imgArea;
 
-    % Save image area in params for future use (ex. in coApp_vs_dens.m or coApp_vs_Time_Filtered)
-    params.imgArea = imgArea;
-
-    % Plot
-    f = figure('visible', 'off'); % Prevent figure from populating while analysis is ongoing
-    xlabel('Time elapsed since lysis (sec)')
-    x = (2.5*[1:lastWindow]);
-    if ~strcmp(params.elapsedTime, 'No Shot Times Recorded')
-        x = bsxfun(@plus, x, params.elapsedTime); % Shift the x-axis by the time elapsed between lysis and acquisition
-    end
-    yyaxis right
-    ylabel('Density of Bait Spots')
-    set(gca,'ycolor','0.65,0.65,0.65')
-    hold on
-    plot(x,(baitsCounted/imgArea),'-','LineWidth',0.5,'Color','0.90,0.90,0.905')
-    yyaxis left
-    ylabel('Percent Co-Appearance')
-    set(gca,'ycolor','k')
-    hold on
-    if strcmp(params.DataType, 'Composite Data')
-        colors = jet(params.nChannels);
-        for s = 1:params.nChannels
-            if s == params.baitChNum
-                continue %Skip the bait channel
-            end
-            preyChannel = ['preyCh' num2str(s)];
-            plot(x,pctColoc.([preyChannel]),'o','MarkerSize',2.5,'Color',colors(s,:))
-            hold on
-            plot(x,colocTrend.([preyChannel]),'-','LineWidth',1,'Color',colors(s,:))
+% Plot
+f = figure('visible', 'off'); % Prevent figure from populating while analysis is ongoing
+xlabel('Time elapsed since lysis (sec)')
+x = (2.5*[1:lastWindow]);
+if ~strcmp(params.elapsedTime, 'No Shot Times Recorded')
+    x = bsxfun(@plus, x, params.elapsedTime); % Shift the x-axis by the time elapsed between lysis and acquisition
+end
+yyaxis right
+ylabel('Density of Bait Spots')
+set(gca,'ycolor','0.65,0.65,0.65')
+hold on
+plot(x,(baitsCounted/imgArea),'-','LineWidth',0.5,'Color','0.90,0.90,0.905')
+yyaxis left
+ylabel('Percent Co-Appearance')
+set(gca,'ycolor','k')
+hold on
+if strcmp(params.DataType, 'Composite Data')
+    colors = jet(params.nChannels);
+    for s = 1:params.nChannels
+        if s == params.baitChNum
+            continue %Skip the bait channel
         end
-    else
-        plot(x,pctColoc,'o','MarkerSize',2.5,'Color','k')
+        preyChannel = ['preyCh' num2str(s)];
+        plot(x,pctColoc.([preyChannel]),'o','MarkerSize',2.5,'Color',colors(s,:))
         hold on
-        plot(x,colocTrend,'-','LineWidth',1,'Color','k')
+        plot(x,colocTrend.([preyChannel]),'-','LineWidth',1,'Color',colors(s,:))
     end
+else
+    plot(x,pctColoc,'o','MarkerSize',2.5,'Color','k')
+    hold on
+    plot(x,colocTrend,'-','LineWidth',1,'Color','k')
+end
 
 % Save plot
 set(f, 'visible','on'); % Ensure that figure will be visible by default before saving

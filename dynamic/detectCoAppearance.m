@@ -50,7 +50,6 @@ if nargin == 0
     end
     
     % Image registration
-    params.regFile = regFile; % Save the name of the image used for registration
     if strcmp(DataType,'Composite Data')
         % Register composite images
         regImg = TIFFStack(regFile,[],nChannels);
@@ -91,6 +90,7 @@ end
 params.DataType = DataType;
 params.pixelSize = pixelSize;
 params.RegistrationData = regData; 
+params.RegFile = regFile;
 if strcmp(DataType,'Composite Data')
     if nChannels == 1 
         error('Composite data should have more than one channel');
@@ -98,13 +98,13 @@ if strcmp(DataType,'Composite Data')
     params.nChannels = nChannels;
     params.baitChNum = baitChNum;
     params.baitChannel = 'Bait';
-    [imgName, dynData] = detCoApp_comp(expDir,imgFile,params);
+    [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params);
 else
     params.LeftChannel = LeftChannel;
     params.RightChannel = RightChannel;
     params.BaitPos = BaitPos;
     params.baitChannel = Answer.([BaitPos 'Channel']); 
-    [imgName, dynData] = detCoApp_dv(expDir,imgFile,params);
+    [imgName, dynData, params] = detCoApp_dv(expDir,imgFile,params);
 end
 
 %% Run blinkerFinder.m
@@ -119,14 +119,13 @@ params = coApp_vs_time(dynData,params,expDir,imgName);
 
 %% Save data
 save([expDir filesep imgName '.mat'], 'dynData','params');
-close(wb)
 end
 
 
 %% Functions for Individual Data Types
 
 %% Composite data (Images are ImageJ hyperstacks with multiple channels) 
-function [imgName, dynData] = detCoApp_comp(expDir,imgFile,params)
+function [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params)
     %% Load images
     wb = waitbar(0,'Loading Images...','Name',strrep(['Analyzing Experiment ' expDir],'_','\_'));
     if length(imgFile) > 1 %if the user selected multiple files
@@ -267,7 +266,7 @@ function [imgName, dynData] = detCoApp_comp(expDir,imgFile,params)
         index = true(dynData.BaitSpotCount,1);
         for d = 1:dynData.BaitSpotCount
             % Inverse affine transformation to calculate the bait spot location within the prey image
-            preySpotLocation = round( transformPointsInverse(params.RegistrationData(j).Transformation, dynData.BaitSpotData(d).spotLocation) );
+            preySpotLocation = round(transformPointsInverse(params.RegistrationData(j).Transformation, dynData.BaitSpotData(d).spotLocation) );
             if preySpotLocation(1) < 6 || preySpotLocation(1) > xmax-5 || preySpotLocation(2) < 6 || preySpotLocation(2) > ymax-5
                 index(d) = false; %Ignore this spot if it doesn't map within the prey image or is too close to the edge
             else
@@ -303,10 +302,11 @@ function [imgName, dynData] = detCoApp_comp(expDir,imgFile,params)
             dynData = findCoApp(dynData, 'Bait', preyChannel, wb);
         end
     end
+close(wb)
 end
 
 %% Dual-view data (side-by-side images)
-function [imgName, dynData] = detCoApp_dv(expDir,imgFile,params)
+function [imgName, dynData, params] = detCoApp_dv(expDir,imgFile,params)
     %% Load images
     wb = waitbar(0,'Loading Images...','Name',strrep(['Analyzing Experiment ' expDir],'_','\_'));
     if length(imgFile) > 1 %if the user selected multiple files
@@ -502,6 +502,7 @@ function [imgName, dynData] = detCoApp_dv(expDir,imgFile,params)
         %% Find co-appearing spots
         dynData = findCoApp(dynData, baitChannel, preyChannel, wb);
     end
+close(wb)
 end  
 
 
