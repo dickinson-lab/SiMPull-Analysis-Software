@@ -17,15 +17,28 @@ keep638 = Dialog.getCheckbox();
 
 setBatchMode(true);
 
-// Loop over files in each folder
-for (a=0; a<dirList.length; a++) {  
+for (a=0; a<dirList.length; a++) { // Loop over experiment folders
+	if (File.isDirectory(parentDir + dirList[a]) ) { 
+		currentDir = parentDir + dirList[a];
+		fileList = getFileList(currentDir);
+		makeCompositeImages();
+	} else {
+		currentDir = parentDir;
+		fileList = dirList;
+		makeCompositeImages();
+		break
+	}
 
-	if ( File.isDirectory(parentDir + dirList[a]) ) { 
-	currentDir = parentDir + dirList[a];
-	fileList = getFileList(currentDir);
-
+function makeCompositeImages() {
 	
-	for (b = 0; b<fileList.length; b++) { // Loop over files in each folder
+	// Make a file for new composite images
+	targetDir = substring(currentDir,0,lengthOf(currentDir) - 1) + "_composite";
+	if ( !File.exists(targetDir) ) {
+		File.makeDirectory(targetDir)
+	}
+	
+	// Loop over files in each folder
+	for (b = 0; b<fileList.length; b++) {
 	
 		// Open and process images
 		open(currentDir + "/" + fileList[b]);
@@ -73,20 +86,12 @@ for (a=0; a<dirList.length; a++) {
 
 		// Create composite image
 		run("Merge Channels...", c1str + c2str + c3str + c4str + "create");
-	
-		
-		// Make a file to save composite images
-		targetDir = substring(currentDir,0,lengthOf(currentDir)-1) +"_composite";
-		if ( !File.exists(targetDir) ) {
-			File.makeDirectory(targetDir)
-		}
 
 		// Save image
 		imgName = substring(fileList[b],0,lengthOf(fileList[b])-14);
-		saveAs("tiff", targetDir + "/" + imgName + "composite");
+		saveAs("tiff", targetDir + "/" + imgName);
 
 		close("*");
 		}
-	}
 }
 
