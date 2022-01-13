@@ -173,39 +173,34 @@ function [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params)
 
     [~,~,~,ndiffs] = size(diffImg); 
     % Check if any windowed average and difference images exist before saving
-    if exist([expDir filesep imgName '_Ch1_diffImg.tif'], 'file')||exist([expDir filesep imgName '_Ch1_avgImg.tif'], 'file')
+    if exist([expDir filesep imgName '_avgImg.tif'], 'file')||exist([expDir filesep imgName '_diffImg.tif'], 'file')
         if newAvg % If averaging window has been changed, delete all existing files
            warning('off','all');
-           for v = 1:params.nChannels
-                if exist([expDir filesep imgName '_Ch' num2str(v) '_diffImg.tif'])
-                    delete([expDir filesep imgName '_Ch' num2str(v) '_diffImg.tif']);
-                end
-                if exist([expDir filesep imgName '_Ch' num2str(v) '_avgImg.tif'])
-                    delete ([expDir filesep imgName '_Ch' num2str(v) '_avgImg.tif']);
-                end
-           end
-           % Save images with new averaging window
-           for v = 1:params.nChannels
-               % Save difference images
-               for w=1:ndiffs
-                    imwrite(uint16(diffImg(:,:,v,w)),[expDir filesep imgName '_Ch' num2str(v) '_diffImg.tif'],'tif','WriteMode','append','Compression','none');
+           delete ([expDir filesep imgName '_avgImg.tif']);
+           delete ([expDir filesep imgName '_diffImg.tif']);
+           % Save difference images with new averaging window
+           for w=1:ndiffs
+               for v=1:params.nChannels
+                    imwrite(uint16(diffImg(:,:,v,w)),[expDir filesep imgName '_diffImg.tif'],'tif','WriteMode','append','Compression','none');
                end
-               % Save average images
-               for w=1:ndiffs+1
-                   imwrite(uint16(avgImg(:,:,v,w)),[expDir filesep imgName '_Ch' num2str(v) '_avgImg.tif'],'tif','WriteMode','append','Compression','none');
+           end
+           % Save average images
+           for w=1:ndiffs+1
+               for v=1:params.nChannels
+                   imwrite(uint16(avgImg(:,:,v,w)),[expDir filesep imgName '_avgImg.tif'],'tif','WriteMode','append','Compression','none');
                end
            end
         end
     else % Save if no images yet exist
-        for v = 1:params.nChannels
-           % Save difference images
-           for w=1:ndiffs
-                imwrite(uint16(diffImg(:,:,v,w)),[expDir filesep imgName '_Ch' num2str(v) '_diffImg.tif'],'tif','WriteMode','append','Compression','none');
+        for w=1:ndiffs
+            for v=1:params.nChannels
+                imwrite(uint16(diffImg(:,:,v,w)),[expDir filesep imgName '_diffImg.tif'],'tif','WriteMode','append','Compression','none');
            end
-           % Save average images
-           for w=1:ndiffs+1
-               imwrite(uint16(avgImg(:,:,v,w)),[expDir filesep imgName '_Ch' num2str(v) '_avgImg.tif'],'tif','WriteMode','append','Compression','none');
-           end
+        end
+        for w=1:ndiffs+1
+            for v=1:params.nChannels
+                imwrite(uint16(avgImg(:,:,v,w)),[expDir filesep imgName '_avgImg.tif'],'tif','WriteMode','append','Compression','none');
+            end
         end
     end
 
