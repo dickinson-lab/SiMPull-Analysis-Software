@@ -97,13 +97,13 @@ if strcmp(DataType,'Composite Data')
     end
     params.nChannels = nChannels;
     params.baitChNum = baitChNum;
-    params.baitChannel = 'Bait';
+    params.BaitChannel = 'Bait';
     [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params);
 else
     params.LeftChannel = LeftChannel;
     params.RightChannel = RightChannel;
     params.BaitPos = BaitPos;
-    params.baitChannel = Answer.([BaitPos 'Channel']); 
+    params.BaitChannel = Answer.([BaitPos 'Channel']); 
     [imgName, dynData, params] = detCoApp_dv(expDir,imgFile,params);
 end
 
@@ -252,11 +252,13 @@ function [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params)
     % instead, just copy the positions of spots found in the bait channel and apply a registration correction.
     % At the same time, identify and ignore bait spots that are so close to the edge that they aren't visible in the prey channel
     waitbar(0,wb,'Getting prey intensity traces...');
+    params.preyChNums = [];
     for j = 1:params.nChannels
         if j == params.baitChNum
             continue %Skip the bait channel
         end
-        preyChannel = ['preyCh' num2str(j)];
+        params.preyChNums(end+1) = j; %Save information about which channel numbers are prey
+        preyChannel = ['PreyCh' num2str(j)];
         dynData.([preyChannel 'SpotData']) = struct('spotLocation',[]);
         index = true(dynData.BaitSpotCount,1);
         for d = 1:dynData.BaitSpotCount
@@ -390,7 +392,7 @@ function [imgName, dynData, params] = detCoApp_dv(expDir,imgFile,params)
     clear preyAvg preyDiff
 
     %% Run PS on the bait channel
-    baitChannel = params.baitChannel;
+    baitChannel = params.BaitChannel;
     [~,~,ndiffs] = size(baitDiff);
     lastFoundSpots = {};
     for b = 1:ndiffs
