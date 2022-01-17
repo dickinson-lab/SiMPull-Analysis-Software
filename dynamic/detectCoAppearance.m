@@ -108,7 +108,7 @@ else
 end
 
 %% Run blinkerFinder.m
-dynData = blinkerFinder(dynData,params.baitChannel);
+dynData = blinkerFinder(dynData,params.BaitChannel);
 
 %% Plot coAppearance over time
 % Calculated time elapsed between embryo lysis and data acquisition and save in params
