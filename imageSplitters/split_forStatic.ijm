@@ -1,5 +1,5 @@
 // Get files to process
-parentDir = getDirectory("Choose a Directory containing Folders of experiments");
+parentDir = getDirectory("Choose a Directory containing Folders of experiments or a single experiment Folder.");
 dirList = getFileList(parentDir);
 
 // Dialog box with options
@@ -88,10 +88,10 @@ function makeCompositeImages() {
 		run("Merge Channels...", c1str + c2str + c3str + c4str + "create");
 
 		// Save image
-		imgName = substring(fileList[b],0,lengthOf(fileList[b])-14);
-		saveAs("tiff", targetDir + "/" + imgName);
+		imgName = substring(fileList[b],0,lengthOf(fileList[b])-15);
+		saveAs("tiff", targetDir + "/" + imgName + ".tif");
 
 		close("*");
-		}
+	}
 }
 
