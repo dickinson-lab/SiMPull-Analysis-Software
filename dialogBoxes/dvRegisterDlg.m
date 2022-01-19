@@ -12,7 +12,7 @@ function [Answer, Cancelled] = dvRegisterDlg(expDir)
     Formats = {};
     DefAns = struct([]);
 
-    Prompt(1,:) = {'\fontsize{14}Choose a representative image to perform dual-view registration. This registration will then be applied across all of your images.',[],[]};
+    Prompt(1,:) = {'\fontsize{14}Choose a representative image to perform registration. This registration will then be applied across all of your images.',[],[]};
     Formats(1,1).type = 'text';
     Formats(1,1).span = [1 2];
 
