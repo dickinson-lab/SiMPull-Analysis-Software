@@ -7,7 +7,7 @@ trendWindow = 50;
 
 % If data source is composite images...
 if strcmp(params.DataType, 'Composite Data')
-    baitChannel = params.baitChannel;
+    baitChannel = params.BaitChannel;
     % Calculate % colocalization for molecules appearing in each time window
     lastWindow = max(cell2mat({dynData.([baitChannel 'SpotData']).appearedInWindow}));
     baitsCounted = zeros(1, lastWindow);
@@ -16,7 +16,7 @@ if strcmp(params.DataType, 'Composite Data')
         if s == params.baitChNum
             continue %Skip the bait channel
         end
-        preyChannel = ['preyCh' num2str(s)];
+        preyChannel = ['PreyCh' num2str(s)];
         colocData = {dynData.([baitChannel 'SpotData']).(['appears_w_' preyChannel])};
         coAppearing = zeros(1,lastWindow);
         for a = 1:lastWindow
@@ -93,10 +93,10 @@ if strcmp(params.DataType, 'Composite Data')
         if s == params.baitChNum
             continue %Skip the bait channel
         end
-        preyChannel = ['preyCh' num2str(s)];
-        plot(x,pctColoc.([preyChannel]),'o','MarkerSize',2.5,'Color',colors(s,:))
+        preyChannel = ['PreyCh' num2str(s)];
+        plot(x,pctColoc.([preyChannel]),'o','MarkerSize',2.5,'Color',colors(s,:),'DisplayName',preyChannel)
         hold on
-        plot(x,colocTrend.([preyChannel]),'-','LineWidth',1,'Color',colors(s,:))
+        plot(x,colocTrend.([preyChannel]),'-','LineWidth',1,'Color',colors(s,:),'DisplayName',preyChannel)
     end
 else
     plot(x,pctColoc,'o','MarkerSize',2.5,'Color','k')
