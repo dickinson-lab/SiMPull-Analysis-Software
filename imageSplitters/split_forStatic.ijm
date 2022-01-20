@@ -28,6 +28,7 @@ for (a=0; a<dirList.length; a++) { // Loop over experiment folders
 		makeCompositeImages();
 		break
 	}
+}
 
 function makeCompositeImages() {
 	
