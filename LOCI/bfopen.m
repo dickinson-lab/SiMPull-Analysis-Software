@@ -98,7 +98,7 @@ else
     planeSize = loci.formats.FormatTools.getPlaneSize(r);
 end
 
-if planeSize/(1024)^3 >= 2,
+if planeSize/(1024)^3 >= 2
     error(['Image plane too large. Only 2GB of data can be extracted '...
         'at one time. You can workaround the problem by opening '...
         'the plane in tiles.']);
@@ -117,7 +117,7 @@ for s = 1:numSeries
     colorMaps = cell(numImages);
     for i = 1:numImages
         if mod(i, 72) == 1
-            fprintf('\n    ');
+            %fprintf('\n    ');
         end
         %fprintf('.');
         arr = bfGetPlane(r, i, varargin{:});

@@ -285,11 +285,13 @@ for a=1:length(dirList)
             %% Loop through each image (state position) in the dataset
             for b = 1:nPositions
                 imageName = fileList(b).name;
-                rawImage = squeeze(bfread([nd2Dir filesep fileList(b).name],1,'Timepoints','all','ShowProgress',false));
-                if iscell(rawImage) % bfread sometimes returns a cell array, for reasons that are unclear - check and convert if needed
-                    rawImage = cat(3, rawImage{:}); 
+                imgCell = bfopen([nd2Dir filesep fileList(b).name]);
+                [ymax, xmax] = size(imgCell{1}{1});
+                [tmax, ~] = size(imgCell{1});
+                rawImage = zeros(ymax,xmax,tmax,'uint16');
+                for c = 1:tmax
+                    rawImage(:,:,c) = imgCell{1}{c};
                 end
-                [ymax,xmax,tmax] = size(rawImage);
                 gridData(index(b)).imageSize = [ymax xmax];
                 params.imageName = imageName(1:(length(imageName)-4));
                 gridData(index(b)).imageName = params.imageName;
