@@ -87,7 +87,7 @@ function makeCompositeImages() {
 
 		// Save new image
 		suffixIndex = indexOf(fileList[b],"_MMStack");
-		imgName = substring(fileList[b],0,suffixIndex) + "_" + b-1;				
+		imgName = substring(fileList[b],0,suffixIndex) + "_" + b;				
 		saveAs("tiff", targetDir + "/" + imgName + ".tif");
 		close("*");
 		showProgress(a*dirList.length+b, dirList.length * fileList.length);
