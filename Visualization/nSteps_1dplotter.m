@@ -30,9 +30,13 @@ for c = 1:nChannels
     imageNames = cell(size(gridData));
     [imageNames{:}]=gridData.imageName;
     splitNames = cellfun(@(x) strsplit(x,'_'), imageNames, 'UniformOutput', false);
-    xvalues = cell2mat( cellfun(@(x) str2num(x{end}), splitNames, 'UniformOutput', false) );
+    if contains(imageNames,'composite')
+        xvalues = cell2mat(cellfun(@(x) str2num(x{end-1}), splitNames, 'UniformOutput', false) );
+    else
+        xvalues = cell2mat( cellfun(@(x) str2num(x{end}), splitNames, 'UniformOutput', false) );
+    end
     
-    figcolors = hsv(12);
+    figcolors = hsv(length(statsByColor.([color 'StepHist'])));
     hold on
     for b = 1:length(statsByColor.([color 'StepHist']))
         plot(xvalues,stepDistNorm(:,b),'Marker','.','MarkerSize',10,'Color',figcolors(b,:));
