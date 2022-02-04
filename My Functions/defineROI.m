@@ -46,7 +46,7 @@ function [gridData, statsByColor, summary] = defineROI(gridData, channels, nChan
             %Get spot location
             spotLoc = gridData(selection).([color1 'SpotData'])(d).spotLocation;
             %If necessary, transform to account for registration
-            if isfield(statsByColor,[color1 'RegistrationData']) && strcmp(statsByColor.([color1 'DVposition']),'Right')
+            if isfield(statsByColor,[color1 'RegistrationData'])
                 spotLoc = transformPointsForward( statsByColor.([color1 'RegistrationData']).Transformation, spotLoc);
             end
             index(d) = ( ROI(1) < spotLoc(1) && spotLoc(1) < ROI(1)+ROI(3) && ROI(2) < spotLoc(2) && spotLoc(2) < ROI(2)+ROI(4) );
