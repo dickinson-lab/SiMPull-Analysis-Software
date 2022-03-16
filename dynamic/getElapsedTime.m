@@ -21,7 +21,7 @@ opts.EmptyLineRule = "read";
 opts = setvaropts(opts, "Width0", "EmptyFieldRule", "auto");
 
 %% Import the metadata
-metaData = readtable([expDir imgName '_MMStack_Default_metadata.txt'], opts);
+metaData = readtable([expDir imgName '_MMStack_Pos0_metadata.txt'], opts);
 
 %% Find aquisition start time
 startTime = 0;

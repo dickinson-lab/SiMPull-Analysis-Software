@@ -160,8 +160,7 @@ function [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params)
     % Check if data have already been processed. If so, check if the value of 'window' has changed.
     newAvg = false;
     slash = strfind(imgFile{1},filesep);
-    imgName = imgFile{1}(slash(end)+1:strfind(imgFile{1},'.tif')-1);
-    imgName = imgName(1:find(imgName=='_',1,'last')-1);
+    imgName = imgFile{1}(slash(end)+1:strfind(imgFile{1},'_MMStack')-1);
     if exist([expDir filesep imgName '.mat'], 'file')
         existingData = load([expDir filesep imgName '.mat'], 'dynData');
         % If a different number of windows were used previously, make newAvg flag true for next step
