@@ -1,8 +1,7 @@
 // Get files to process
 parentDir = getDirectory("Choose a Directory containing Folders of experiments or a single experiment Folder.");
 dirList = getFileList(parentDir);
-
-//setBatchMode(true);
+setBatchMode(true);
 
 for (a=0; a<dirList.length; a++) { // Loop over experiment folders
 	if (File.isDirectory(parentDir + dirList[a]) ) { 
