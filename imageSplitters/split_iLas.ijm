@@ -1,0 +1,57 @@
+// Get files to process
+parentDir = getDirectory("Choose a Directory containing Folders of experiments or a single experiment Folder.");
+dirList = getFileList(parentDir);
+setBatchMode(true);
+
+for (a=0; a<dirList.length; a++) { // Loop over experiment folders
+	if (File.isDirectory(parentDir + dirList[a]) ) { 
+		currentDir = parentDir + dirList[a];
+		fileList = getFileList(currentDir);
+		makeCompositeImages();
+	} else {
+		currentDir = parentDir;
+		fileList = dirList;
+		makeCompositeImages();
+		break
+	}
+}
+
+function makeCompositeImages() {
+	
+	// Loop over files in each folder
+	for (b = 0; b<fileList.length; b++) {
+		if ( endsWith(fileList[b],".ome.tif") ) {
+	
+		// Make a file for new composite images
+		targetDir = substring(currentDir,0,lengthOf(currentDir) - 1) + "_composite";
+		if ( !File.exists(targetDir) ) {
+			File.makeDirectory(targetDir)
+		}
+
+		// Open and process images
+		open(currentDir + "/" + fileList[b]);
+		activeImg = getTitle();
+		getDimensions(width,height,channels,slices,frames);
+
+		selectWindow(activeImg);
+		makeRectangle(0,0,width,height/2);
+		run("Duplicate...", "title=488 duplicate");
+		c1str = "c1=488 ";
+		
+		selectWindow(activeImg);
+		makeRectangle(0,height/2,width,height/2);
+		run("Duplicate...", "title=561 duplicate");
+		c2str = "c2=561 ";
+				
+		// Make composite
+		run("Merge Channels...", c1str + c2str + "create");
+
+		// Save new image
+		suffixIndex = indexOf(fileList[b],"_MMStack");
+		imgName = substring(fileList[b],0,suffixIndex) + "_" + b;				
+		saveAs("tiff", targetDir + "/" + imgName + ".tif");
+		close("*");
+		showProgress(a*dirList.length+b, dirList.length * fileList.length);
+		}
+	}
+}
