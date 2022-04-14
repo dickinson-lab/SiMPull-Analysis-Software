@@ -8,8 +8,8 @@ warning('off'); %Prevent unnecessary warnings from libtiff
 % Ask user for data files
 matFiles = uipickfiles('Prompt','Select data files to analyze','Type',{'*.mat'});
 
-statusbar = waitbar(0);
-for a = 1:length(matFiles)
+fileBar = waitbar(0);
+for a = 1:length(matFiles)  
     % Get image name and root directory
     slash = strfind(matFiles{a},filesep);
     fileName = matFiles{a}(slash(end)+1:end); 
@@ -24,10 +24,10 @@ for a = 1:length(matFiles)
     end
          
     %% Loop over spots, count spots for each
+    waitbar((a-1)/length(matFiles),fileBar,strrep(['Counting Photobleaching Steps for ' fileName],'_','\_'));
     nSpots = length(dynData.([BaitChannel 'SpotData']));
     needsLongerTrace = false(params.nChannels,nSpots); %This variable will be set to true each time a spot doesn't bleach completely.
     for c = 1:nSpots
-        waitbar( (c-1)/length(dynData.([BaitChannel 'SpotData'])),statusbar,strrep(['Counting Photobleaching Steps for ' fileName],'_','\_'));
         %Bait Channel 
         countStepsDynamic(c, BaitChannel, params.baitChNum);
         %Prey Channel(s)
@@ -48,7 +48,7 @@ for a = 1:length(matFiles)
 
     %% Pull out longer intensity traces and re-count where needed
     if any(any(needsLongerTrace))
-        waitbar(0,statusbar,strrep(['Loading Images for ' fileName],'_','\_'));
+        waitbar((a-1)/length(matFiles),fileBar,strrep(['Loading Images for ' fileName],'_','\_'));
         % Locate image files
         d = uipickfiles_subs.filtered_dir([expDir filesep '*.tif'],'',false,@(x,c)uipickfiles_subs.file_sort(x,[1 0 0],c)); % See comments in uipickfiles_subs for syntax here
         imgFile = arrayfun(@(x) [x.folder filesep x.name], d, 'UniformOutput', false);
@@ -76,9 +76,11 @@ for a = 1:length(matFiles)
         % Load image data piecewise into memory, get longer traces and re-count
         appearedInWindow = [dynData.([BaitChannel 'SpotData']).appearedInWindow];
         traceFirstFrame = (appearedInWindow - 1) .* params.window + 1;
+        statusBar = waitbar(0);
         for d = traceLength:traceLength:tmax-1
+            waitbar(d/(tmax-1),statusBar,'Extracting longer intensity traces');
             traceWindowStart = d+1;
-            traceWindowEnd = d+traceLength;
+            traceWindowEnd = min(d+traceLength, tmax);
             firstFrameIdx = traceFirstFrame < traceWindowStart;
            
             % Bait Channel
@@ -106,11 +108,11 @@ for a = 1:length(matFiles)
     end
        
     %% Save 
-    waitbar((a-1)/length(matFiles),statusbar,strrep(['Saving ' fileName],'_','\_'));
+    waitbar((a-1)/length(matFiles),fileBar,strrep(['Saving ' fileName],'_','\_'));
     save([expDir filesep fileName], 'dynData','params');
 end
 
-close(statusbar)
+close(fileBar)
 
     %% Helper function to count bleaching events for a single trace
     % Since this is a nested function, it can access variables from the parent
