@@ -42,9 +42,9 @@ for c = 1:nChannels
     bkgMean = [];
     
     for b=1:number
-        if b>1 %No need to re-load the first file since we already loaded it above
+       % if b>1 %No need to re-load the first file since we already loaded it above
             load([matPath{b} filesep matFile{b}]);
-        end
+        %end
         fileName = matFile{b};
         
         %Get y values
@@ -60,8 +60,11 @@ for c = 1:nChannels
         imageNames = cell(size(gridData));
         [imageNames{:}]=gridData.imageName;
         splitNames = cellfun(@(x) strsplit(x,'_'), imageNames, 'UniformOutput', false);
-        xvalues = cell2mat( cellfun(@(x) str2num(x{end}), splitNames, 'UniformOutput', false) );
-        
+        if contains(imageNames{1},'composite') % Necessary if images were acquired using a quad-view camera set up and saved as composite images before analysis (mainly applies to data acquired Dec2021-Jan2022)
+            xvalues = cell2mat( cellfun(@(x) str2num(x{end-1}), splitNames, 'UniformOutput', false));
+        else
+            xvalues = cell2mat( cellfun(@(x) str2num(x{end}), splitNames, 'UniformOutput', false));
+        end
         plot(xvalues,spotCount,'Marker','.','MarkerSize',10,'Color',colors(b,:),'DisplayName',strrep(fileName(1:end-4),'_','\_'));
         
         % If this is a background dataset, record the mean
