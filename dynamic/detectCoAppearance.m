@@ -537,6 +537,7 @@ function dynData = findCoApp(dynData, baitChannel, preyChannel, wb)
         dynData.([preyChannel 'SpotData'])(c).stepstdev = results.stepstdev;
         if error
             dynData.([preyChannel 'SpotData'])(c).appearTime = 'Analysis Failed';
+            dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = NaN;
             continue
         end
 
