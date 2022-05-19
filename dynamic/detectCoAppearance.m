@@ -568,6 +568,6 @@ function dynData = findCoApp(dynData, baitChannel, preyChannel, wb)
     end
 
     % Tally results
-    dynData.([baitChannel 'AppearanceFound']) = sum( ~isnan([ dynData.([baitChannel 'SpotData']).(['appears_w_' preyChannel]) ]) ) ;
+    dynData.([baitChannel 'AppearanceFound']) = sum( isnumeric([ dynData.([baitChannel 'SpotData']).appearTime ]) ) ;
     dynData.([baitChannel preyChannel 'CoAppearing']) = sum([ dynData.([baitChannel 'SpotData']).(['appears_w_' preyChannel]) ], 'omitnan');
 end
