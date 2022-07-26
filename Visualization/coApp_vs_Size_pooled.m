@@ -16,7 +16,16 @@ for a = 1:length(matFiles)
     % Get image name and root directory
     slash = strfind(matFiles{a},filesep);
     fileName = matFiles{a}(slash(end)+1:end); 
-    expDir = matFiles{a}(1:slash(end));
+    if isfolder(matFiles{a})
+        fileName = [fileName '.mat'];
+        expDir = matFiles{a};
+        if ~isfile([expDir filesep fileName])
+            warndlg(['No .mat file found for selected folder ' expDir]);
+            continue
+        end
+    else
+        expDir = matFiles{a}(1:slash(end));
+    end
     
     % Load data structure
     load([expDir filesep fileName],'dynData','params');
@@ -31,9 +40,9 @@ for a = 1:length(matFiles)
     lastWindow = max(cell2mat({dynData.([BaitChannel 'SpotData']).appearedInWindow}));
     baitsCounted = zeros(1, lastWindow);
     % Create structs for each prey's % co-appearance with bait
-    for b = 1:3
-        if b == 3
-            spotChoiceIdx = [dynData.BaitSpotData.nFluors] >= 3;
+    for b = 1:5
+        if b == 5
+            spotChoiceIdx = [dynData.BaitSpotData.nFluors] >= 5;
         else
             spotChoiceIdx = [dynData.BaitSpotData.nFluors] == b;
         end
@@ -81,7 +90,7 @@ for s = 1:params.nChannels
         continue %Skip the bait channel
     end
     preyChannel = ['PreyCh' num2str(s)];
-    for d = 1:3
+    for d = 1:5
         % Condense data so that summary statistics can be counted
         coAppearing = sum(totalCoApp.(preyChannel){d},1,'omitnan');
         baitsCounted = sum(totalCounted.(preyChannel){d},1,'omitnan');
@@ -93,6 +102,7 @@ for s = 1:params.nChannels
         colocTrend = 100 * (preyTrend ./ baitTrend);
         % Calculate total (time-independent) co-appearance
         totalPctCoApp(d) = 100 * (sum(coAppearing) / sum(baitsCounted) );
+        disp(['N(' num2str(d) ')=' num2str(sum(baitsCounted))]);
 
         %Plot
         f = figure('Name',['Traces with ' num2str(d) ' steps']);
@@ -106,6 +116,6 @@ for s = 1:params.nChannels
         plot(x,colocTrend,'-','LineWidth',1,'Color',colors(s,:),'DisplayName',preyChannel)
     end
     figure('Name','Total pct. co-appearance');
-    bar(1:3,totalPctCoApp);
+    bar(1:5,totalPctCoApp);
 end
 

@@ -239,6 +239,11 @@ function [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params)
         % Get intensity traces
         dynData = extractIntensityTraces('Bait', subStack, params, dynData);
     end
+    
+    % Make sure the BaitSpotData structure is organized as a column vector
+    if isrow(dynData.BaitSpotData)
+        dynData.BaitSpotData = dynData.BaitSpotData';
+    end
 
     % Count the total number of bait spots across difference images
     [dynData.BaitSpotCount,~] = size(dynData.BaitSpotData);
