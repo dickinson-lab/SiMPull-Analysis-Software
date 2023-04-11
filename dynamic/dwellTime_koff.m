@@ -83,7 +83,7 @@ function [dynData, koff_summary] = dwellTime_koff(varargin)
     end
     
     % Summary structure for results - this facilitates copying into Excel
-    koff_summary = struct('Sample_name',[],'k_obs_lower',[],'k_obs',[],'k_obs_upper',[],'n',[],'non_disappearing',[]);
+    koff_summary = struct('Sample_name',[]); %,'k_obs_lower',[],'k_obs',[],'k_obs_upper',[],'n',[],'non_disappearing',[]);
     
     if length(matFiles) > 1
         statusbar = waitbar(0);
@@ -103,11 +103,6 @@ function [dynData, koff_summary] = dwellTime_koff(varargin)
             load([expDir filesep fileName]);
         end
         BaitChannel = params.BaitChannel; %Extract channel info - this is just for code readability
-        if ~strcmp(params.DataType, 'Composite Data')
-            PreyChannel = params.PreyChannel;
-        else
-            PreyChannel = ['PreyCh' num2str(params.preyChNums)]; % Needs to be updated to handle data with more than two channels
-        end
         
         if length(matFiles) > 1
             waitbar((a-1)/length(matFiles),statusbar,strrep(['Finding Dwell Times for ' fileName],'_','\_'));
@@ -127,8 +122,16 @@ function [dynData, koff_summary] = dwellTime_koff(varargin)
                 % Bait channel
                 [dynData.([BaitChannel 'SpotData'])(c).dwellTime, dynData.([BaitChannel 'SpotData'])(c).noDisappearance] = calculateDwellTime(dynData.([BaitChannel 'SpotData'])(c));
     
-                % Prey channel
-                [dynData.([PreyChannel 'SpotData'])(c).dwellTime, dynData.([PreyChannel 'SpotData'])(c).noDisappearance] = calculateDwellTime(dynData.([PreyChannel 'SpotData'])(c));
+                % Prey channel(s)
+                if ~strcmp(params.DataType, 'Composite Data')
+                    PreyChannel = params.PreyChannel;
+                    [dynData.([PreyChannel 'SpotData'])(c).dwellTime, dynData.([PreyChannel 'SpotData'])(c).noDisappearance] = calculateDwellTime(dynData.([PreyChannel 'SpotData'])(c));
+                else
+                    for d = 1:length(params.preyChNums)
+                        PreyChannel = ['PreyCh' num2str(params.preyChNums(d))]; 
+                        [dynData.([PreyChannel 'SpotData'])(c).dwellTime, dynData.([PreyChannel 'SpotData'])(c).noDisappearance] = calculateDwellTime(dynData.([PreyChannel 'SpotData'])(c));
+                    end
+                end
             end
         end
         
@@ -136,63 +139,68 @@ function [dynData, koff_summary] = dwellTime_koff(varargin)
         if length(matFiles) > 1
             waitbar((a-1)/length(matFiles),statusbar,strrep(['Calculating k_off for ' fileName],'_','\_'));
         end
-        
-        % Pull out co-appearing spots - that's all we're interested in for this calculation
-        nonSkippedIndex = ~cellfun(@isnan, {dynData.([BaitChannel 'SpotData']).dwellTime});
-        coAppIndex = cellfun(@(x) ~isempty(x) && ~isnan(x) && x==true, {dynData.([BaitChannel 'SpotData']).(['appears_w_' PreyChannel])});
-        hasStepIndex = ~cellfun(@isnan, {dynData.([PreyChannel 'SpotData']).dwellTime});
-        index = nonSkippedIndex & coAppIndex & hasStepIndex;
-        baitStruct = dynData.([BaitChannel 'SpotData'])(index); 
-        preyStruct = dynData.([PreyChannel 'SpotData'])(index); 
-        
-        % Count non-disappearing spots - if this is a large number, we might need to re-process data to pull longer intensity traces
-        baitNoDisappearance = sum(cell2mat({baitStruct.noDisappearance}));
-        preyNoDisappearance = sum(cell2mat({preyStruct.noDisappearance}));
-        
-        % Count up the number of spots observed and the number of observations of the complex remaining intact 
-        n = sum(index); % Number of complexes analyzed
-        n_bound = sum(cell2mat({preyStruct.dwellTime})); % n_bound is the number of times we observed the prey protein staying bound (not disappearing). 
-        
-        % Count the number of prey protein disappearances.  We only count cases where 
-        % 1) The prey protein is observed to disappear, and 
-        % 2) The bait and prey do not disappear together, since co-disappearing traces are likely to just be instances of the whole complex dissociating.
-        index1 = ~cell2mat({preyStruct.noDisappearance});
-        index2 = abs( cell2mat({preyStruct.dwellTime}) - cell2mat({baitStruct.dwellTime}) ) > 4; % Similar to the criterion for co-appearance, spots are considered to disappear at the same time if they disappear within 4 frames of each other.
-        n_off = sum(index1&index2);
-        
-        % Calculate P and its confidence intervals
-        P(1,1) = betaincinv(0.025, 1+n_off, 1+n_bound, 'upper'); %Upper bound of confidence interval
-        P(2,1) = (1 + n_off) / (2 + n_off + n_bound);
-        P(3,1) = betaincinv(0.025, 1+n_off, 1+n_bound, 'lower'); %Lower bound of confidence interval
-    
-        % Calculate koff
-        k_obs = -log(1-P);
-        
-        %% Display the results
-        if printResults
-            disp(['Results for ' fileName ':']);
-            disp(['Analyzed data for ' num2str(n) ' co-appearing spots']);
-            disp(['Prey channel k_obs = ' num2str(k_obs(2)) ' (' num2str(k_obs(3)) ', ' num2str(k_obs(1)) ')']);
-            disp([ num2str(baitNoDisappearance) ' bait molecules that remained bound throughout their intensity traces' ]);
-            disp([ num2str(preyNoDisappearance) ' prey molecules that remained bound throughout their intensity traces' ]);
-            disp([ num2str(sum(~index2)) ' bait and prey molecules disappeared simultaneously']);
-            disp(newline);
-        end
-        
-        %Add results to summary structure
         koff_summary(a).Sample_name = fileName;
-        koff_summary(a).k_obs_lower = k_obs(3);
-        koff_summary(a).k_obs = k_obs(2);
-        koff_summary(a).k_obs_upper = k_obs(1);
-        koff_summary(a).n = n;
-        koff_summary(a).non_disappearing = preyNoDisappearance; 
+
+        for e = 1:length(params.preyChNums)
+            PreyChannel = ['PreyCh' num2str(params.preyChNums(e))]; 
+        
+            % Pull out co-appearing spots - that's all we're interested in for this calculation
+            nonSkippedIndex = ~cellfun(@isnan, {dynData.([BaitChannel 'SpotData']).dwellTime});
+            coAppIndex = cellfun(@(x) ~isempty(x) && ~isnan(x) && x==true, {dynData.([BaitChannel 'SpotData']).(['appears_w_' PreyChannel])});
+            hasStepIndex = ~cellfun(@isnan, {dynData.([PreyChannel 'SpotData']).dwellTime});
+            index = nonSkippedIndex & coAppIndex & hasStepIndex;
+            baitStruct = dynData.([BaitChannel 'SpotData'])(index); 
+            preyStruct = dynData.([PreyChannel 'SpotData'])(index); 
+            
+            % Count non-disappearing spots - if this is a large number, we might need to re-process data to pull longer intensity traces
+            baitNoDisappearance = sum(cell2mat({baitStruct.noDisappearance}));
+            preyNoDisappearance = sum(cell2mat({preyStruct.noDisappearance}));
+            
+            % Count up the number of spots observed and the number of observations of the complex remaining intact 
+            n = sum(index); % Number of complexes analyzed
+            n_bound = sum(cell2mat({preyStruct.dwellTime})); % n_bound is the number of times we observed the prey protein staying bound (not disappearing). 
+            
+            % Count the number of prey protein disappearances.  We only count cases where 
+            % 1) The prey protein is observed to disappear, and 
+            % 2) The bait and prey do not disappear together, since co-disappearing traces are likely to just be instances of the whole complex dissociating.
+            index1 = ~cell2mat({preyStruct.noDisappearance});
+            index2 = abs( cell2mat({preyStruct.dwellTime}) - cell2mat({baitStruct.dwellTime}) ) > 4; % Similar to the criterion for co-appearance, spots are considered to disappear at the same time if they disappear within 4 frames of each other.
+            n_off = sum(index1&index2);
+            
+            % Calculate P and its confidence intervals
+            P(1,1) = betaincinv(0.025, 1+n_off, 1+n_bound, 'upper'); %Upper bound of confidence interval
+            P(2,1) = (1 + n_off) / (2 + n_off + n_bound);
+            P(3,1) = betaincinv(0.025, 1+n_off, 1+n_bound, 'lower'); %Lower bound of confidence interval
+        
+            % Calculate koff
+            k_obs = -log(1-P);
+            
+            %% Display the results
+            if printResults
+                disp(['Results for ' fileName ', ' PreyChannel ' channel:']);
+                disp(['Analyzed data for ' num2str(n) ' co-appearing spots']);
+                disp(['Prey channel k_obs = ' num2str(k_obs(2)) ' (' num2str(k_obs(3)) ', ' num2str(k_obs(1)) ')']);
+                disp([ num2str(baitNoDisappearance) ' bait molecules that remained bound throughout their intensity traces' ]);
+                disp([ num2str(preyNoDisappearance) ' prey molecules that remained bound throughout their intensity traces' ]);
+                disp([ num2str(sum(~index2)) ' bait and prey molecules disappeared simultaneously']);
+                disp(newline);
+            end
+            
+            %Add results to summary structure
+            koff_summary(a).([PreyChannel '_k_obs_lower']) = k_obs(3);
+            koff_summary(a).([PreyChannel '_k_obs']) = k_obs(2);
+            koff_summary(a).([PreyChannel '_k_obs_upper']) = k_obs(1);
+            koff_summary(a).([PreyChannel '_n']) = n;
+            koff_summary(a).([PreyChannel '_non_disappearing']) = preyNoDisappearance; 
+        
+            dynData.([PreyChannel '_P_off']) = P;
+            dynData.([PreyChannel '_k_obs']) = k_obs;
+        end
         
         %Save 
         if length(matFiles) > 1
             waitbar((a-1)/length(matFiles),statusbar,strrep(['Saving ' fileName],'_','\_'));
         end
-        dynData.([PreyChannel '_P_off']) = P;
-        dynData.([PreyChannel '_k_obs']) = k_obs;
         save([expDir filesep fileName], 'dynData','params','koff_summary');
     end
     if length(matFiles) > 1
