@@ -567,7 +567,7 @@ for iData = 1:nData
         
         % Calculate mean and confidence intervals
         if opt.showWeightedMean
-            m(iData) = nanmean(currentData(:,2));
+            m(iData) = mean(currentData(:,2),'omitnan');
             if ~allMarkersSameSize
                 currNBaits = opt.markerSizes(currentDataIdx,1);
                 weights = currNBaits ./ sum(currNBaits);
