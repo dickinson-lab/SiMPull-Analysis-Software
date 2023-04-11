@@ -18,109 +18,187 @@
 % analyzed are 1:1 heterodimers.  It is not designed to deal with oligomers
 % and will give strange results if data from an oligomeric complex is analyzed.
 
-% Optional filter for to exclude traces with too many bait steps: this avoids analyzing 
-% nonsensical traces in dense regions of the data. Set to 0 to disable. 
-maxBaitSteps = 4;
+% Usage: [dynData, summary] = dwellTime_koff(maxBaitSteps, matFiles, printResults, dynData, params)
+% Parameters (all optional): 
+    % maxBaitSteps: Maximum number of steps a trace can have in order to be analyzed.
+    % This avoids analyzing nonsensical traces in dense regions of the data.
+    % Filter is disabled if 0 or blank
 
-% Ask user for data files
-matFiles = uipickfiles('Prompt','Select data files to analyze','Type',{'*.mat'});
+    % matFiles: List of data files to be analyzed. Cell array of strings,
+    % each containing a path to one .mat file. If left blank, user is
+    % prompted to select files. 
 
-% Summary structure for results - this facilitates copying into Excel
-summary = struct('Sample_name',[],'k_obs_lower',[],'k_obs',[],'k_obs_upper',[],'n',[],'non_disappearing',[]);
+    % printResults: Logical that determines whether to display the results
+    % on the command line. Default: true.
 
-statusbar = waitbar(0);
-for a = 1:length(matFiles)
-    % Get image name and root directory
-    slash = strfind(matFiles{a},filesep);
-    fileName = matFiles{a}(slash(end)+1:end); 
-    expDir = matFiles{a}(1:slash(end));
-    
-    waitbar((a-1)/length(matFiles),statusbar,strrep(['Loading ' fileName],'_','\_'));
-    
-    % Load data
-    load([expDir filesep fileName]);
-    BaitChannel = params.BaitChannel; %Extract channel info - this is just for code readability
-    PreyChannel = params.PreyChannel;
-         
-    waitbar((a-1)/length(matFiles),statusbar,strrep(['Finding Dwell Times for ' fileName],'_','\_'));
-    %% Loop over spots, find dwell times for each
-    for c = 1:length(dynData.([BaitChannel 'SpotData']))     
-        [nBaitSteps, ~] = size(dynData.([BaitChannel 'SpotData'])(c).changepoints);
-        if maxBaitSteps && nBaitSteps > maxBaitSteps
-            %Skip analyzing this trace if it's too complicated
-            dynData.([BaitChannel 'SpotData'])(c).dwellTime = NaN;
-            dynData.([BaitChannel 'SpotData'])(c).noDisappearance = NaN;
-            dynData.([PreyChannel 'SpotData'])(c).dwellTime = NaN;
-            dynData.([PreyChannel 'SpotData'])(c).noDisappearance = NaN;
-        else
-            %Otherwise, continue
-            % Bait channel
-            [dynData.([BaitChannel 'SpotData'])(c).dwellTime, dynData.([BaitChannel 'SpotData'])(c).noDisappearance] = calculateDwellTime(dynData.([BaitChannel 'SpotData'])(c));
+    % dynData, params: Data to analyze. If this is passed in, the function will not
+    % load new data from disk. Instead, it will analyze the dynData
+    % structure it was given and will save the results in the path given by
+    % 'matFiles'. Both dynData and params must be passed or the function
+    % will give an error. This syntax only supports analyzing a single dataset. 
 
-            % Prey channel
-            [dynData.([PreyChannel 'SpotData'])(c).dwellTime, dynData.([PreyChannel 'SpotData'])(c).noDisappearance] = calculateDwellTime(dynData.([PreyChannel 'SpotData'])(c));
+function [dynData, koff_summary] = dwellTime_koff(varargin)
+    %Parse user input
+    if nargin == 0
+        maxBaitSteps = 0;
+        matFiles = {};
+        printResults = true;
+        dynData = [];
+        load = true;
+    elseif nargin == 1
+        maxBaitSteps = varargin{1};
+        matFiles = {}; 
+        printResults = true;
+        dynData = [];
+        load = true;
+    elseif nargin == 2
+        maxBaitSteps = varargin{1};
+        matFiles = varargin{2};
+        printResults = true;
+        dynData = [];
+        load = true;
+    elseif nargin == 3
+        maxBaitSteps = varargin{1};
+        matFiles = varargin{2};
+        printResults = varargin{3};
+        dynData = [];
+        load = true;
+    elseif nargin == 5
+        maxBaitSteps = varargin{1};
+        matFiles = varargin{2};
+        printResults = varargin{3};
+        dynData = varargin{4};
+        params = varargin{5};
+        load = false;
+        if length(matFiles) ~= 1
+            error('Only a single file name is allowed if dynData is passed in');
         end
+    else
+        error('Wrong number of input arguments');
     end
     
-    %% Use the dwell time information to calculate k_off
-    waitbar((a-1)/length(matFiles),statusbar,strrep(['Calculating k_off for ' fileName],'_','\_'));
+    if isempty(matFiles)
+        % Ask user for data files
+        matFiles = uipickfiles('Prompt','Select data files to analyze','Type',{'*.mat'});
+    end
     
-    % Pull out co-appearing spots - that's all we're interested in for this calculation
-    nonSkippedIndex = ~cellfun(@isnan, {dynData.([BaitChannel 'SpotData']).dwellTime});
-    coAppIndex = cellfun(@(x) ~isempty(x) && ~isnan(x) && x==true, {dynData.([BaitChannel 'SpotData']).(['appears_w_' PreyChannel])});
-    hasStepIndex = ~cellfun(@isnan, {dynData.([PreyChannel 'SpotData']).dwellTime});
-    index = nonSkippedIndex & coAppIndex & hasStepIndex;
-    baitStruct = dynData.([BaitChannel 'SpotData'])(index); 
-    preyStruct = dynData.([PreyChannel 'SpotData'])(index); 
+    % Summary structure for results - this facilitates copying into Excel
+    koff_summary = struct('Sample_name',[],'k_obs_lower',[],'k_obs',[],'k_obs_upper',[],'n',[],'non_disappearing',[]);
     
-    % Count non-disappearing spots - if this is a large number, we might need to re-process data to pull longer intensity traces
-    baitNoDisappearance = sum(cell2mat({baitStruct.noDisappearance}));
-    preyNoDisappearance = sum(cell2mat({preyStruct.noDisappearance}));
+    if length(matFiles) > 1
+        statusbar = waitbar(0);
+    end
+    for a = 1:length(matFiles)
+        % Get image name and root directory
+        slash = strfind(matFiles{a},filesep);
+        fileName = matFiles{a}(slash(end)+1:end); 
+        expDir = matFiles{a}(1:slash(end));
+        
+        if length(matFiles) > 1
+            waitbar((a-1)/length(matFiles),statusbar,strrep(['Loading ' fileName],'_','\_'));
+        end
+        
+        % Load data
+        if load
+            load([expDir filesep fileName]);
+        end
+        BaitChannel = params.BaitChannel; %Extract channel info - this is just for code readability
+        if ~strcmp(params.DataType, 'Composite Data')
+            PreyChannel = params.PreyChannel;
+        else
+            PreyChannel = ['PreyCh' num2str(params.preyChNums)]; % Needs to be updated to handle data with more than two channels
+        end
+        
+        if length(matFiles) > 1
+            waitbar((a-1)/length(matFiles),statusbar,strrep(['Finding Dwell Times for ' fileName],'_','\_'));
+        end
+ 
+        %% Loop over spots, find dwell times for each
+        for c = 1:length(dynData.([BaitChannel 'SpotData']))     
+            [nBaitSteps, ~] = size(dynData.([BaitChannel 'SpotData'])(c).changepoints);
+            if maxBaitSteps && nBaitSteps > maxBaitSteps
+                %Skip analyzing this trace if it's too complicated
+                dynData.([BaitChannel 'SpotData'])(c).dwellTime = NaN;
+                dynData.([BaitChannel 'SpotData'])(c).noDisappearance = NaN;
+                dynData.([PreyChannel 'SpotData'])(c).dwellTime = NaN;
+                dynData.([PreyChannel 'SpotData'])(c).noDisappearance = NaN;
+            else
+                %Otherwise, continue
+                % Bait channel
+                [dynData.([BaitChannel 'SpotData'])(c).dwellTime, dynData.([BaitChannel 'SpotData'])(c).noDisappearance] = calculateDwellTime(dynData.([BaitChannel 'SpotData'])(c));
     
-    % Count up the number of spots observed and the number of observations of the complex remaining intact 
-    n = sum(index); % Number of complexes analyzed
-    n_bound = sum(cell2mat({preyStruct.dwellTime})); % n_bound is the number of times we observed the prey protein staying bound (not disappearing). 
+                % Prey channel
+                [dynData.([PreyChannel 'SpotData'])(c).dwellTime, dynData.([PreyChannel 'SpotData'])(c).noDisappearance] = calculateDwellTime(dynData.([PreyChannel 'SpotData'])(c));
+            end
+        end
+        
+        %% Use the dwell time information to calculate k_off
+        if length(matFiles) > 1
+            waitbar((a-1)/length(matFiles),statusbar,strrep(['Calculating k_off for ' fileName],'_','\_'));
+        end
+        
+        % Pull out co-appearing spots - that's all we're interested in for this calculation
+        nonSkippedIndex = ~cellfun(@isnan, {dynData.([BaitChannel 'SpotData']).dwellTime});
+        coAppIndex = cellfun(@(x) ~isempty(x) && ~isnan(x) && x==true, {dynData.([BaitChannel 'SpotData']).(['appears_w_' PreyChannel])});
+        hasStepIndex = ~cellfun(@isnan, {dynData.([PreyChannel 'SpotData']).dwellTime});
+        index = nonSkippedIndex & coAppIndex & hasStepIndex;
+        baitStruct = dynData.([BaitChannel 'SpotData'])(index); 
+        preyStruct = dynData.([PreyChannel 'SpotData'])(index); 
+        
+        % Count non-disappearing spots - if this is a large number, we might need to re-process data to pull longer intensity traces
+        baitNoDisappearance = sum(cell2mat({baitStruct.noDisappearance}));
+        preyNoDisappearance = sum(cell2mat({preyStruct.noDisappearance}));
+        
+        % Count up the number of spots observed and the number of observations of the complex remaining intact 
+        n = sum(index); % Number of complexes analyzed
+        n_bound = sum(cell2mat({preyStruct.dwellTime})); % n_bound is the number of times we observed the prey protein staying bound (not disappearing). 
+        
+        % Count the number of prey protein disappearances.  We only count cases where 
+        % 1) The prey protein is observed to disappear, and 
+        % 2) The bait and prey do not disappear together, since co-disappearing traces are likely to just be instances of the whole complex dissociating.
+        index1 = ~cell2mat({preyStruct.noDisappearance});
+        index2 = abs( cell2mat({preyStruct.dwellTime}) - cell2mat({baitStruct.dwellTime}) ) > 4; % Similar to the criterion for co-appearance, spots are considered to disappear at the same time if they disappear within 4 frames of each other.
+        n_off = sum(index1&index2);
+        
+        % Calculate P and its confidence intervals
+        P(1,1) = betaincinv(0.025, 1+n_off, 1+n_bound, 'upper'); %Upper bound of confidence interval
+        P(2,1) = (1 + n_off) / (2 + n_off + n_bound);
+        P(3,1) = betaincinv(0.025, 1+n_off, 1+n_bound, 'lower'); %Lower bound of confidence interval
     
-    % Count the number of prey protein disappearances.  We only count cases where 
-    % 1) The prey protein is observed to disappear, and 
-    % 2) The bait and prey do not disappear together, since co-disappearing traces are likely to just be instances of the whole complex dissociating.
-    index1 = ~cell2mat({preyStruct.noDisappearance});
-    index2 = abs( cell2mat({preyStruct.dwellTime}) - cell2mat({baitStruct.dwellTime}) ) > 4; % Similar to the criterion for co-appearance, spots are considered to disappear at the same time if they disappear within 4 frames of each other.
-    n_off = sum(index1&index2);
-    
-    % Calculate P and its confidence intervals
-    P(1,1) = betaincinv(0.025, 1+n_off, 1+n_bound, 'upper'); %Upper bound of confidence interval
-    P(2,1) = (1 + n_off) / (2 + n_off + n_bound);
-    P(3,1) = betaincinv(0.025, 1+n_off, 1+n_bound, 'lower'); %Lower bound of confidence interval
-
-    % Calculate koff
-    k_obs = -log(1-P);
-    
-    %% Display the results
-    disp(['Results for ' fileName ':']);
-    disp(['Analyzed data for ' num2str(n) ' co-appearing spots']);
-    disp(['Prey channel k_obs = ' num2str(k_obs(2)) ' (' num2str(k_obs(3)) ', ' num2str(k_obs(1)) ')']);
-    disp([ num2str(baitNoDisappearance) ' bait molecules that remained bound throughout their intensity traces' ]);
-    disp([ num2str(preyNoDisappearance) ' prey molecules that remained bound throughout their intensity traces' ]);
-    disp([ num2str(sum(~index2)) ' bait and prey molecules disappeared simultaneously']);
-    disp(newline);
-    
-    %Add results to summary structure
-    summary(a).Sample_name = fileName;
-    summary(a).k_obs_lower = k_obs(3);
-    summary(a).k_obs = k_obs(2);
-    summary(a).k_obs_upper = k_obs(1);
-    summary(a).n = n;
-    summary(a).non_disappearing = preyNoDisappearance; 
-    
-    %Save 
-    waitbar((a-1)/length(matFiles),statusbar,strrep(['Saving ' fileName],'_','\_'));
-    dynData.([PreyChannel '_P_off']) = P;
-    dynData.([PreyChannel '_k_obs']) = k_obs;
-    save([expDir filesep fileName], 'dynData','params');
+        % Calculate koff
+        k_obs = -log(1-P);
+        
+        %% Display the results
+        if printResults
+            disp(['Results for ' fileName ':']);
+            disp(['Analyzed data for ' num2str(n) ' co-appearing spots']);
+            disp(['Prey channel k_obs = ' num2str(k_obs(2)) ' (' num2str(k_obs(3)) ', ' num2str(k_obs(1)) ')']);
+            disp([ num2str(baitNoDisappearance) ' bait molecules that remained bound throughout their intensity traces' ]);
+            disp([ num2str(preyNoDisappearance) ' prey molecules that remained bound throughout their intensity traces' ]);
+            disp([ num2str(sum(~index2)) ' bait and prey molecules disappeared simultaneously']);
+            disp(newline);
+        end
+        
+        %Add results to summary structure
+        koff_summary(a).Sample_name = fileName;
+        koff_summary(a).k_obs_lower = k_obs(3);
+        koff_summary(a).k_obs = k_obs(2);
+        koff_summary(a).k_obs_upper = k_obs(1);
+        koff_summary(a).n = n;
+        koff_summary(a).non_disappearing = preyNoDisappearance; 
+        
+        %Save 
+        if length(matFiles) > 1
+            waitbar((a-1)/length(matFiles),statusbar,strrep(['Saving ' fileName],'_','\_'));
+        end
+        dynData.([PreyChannel '_P_off']) = P;
+        dynData.([PreyChannel '_k_obs']) = k_obs;
+        save([expDir filesep fileName], 'dynData','params','koff_summary');
+    end
+    if length(matFiles) > 1
+        close(statusbar)
+    end
 end
-
-close(statusbar)
 
 %% Helper function to find dwell time for a single spot
 function [dwellTime, noDisappearance] = calculateDwellTime(spotData)
