@@ -10,10 +10,21 @@ matFiles = uipickfiles('Prompt','Select data files to analyze','Type',{'*.mat'})
 
 fileBar = waitbar(0);
 for a = 1:length(matFiles)  
-    % Get image name and root directory
+    % Get file name
     slash = strfind(matFiles{a},filesep);
     fileName = matFiles{a}(slash(end)+1:end); 
-    expDir = matFiles{a}(1:slash(end));
+
+    % Get Directory
+    if isfolder(matFiles{a})
+        fileName = [fileName '.mat'];
+        expDir = matFiles{a};
+        if ~isfile([expDir filesep fileName])
+            warndlg(['No .mat file found for selected folder ' expDir]);
+            continue
+        end
+    else
+        expDir = matFiles{a}(1:slash(end));
+    end
     
     % Load data structure
     load([expDir filesep fileName],'dynData','params');
