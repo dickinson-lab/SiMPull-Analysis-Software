@@ -64,11 +64,22 @@ for a = 1:length(matFiles)
     if ~isnumeric(params.elapsedTime)
         params.elapsedTime = 0;
     end
-    for c = 1:length(dynData.BaitSpotData)
-        if ~isnumeric(dynData.BaitSpotData(c).appearTime)
-            continue
+    if isfield(dynData.BaitSpotData,'appearTimeFrames') % Updated naming convention
+        for c = 1:length(dynData.BaitSpotData)
+            if isnumeric(dynData.BaitSpotData(c).appearTimeFrames)
+                dynData.BaitSpotData(c).appearTimeSecs = dynData.BaitSpotData(c).appearTimeFrames * 0.05 + params.elapsedTime; %Hard-coded 50 ms exposure time - could be a paramter later if needed 
+            else
+                dynData.BaitSpotData(c).appearTimeSecs = NaN;
+            end
+        end    
+    else % Legacy naming convention
+        for c = 1:length(dynData.BaitSpotData)
+            if isnumeric(dynData.BaitSpotData(c).appearTime)
+                dynData.BaitSpotData(c).appearTimeSecs = dynData.BaitSpotData(c).appearTime * 0.05 + params.elapsedTime; %Hard-coded 50 ms exposure time - could be a paramter later if needed 
+            else
+                dynData.BaitSpotData(c).appearTimeSecs = NaN;
+            end
         end
-        dynData.BaitSpotData(c).appearTime = dynData.BaitSpotData(c).appearTime * 0.05 + params.elapsedTime; %Hard-coded 50 ms exposure time - could be a paramter later if needed 
     end
 
     lastWindow = max(cell2mat({dynData.([BaitChannel 'SpotData']).appearedInWindow}));
@@ -80,12 +91,12 @@ for a = 1:length(matFiles)
         else
             spotChoiceIdx = true (1, length(dynData.BaitSpotData));
         end
-        spotChoiceIdx = spotChoiceIdx & cellfun(@isnumeric, {dynData.BaitSpotData.appearTime}); 
+        spotChoiceIdx = spotChoiceIdx & ~cellfun(@isnan, {dynData.BaitSpotData.appearTimeSecs}); 
         
         % filterIdx eliminates blinking, late-appearing and short-dwell spots. 
         % In a future version, these three filters could be applied separately. 
         filterIdx = spotChoiceIdx & ~cellfun(@(x) isnumeric(x) && length(x)==1 && ~isnan(x) && x<2500, {dynData.BaitSpotData.nFramesSinceLastApp}); % Blinker filter
-        filterIdx = filterIdx & ~cellfun(@(x,y) isnumeric(x) && x > 50*(y+1), {dynData.BaitSpotData.appearTime}, {dynData.BaitSpotData.appearedInWindow}); % Late appearance filter
+        filterIdx = filterIdx & ~cellfun(@(x,y) x > 50*(y+1), {dynData.BaitSpotData.appearTimeSecs}, {dynData.BaitSpotData.appearedInWindow}); % Late appearance filter
         if ~isfield(dynData.BaitSpotData,'dwellTime')
             [dynData, ~] = dwellTime_koff(0,{[expDir filesep fileName]},false, dynData, params);
         end
@@ -107,11 +118,11 @@ for a = 1:length(matFiles)
                 lowerBound = (d-1) * params.window * 0.05;
                 upperBound = d * params.window * 0.05; %Hard-coded 50 ms exposure time - could be a paramter later if needed 
                 % Unfiltered data
-                index = cell2mat({dynData.([BaitChannel 'SpotData'])(spotChoiceIdx).appearTime}) > lowerBound & cell2mat({dynData.([BaitChannel 'SpotData'])(spotChoiceIdx).appearTime}) <= upperBound;
+                index = cell2mat({dynData.([BaitChannel 'SpotData'])(spotChoiceIdx).appearTimeSecs}) > lowerBound & cell2mat({dynData.([BaitChannel 'SpotData'])(spotChoiceIdx).appearTimeSecs}) <= upperBound;
                 baitsCounted(d) = sum(~cellfun(@(x) isempty(x) || isnan(x), colocData(index)));
                 coAppearing(d) = sum(cellfun(@(x) ~isempty(x) && x==true, colocData(index)));
                 % Filtered data
-                index = cell2mat({dynData.([BaitChannel 'SpotData'])(filterIdx).appearTime}) > lowerBound & cell2mat({dynData.([BaitChannel 'SpotData'])(filterIdx).appearTime}) <= upperBound;
+                index = cell2mat({dynData.([BaitChannel 'SpotData'])(filterIdx).appearTimeSecs}) > lowerBound & cell2mat({dynData.([BaitChannel 'SpotData'])(filterIdx).appearTimeSecs}) <= upperBound;
                 filtCounted(d) = sum(~cellfun(@(x) isempty(x) || isnan(x), filteredColocData(index)));
                 filtCoAppearing(d) = sum(cellfun(@(x) ~isempty(x) && x==true, filteredColocData(index)));
             end  

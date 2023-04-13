@@ -19,7 +19,7 @@ function dataStruct = findAppearanceTimes(dataStruct, channel)
         dataStruct.([channel 'SpotData'])(a).steplevels = results.steplevels;
         dataStruct.([channel 'SpotData'])(a).stepstdev = results.stepstdev;
         if error
-            dataStruct.([channel 'SpotData'])(a).appearTime = 'Analysis Failed';
+            dataStruct.([channel 'SpotData'])(a).appearTimeFrames = 'Analysis Failed';
             continue
         end
 
@@ -30,9 +30,9 @@ function dataStruct = findAppearanceTimes(dataStruct, channel)
             if dataStruct.([channel 'SpotData'])(a).steplevels(c+1) > dataStruct.([channel 'SpotData'])(a).steplevels(c)
                 %If step is positive in magnitude, we're good - save info and move on
                 if isfield(dataStruct.([channel 'SpotData']),'appearedInWindow')
-                    dataStruct.([channel 'SpotData'])(a).appearTime = dataStruct.avgWindow * (dataStruct.([channel 'SpotData'])(a).appearedInWindow - 1) + dataStruct.([channel 'SpotData'])(a).changepoints(c,1);
+                    dataStruct.([channel 'SpotData'])(a).appearTimeFrames = dataStruct.avgWindow * (dataStruct.([channel 'SpotData'])(a).appearedInWindow - 1) + dataStruct.([channel 'SpotData'])(a).changepoints(c,1);
                 else
-                    dataStruct.([channel 'SpotData'])(a).appearTime = dataStruct.([channel 'SpotData'])(a).changepoints(c,1);
+                    dataStruct.([channel 'SpotData'])(a).appearTimeFrames = dataStruct.([channel 'SpotData'])(a).changepoints(c,1);
                 end
                 foundAppearance = 1;
                 break
@@ -41,7 +41,7 @@ function dataStruct = findAppearanceTimes(dataStruct, channel)
         end
         % Make sure we found it, note if not.
         if ~foundAppearance
-            dataStruct.([channel 'SpotData'])(a).appearTime = 'Not found';
+            dataStruct.([channel 'SpotData'])(a).appearTimeFrames = 'Not found';
         end
     
     end % of loop over all spots / traces

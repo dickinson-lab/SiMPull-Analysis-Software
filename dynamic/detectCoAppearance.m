@@ -541,14 +541,14 @@ function dynData = findCoApp(dynData, baitChannel, preyChannel, wb)
         dynData.([preyChannel 'SpotData'])(c).steplevels = results.steplevels;
         dynData.([preyChannel 'SpotData'])(c).stepstdev = results.stepstdev;
         if error
-            dynData.([preyChannel 'SpotData'])(c).appearTime = 'Analysis Failed';
+            dynData.([preyChannel 'SpotData'])(c).appearTimeFrames = 'Analysis Failed';
             dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = NaN;
             continue
         end
 
         %Look for an upstep at the appearance time
-        if isnumeric(dynData.([baitChannel 'SpotData'])(c).appearTime)
-            baitAppearTime = dynData.([baitChannel 'SpotData'])(c).appearTime;
+        if isnumeric(dynData.([baitChannel 'SpotData'])(c).appearTimeFrames)
+            baitAppearTime = dynData.([baitChannel 'SpotData'])(c).appearTimeFrames;
 
             % Make sure there is a step to be tested 
             if ~isempty(dynData.([preyChannel 'SpotData'])(c).changepoints)
@@ -573,6 +573,6 @@ function dynData = findCoApp(dynData, baitChannel, preyChannel, wb)
     end
 
     % Tally results
-    dynData.([baitChannel 'AppearanceFound']) = sum( isnumeric([ dynData.([baitChannel 'SpotData']).appearTime ]) ) ;
+    dynData.([baitChannel 'AppearanceFound']) = sum( isnumeric([ dynData.([baitChannel 'SpotData']).appearTimeFrames ]) ) ;
     dynData.([baitChannel preyChannel 'CoAppearing']) = sum([ dynData.([baitChannel 'SpotData']).(['appears_w_' preyChannel]) ], 'omitnan');
 end
