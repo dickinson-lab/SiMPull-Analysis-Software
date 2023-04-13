@@ -64,20 +64,22 @@ for a = 1:length(matFiles)
     if ~isnumeric(params.elapsedTime)
         params.elapsedTime = 0;
     end
-    if isfield(dynData.BaitSpotData,'appearTimeFrames') % Updated naming convention
-        for c = 1:length(dynData.BaitSpotData)
-            if isnumeric(dynData.BaitSpotData(c).appearTimeFrames)
-                dynData.BaitSpotData(c).appearTimeSecs = dynData.BaitSpotData(c).appearTimeFrames * 0.05 + params.elapsedTime; %Hard-coded 50 ms exposure time - could be a paramter later if needed 
-            else
-                dynData.BaitSpotData(c).appearTimeSecs = NaN;
-            end
-        end    
-    else % Legacy naming convention
-        for c = 1:length(dynData.BaitSpotData)
-            if isnumeric(dynData.BaitSpotData(c).appearTime)
-                dynData.BaitSpotData(c).appearTimeSecs = dynData.BaitSpotData(c).appearTime * 0.05 + params.elapsedTime; %Hard-coded 50 ms exposure time - could be a paramter later if needed 
-            else
-                dynData.BaitSpotData(c).appearTimeSecs = NaN;
+    if ~isfield(dynData.BaitSpotData,'appearTimeSecs') %If this field has already been created, we can skip calculating times again
+        if isfield(dynData.BaitSpotData,'appearTimeFrames') % Updated naming convention
+            for c = 1:length(dynData.BaitSpotData)
+                if isnumeric(dynData.BaitSpotData(c).appearTimeFrames)
+                    dynData.BaitSpotData(c).appearTimeSecs = dynData.BaitSpotData(c).appearTimeFrames * 0.05 + params.elapsedTime; %Hard-coded 50 ms exposure time - could be a paramter later if needed 
+                else
+                    dynData.BaitSpotData(c).appearTimeSecs = NaN;
+                end
+            end    
+        else % Legacy naming convention
+            for c = 1:length(dynData.BaitSpotData)
+                if isnumeric(dynData.BaitSpotData(c).appearTime)
+                    dynData.BaitSpotData(c).appearTimeSecs = dynData.BaitSpotData(c).appearTime * 0.05 + params.elapsedTime; %Hard-coded 50 ms exposure time - could be a paramter later if needed 
+                else
+                    dynData.BaitSpotData(c).appearTimeSecs = NaN;
+                end
             end
         end
     end
