@@ -50,7 +50,7 @@ if nargin == 0
     end
     
     % Image registration
-    if strcmp(DataType,'Composite Data')
+    % if strcmp(DataType,'Composite Data') %% Data types are deprecated
         % Register composite images
         regImg = TIFFStack(regFile,[],nChannels);
         subImg = regImg(:,:,:,RegWindow1:RegWindow2);
@@ -62,16 +62,16 @@ if nargin == 0
                 regData(g) = registerImages( avgImg(:,:,g), avgImg(:,:,baitChNum) );
             end
         end
-    else
-        % Register side-by-side dual-view images
-        regImg = TIFFStack(regFile);
-        subImg = regImg(:,:,RegWindow1:RegWindow2);
-        avgImg = mean(subImg, 3);
-        [~, xmax] = size(avgImg);
-        leftImg = avgImg(:,1:(xmax/2));
-        rightImg = avgImg(:,(xmax/2)+1:xmax);
-        regData = registerImages(rightImg, leftImg);
-    end
+%     else
+%         % Register side-by-side dual-view images
+%         regImg = TIFFStack(regFile);
+%         subImg = regImg(:,:,RegWindow1:RegWindow2);
+%         avgImg = mean(subImg, 3);
+%         [~, xmax] = size(avgImg);
+%         leftImg = avgImg(:,1:(xmax/2));
+%         rightImg = avgImg(:,(xmax/2)+1:xmax);
+%         regData = registerImages(rightImg, leftImg);
+%     end
     % We don't save the registration info here because it's saved as part of each individual file below.  
     % Instead we just hang on to the regData variable for later use.
 elseif nargin == 3
@@ -87,7 +87,7 @@ else
 end
 
 % Save parameters for future use and branch based on image type
-params.DataType = DataType;
+% params.DataType = DataType;
 params.pixelSize = pixelSize;
 params.RegistrationData = regData; 
 params.RegFile = regFile;

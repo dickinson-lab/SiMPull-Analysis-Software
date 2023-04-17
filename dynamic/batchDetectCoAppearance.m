@@ -25,7 +25,7 @@ else
 end
 
 % Image registration
-if strcmp(DataType,'Composite Data')
+% if strcmp(DataType,'Composite Data')  %% Data types are deprecated
     % Register composite images
     regImg = TIFFStack(regFile,[],nChannels);
     subImg = regImg(:,:,:,RegWindow1:RegWindow2);
@@ -37,16 +37,16 @@ if strcmp(DataType,'Composite Data')
             regData(g) = registerImages( avgImg(:,:,g), avgImg(:,:,baitChNum) );
         end
     end
-else
-    % Register side-by-side dual-view images
-    regImg = TIFFStack(regFile);
-    subImg = regImg(:,:,RegWindow1:RegWindow2);
-    avgImg = mean(subImg, 3);
-    [~, xmax] = size(avgImg);
-    leftImg = avgImg(:,1:(xmax/2));
-    rightImg = avgImg(:,(xmax/2)+1:xmax);
-    regData = registerImages(rightImg, leftImg);
-end
+% else
+%     % Register side-by-side dual-view images
+%     regImg = TIFFStack(regFile);
+%     subImg = regImg(:,:,RegWindow1:RegWindow2);
+%     avgImg = mean(subImg, 3);
+%     [~, xmax] = size(avgImg);
+%     leftImg = avgImg(:,1:(xmax/2));
+%     rightImg = avgImg(:,(xmax/2)+1:xmax);
+%     regData = registerImages(rightImg, leftImg);
+% end
 
 % Loop over image directories and call detectCoAppearance on each one
 statusbar = waitbar(0);

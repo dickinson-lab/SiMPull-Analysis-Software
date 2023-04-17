@@ -113,7 +113,7 @@ function [Answer, Cancelled] = dynamicChannelInfoDlg(expDir)
 
     Prompt(17,:) = {' ',[],[]};
     Formats(11,1).type = 'text';
-    Formats(11,1).span = [1 4];
+    Formats(11,1).span = [2 4];
 
     [Answer,Cancelled] = inputsdlg(Prompt,Title,Formats,DefAns,Options);
 end
