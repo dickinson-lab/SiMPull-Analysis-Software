@@ -30,6 +30,7 @@ for b = 1:length(preyChannelNames)
 
     %Plot
     fig = figure;
+    fig.UserData = struct('DatasetsPlotted',matFiles);
     ax = axes;
     hold on
     errorbar(ax,1:maxSize,meanTotalObs,stdTotalObs,'.-k','LineWidth',2,'MarkerSize',25);
