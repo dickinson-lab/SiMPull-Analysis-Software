@@ -2,6 +2,8 @@
 
 % Takes a file list as input, or can be run with no arguments and will then
 % prompt the user to select files. 
+% The second argument, if true, enables warnings for missing photobleaching
+% step counting. Default: false
 
 % Returns a structure with two metrics for total spots ("totalCounted" and "totalCoApp")
 % and two for their filtered counterparts "filteredCounted" and "filteredCoApp"
@@ -18,8 +20,13 @@ function output = tabulateCoAppearance(varargin)
 % Parse input
 if nargin == 0
     matFiles = uipickfiles('Prompt','Select data files or folders to analyze','Type',{'*.mat'},'FilterSpec',startPath);
+    warnFlag = false;
 elseif nargin == 1
     matFiles = varargin{1};
+    warnFlag = false;
+elseif nargin == 2
+    matFiles = varargin{1};
+    warnFlag = varargin{2};
 else
     error('Wrong number of input arguments');
 end
@@ -56,6 +63,8 @@ for a = 1:length(matFiles)
         if maxSteps < max([dynData.BaitSpotData.nFluors])
             maxSteps = max([dynData.BaitSpotData.nFluors]);
         end
+    elseif warnFlag
+        warning(['Dataset ' fileName ' is missing photobleaching step data.' newline 'Please run countDynamicBleaching first.']);
     end               
 
     %% Calculate co-appearance vs. size vs. time
