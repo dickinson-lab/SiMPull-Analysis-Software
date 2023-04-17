@@ -28,14 +28,14 @@ for b = 1:length(preyChannelNames)
     meanNonColocObs = cellfun(@mean, nonColocObs);
     stdNonColocObs = cellfun(@std, nonColocObs);
 
-    %Plot
+    %% Plot
     fig = figure;
     fig.UserData = struct('DatasetsPlotted',matFiles);
     ax = axes;
     hold on
-    errorbar(ax,1:maxSize,meanTotalObs,stdTotalObs,'.-k','LineWidth',2,'MarkerSize',25);
-    errorbar(ax,1:maxSize,meanColocObs,stdColocObs,'.-','Color',[0 0.5 0],'LineWidth',2,'MarkerSize',25);
-    errorbar(ax,1:maxSize,meanNonColocObs,stdNonColocObs,'.-','Color',[0.3 0 1],'LineWidth',2,'MarkerSize',25);
+    errorbar(ax,1:maxSize,meanTotalObs,stdTotalObs,'o-k','LineWidth',2,'MarkerSize',8);
+    errorbar(ax,1:maxSize,meanColocObs,stdColocObs,'o','Color',[0 0.5 0],'LineWidth',2,'MarkerSize',8);
+    errorbar(ax,1:maxSize,meanNonColocObs,stdNonColocObs,'o','Color',[0.2 0 1],'LineWidth',2,'MarkerSize',8);
     set(ax,'YScale','log');
     set(ax,'FontSize',14,'Box','on','LineWidth',2);
     ylabel(ax,'Mean Observations per Embryo');
