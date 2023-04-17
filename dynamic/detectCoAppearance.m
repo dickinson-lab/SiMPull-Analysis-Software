@@ -83,6 +83,7 @@ elseif nargin == 3
     Answer = varargin{2};
     v2struct(Answer);
     regData = varargin{3};
+    DataType = 'Composite Data';  %% Data types are deprecated, set here to preserve backward compatibility
 else
     error('Incorrect number of input arguments given. Call detectCoAppearance(imgFilesCellArray, DialogBoxAnswers, regData) to provide parameters, or call with no arguments to raise dialog boxes.');
 end
