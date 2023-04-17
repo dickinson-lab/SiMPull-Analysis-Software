@@ -44,32 +44,32 @@ function [dynData, koff_summary] = dwellTime_koff(varargin)
         matFiles = {};
         printResults = true;
         dynData = [];
-        load = true;
+        loadData = true;
     elseif nargin == 1
         maxBaitSteps = varargin{1};
         matFiles = {}; 
         printResults = true;
         dynData = [];
-        load = true;
+        loadData = true;
     elseif nargin == 2
         maxBaitSteps = varargin{1};
         matFiles = varargin{2};
         printResults = true;
         dynData = [];
-        load = true;
+        loadData = true;
     elseif nargin == 3
         maxBaitSteps = varargin{1};
         matFiles = varargin{2};
         printResults = varargin{3};
         dynData = [];
-        load = true;
+        loadData = true;
     elseif nargin == 5
         maxBaitSteps = varargin{1};
         matFiles = varargin{2};
         printResults = varargin{3};
         dynData = varargin{4};
         params = varargin{5};
-        load = false;
+        loadData = false;
         if length(matFiles) ~= 1
             error('Only a single file name is allowed if dynData is passed in');
         end
@@ -79,7 +79,7 @@ function [dynData, koff_summary] = dwellTime_koff(varargin)
     
     if isempty(matFiles)
         % Ask user for data files
-        matFiles = uipickfiles('Prompt','Select data files to analyze','Type',{'*.mat'});
+        matFiles = uipickfiles('Prompt','Select data files or folders to analyze','Type',{'*.mat'});
     end
     
     % Summary structure for results - this facilitates copying into Excel
@@ -89,17 +89,28 @@ function [dynData, koff_summary] = dwellTime_koff(varargin)
         statusbar = waitbar(0);
     end
     for a = 1:length(matFiles)
-        % Get image name and root directory
+        % Get file name
         slash = strfind(matFiles{a},filesep);
         fileName = matFiles{a}(slash(end)+1:end); 
-        expDir = matFiles{a}(1:slash(end));
+    
+        % Get Directory
+        if isfolder(matFiles{a})
+            fileName = [fileName '.mat'];
+            expDir = matFiles{a};
+            if ~isfile([expDir filesep fileName])
+                warndlg(['No .mat file found for selected folder ' expDir]);
+                continue
+            end
+        else
+            expDir = matFiles{a}(1:slash(end));
+        end
         
         if length(matFiles) > 1
             waitbar((a-1)/length(matFiles),statusbar,strrep(['Loading ' fileName],'_','\_'));
         end
         
         % Load data
-        if load
+        if loadData
             load([expDir filesep fileName]);
         end
         BaitChannel = params.BaitChannel; %Extract channel info - this is just for code readability
