@@ -14,10 +14,10 @@ function dynData = blinkerFinder(dynData, baitChannel)
             match = baitSpotLocation(a,1) == baitSpotLocation(b,1) && baitSpotLocation(a,2) == baitSpotLocation(b,2); 
             if match            % If the spotLocation of bait 'a' matches the location of a previous bait appearance 'b', calculate the number of frames between appearance events
                 % If appearance time was not found in the analysis of either of the traces, enter NaN for nFramesSinceLastApp between these two bait appearances at this location
-                if strcmp(dynData.([baitChannel 'SpotData'])(a).appearTime,'Not found')||strcmp(dynData.([baitChannel 'SpotData'])(b).appearTime,'Not found')
+                if strcmp(dynData.([baitChannel 'SpotData'])(a).appearTimeFrames,'Not found')||strcmp(dynData.([baitChannel 'SpotData'])(b).appearTimeFrames,'Not found')
                     dynData.([baitChannel 'SpotData'])(a).nFramesSinceLastApp = NaN;
                 else
-                    dynData.([baitChannel 'SpotData'])(a).nFramesSinceLastApp = dynData.([baitChannel 'SpotData'])(a).appearTime - dynData.([baitChannel 'SpotData'])(b).appearTime;
+                    dynData.([baitChannel 'SpotData'])(a).nFramesSinceLastApp = dynData.([baitChannel 'SpotData'])(a).appearTimeFrames - dynData.([baitChannel 'SpotData'])(b).appearTimeFrames;
                 end
                 found = 1;  % After recording nFramesSinceLastApp, break out of the while loop by changing the flag to indicate a spotLocation has been found so that the next iteration of the for loop can begin
             else
