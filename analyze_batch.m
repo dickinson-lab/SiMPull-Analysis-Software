@@ -254,8 +254,12 @@ for a=1:length(dirList)
     if countSpots
         %% Set up
         % Figure out how many stage positions we have
-        if strcmp(dataType, 'Nikon ND2') || strcmp(dataType, 'Composite TIFF')
+        if strcmp(dataType, 'Composite TIFF')
             nPositions = length(fileList);
+        elseif strcmp(dataType, 'Nikon ND2')
+            posNames = cellfun(@(x) regexp(x,'_?[0-9\-]+.nd2','split'), {fileList.name}, 'UniformOutput', false); %The regexp finds the wavelength designator at the end of each file name
+            posNames = unique(cellfun(@(x) x{1}, posNames, 'UniformOutput', false));
+            nPositions = length(posNames);
         else
             posNames = cellfun(@(x) regexp(x,'_?[0-9\-]+.tif','split'), {fileList.name}, 'UniformOutput', false); %The regexp finds the wavelength designator at the end of each file name
             posNames = unique(cellfun(@(x) x{1}, posNames, 'UniformOutput', false));
@@ -282,42 +286,41 @@ for a=1:length(dirList)
         
         %% This section is for Nikon files %%
         if strcmp(dataType, 'Nikon ND2') 
-            %% Loop through each image (state position) in the dataset
-            for b = 1:nPositions
-                imageName = fileList(b).name;
-                imgCell = bfopen([nd2Dir filesep fileList(b).name]);
-                [ymax, xmax] = size(imgCell{1}{1});
-                [tmax, ~] = size(imgCell{1});
-                rawImage = zeros(ymax,xmax,tmax,'uint16');
-                for c = 1:tmax
-                    rawImage(:,:,c) = imgCell{1}{c};
+            %% Loop over Channels first
+            for i = 1:nChannels
+                %Figure out which files we need to load
+                color = channels{i};
+                colorIndex = false(1,length(fileList));
+                for r = 1:length(wavelengths.(color))
+                    ptrn = ['_[\d-]*' wavelengths.(color){r} '[\d-]*\.nd2$'];
+                    colorIndex = colorIndex | ~cellfun(@isempty, regexp({fileList.name}, ptrn)); 
                 end
-                gridData(index(b)).imageSize = [ymax xmax];
-                params.imageName = imageName(1:(length(imageName)-4));
-                gridData(index(b)).imageName = params.imageName;
+                imagesOfThisColor = fileList(colorIndex);
                 
-                %% Perform spot counting for each channel of this image
-                for i = 1:nChannels 
-                    color = channels{i};                    
-                    waitbar( (b-1)/nPositions, spotwb, ['Finding ' color ' Spots in image ' strrep(imageName,'_','\_') '...'] );
- 
-                    % Check that the selected range of times is present in the data (only required for Nikon ND2 files)
-                    timeRange1 = Answer.([color 'Range1']);
-                    timeRange2 = Answer.([color 'Range2']);
-                    if timeRange2 > tmax
-                        warning(['The time range entered for the green channel is outside the limits of the data for image' strrep(imageName,'_','\_')]);
-                        imageLength = tmax + 1 - timeRange1;
-                    else
-                        imageLength = timeRange2 + 1 - timeRange1;
+                %% Perform spot counting for each image
+                for b = 1:length(imagesOfThisColor)
+                                        
+                    % Get position name
+                    imageName = imagesOfThisColor(b).name;
+                    posName = regexp(imageName, '(\S+)_[0-9\-]+.nd2','tokens');
+                    posName = posName{1}{1};
+                    params.imageName = posName;
+                    gridData(index(b)).imageName = params.imageName;
+                    
+                    % Load Image
+                    imgCell = bfopen([nd2Dir filesep imagesOfThisColor(b).name]);
+                    [ymax, xmax] = size(imgCell{1}{1});
+                    [tmax, ~] = size(imgCell{1});
+                    rawImage = zeros(ymax,xmax,tmax,'uint16');
+                    for c = 1:tmax
+                        rawImage(:,:,c) = imgCell{1}{c};
                     end
-
-                    % Grab the appropriate portion of the image
-                    thisImage = rawImage(:,:, timeRange1:min(timeRange2,tmax)  );
-
+                    gridData(index(b)).imageSize = [ymax xmax];
+                    
                     % Generate average image for spot counting
                     params.firstTime = firstTime.(color);
                     params.lastTime = lastTime.(color);
-                    avgImage = averageImage(thisImage, color, params);
+                    avgImage = averageImage(rawImage, color, params);
                     %Save average image for later reference
                     imwrite(avgImage,[nd2Dir filesep params.imageName '_' color 'avg.tif'],'tiff');
                     
@@ -325,11 +328,11 @@ for a=1:length(dirList)
                     gridData = spotcount_ps(color, avgImage, params, gridData, index(b));
                     
                     % Extract and save intensity traces for found spots
-                    gridData(index(b)) = extractIntensityTraces(color, thisImage, params, gridData(index(b)));
+                    gridData(index(b)) = extractIntensityTraces(color, rawImage, params, gridData(index(b)));
                     
-                end %Loop i over channels
+                end % Loop b over images
                 
-            end %Loop b over images 
+            end % Loop i over channels
         
         elseif strcmp(dataType, 'Composite TIFF')
         %% This section is for composite TIFF files %%    

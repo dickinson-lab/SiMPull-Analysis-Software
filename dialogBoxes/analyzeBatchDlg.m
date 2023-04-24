@@ -120,192 +120,112 @@ Formats(7,7).enable = 'off';
 Formats(7,7).span = [1 2];
 DefAns.FarRedDualViewPos = 'Right';
 
-Prompt(17,:) = {'First Frame:','BlueRange1',[]};
-Formats(8,1).type = 'edit';
-Formats(8,1).format = 'integer';
-Formats(8,1).limits = [1 inf];
-Formats(8,1).size = [40 25];
-Formats(8,1).unitsloc = 'bottomleft';
-Formats(8,1).enable = 'off';
-Formats(8,1).span = [1 2];
-DefAns.BlueRange1 = 1;
+Prompt(17,:) = {'Frames to average for spot detection:',[],[]};
+Formats(8,1).type = 'text';
+Formats(8,1).span = [1 8];
 
-Prompt(18,:) = {'First Frame:','GreenRange1',[]};
-Formats(8,3).type = 'edit';
-Formats(8,3).format = 'integer';
-Formats(8,3).limits = [1 inf];
-Formats(8,3).size = [40 25];
-Formats(8,3).unitsloc = 'bottomleft';
-Formats(8,3).enable = 'off';
-Formats(8,3).span = [1 2];
-DefAns.GreenRange1 = 1;
-
-Prompt(19,:) = {'First Frame:','RedRange1',[]};
-Formats(8,5).type = 'edit';
-Formats(8,5).format = 'integer';
-Formats(8,5).limits = [1 inf];
-Formats(8,5).size = [40 25];
-Formats(8,5).unitsloc = 'bottomleft';
-Formats(8,5).enable = 'off';
-Formats(8,5).span = [1 2];
-DefAns.RedRange1 = 1;
-
-Prompt(20,:) = {'First Frame:','FarRedRange1',[]};
-Formats(8,7).type = 'edit';
-Formats(8,7).format = 'integer';
-Formats(8,7).limits = [1 inf];
-Formats(8,7).size = [40 25];
-Formats(8,7).unitsloc = 'bottomleft';
-Formats(8,7).enable = 'off';
-Formats(8,7).span = [1 2];
-DefAns.FarRedRange1 = 1;
-
-Prompt(21,:) = {'Last Frame:','BlueRange2',[]};
+Prompt(18,:) = {' ','BlueWindow1',[]};
 Formats(9,1).type = 'edit';
 Formats(9,1).format = 'integer';
 Formats(9,1).limits = [1 inf];
-Formats(9,1).size = [40 25];
+Formats(9,1).size = [25 25];
 Formats(9,1).unitsloc = 'bottomleft';
 Formats(9,1).enable = 'off';
-Formats(9,1).span = [1 2];
-DefAns.BlueRange2 = 1200;
+Formats(9,1).span = [1 1];
+DefAns.BlueWindow1 = 6;
 
-Prompt(22,:) = {'Last Frame:','GreenRange2',[]};
+Prompt(19,:) = {' to ','BlueWindow2',[]};
+Formats(9,2).type = 'edit';
+Formats(9,2).format = 'integer';
+Formats(9,2).limits = [1 inf];
+Formats(9,2).size = [25 25];
+Formats(9,2).unitsloc = 'bottomleft';
+Formats(9,2).enable = 'off';
+Formats(9,2).span = [1 1];
+DefAns.BlueWindow2 = 50;
+
+Prompt(20,:) = {' ','GreenWindow1',[]};
 Formats(9,3).type = 'edit';
 Formats(9,3).format = 'integer';
 Formats(9,3).limits = [1 inf];
-Formats(9,3).size = [40 25];
+Formats(9,3).size = [25 25];
 Formats(9,3).unitsloc = 'bottomleft';
-Formats(9,3).enable = 'off';
-Formats(9,3).span = [1 2];
-DefAns.GreenRange2 = 1200;
+Formats(9,3).enable = 'on';
+Formats(9,3).span = [1 1];
+DefAns.GreenWindow1 = 6;
 
-Prompt(23,:) = {'Last Frame:','RedRange2',[]};
+Prompt(21,:) = {' to ','GreenWindow2',[]};
+Formats(9,4).type = 'edit';
+Formats(9,4).format = 'integer';
+Formats(9,4).limits = [1 inf];
+Formats(9,4).size = [25 25];
+Formats(9,4).unitsloc = 'bottomleft';
+Formats(9,4).enable = 'on';
+Formats(9,4).span = [1 1];
+DefAns.GreenWindow2 = 50;
+
+Prompt(22,:) = {' ','RedWindow1',[]};
 Formats(9,5).type = 'edit';
 Formats(9,5).format = 'integer';
 Formats(9,5).limits = [1 inf];
-Formats(9,5).size = [40 25];
+Formats(9,5).size = [25 25];
 Formats(9,5).unitsloc = 'bottomleft';
 Formats(9,5).enable = 'off';
-Formats(9,5).span = [1 2];
-DefAns.RedRange2 = 1200;
+Formats(9,5).span = [1 1];
+DefAns.RedWindow1 = 6;
 
-Prompt(24,:) = {'Last Frame:','FarRedRange2',[]};
+Prompt(23,:) = {' to ','RedWindow2',[]};
+Formats(9,6).type = 'edit';
+Formats(9,6).format = 'integer';
+Formats(9,6).limits = [1 inf];
+Formats(9,6).size = [25 25];
+Formats(9,6).unitsloc = 'bottomleft';
+Formats(9,6).enable = 'off';
+Formats(9,6).span = [1 1];
+DefAns.RedWindow2 = 50;
+
+Prompt(24,:) = {' ','FarRedWindow1',[]};
 Formats(9,7).type = 'edit';
 Formats(9,7).format = 'integer';
 Formats(9,7).limits = [1 inf];
-Formats(9,7).size = [40 25];
+Formats(9,7).size = [25 25];
 Formats(9,7).unitsloc = 'bottomleft';
 Formats(9,7).enable = 'off';
-Formats(9,7).span = [1 2];
-DefAns.FarRedRange2 = 1200;
-
-Prompt(25,:) = {'Frames to average for spot detection:',[],[]};
-Formats(10,1).type = 'text';
-Formats(10,1).span = [1 8];
-
-Prompt(26,:) = {' ','BlueWindow1',[]};
-Formats(11,1).type = 'edit';
-Formats(11,1).format = 'integer';
-Formats(11,1).limits = [1 inf];
-Formats(11,1).size = [25 25];
-Formats(11,1).unitsloc = 'bottomleft';
-Formats(11,1).enable = 'off';
-Formats(11,1).span = [1 1];
-DefAns.BlueWindow1 = 6;
-
-Prompt(27,:) = {' to ','BlueWindow2',[]};
-Formats(11,2).type = 'edit';
-Formats(11,2).format = 'integer';
-Formats(11,2).limits = [1 inf];
-Formats(11,2).size = [25 25];
-Formats(11,2).unitsloc = 'bottomleft';
-Formats(11,2).enable = 'off';
-Formats(11,2).span = [1 1];
-DefAns.BlueWindow2 = 50;
-
-Prompt(28,:) = {' ','GreenWindow1',[]};
-Formats(11,3).type = 'edit';
-Formats(11,3).format = 'integer';
-Formats(11,3).limits = [1 inf];
-Formats(11,3).size = [25 25];
-Formats(11,3).unitsloc = 'bottomleft';
-Formats(11,3).enable = 'on';
-Formats(11,3).span = [1 1];
-DefAns.GreenWindow1 = 6;
-
-Prompt(29,:) = {' to ','GreenWindow2',[]};
-Formats(11,4).type = 'edit';
-Formats(11,4).format = 'integer';
-Formats(11,4).limits = [1 inf];
-Formats(11,4).size = [25 25];
-Formats(11,4).unitsloc = 'bottomleft';
-Formats(11,4).enable = 'on';
-Formats(11,4).span = [1 1];
-DefAns.GreenWindow2 = 50;
-
-Prompt(30,:) = {' ','RedWindow1',[]};
-Formats(11,5).type = 'edit';
-Formats(11,5).format = 'integer';
-Formats(11,5).limits = [1 inf];
-Formats(11,5).size = [25 25];
-Formats(11,5).unitsloc = 'bottomleft';
-Formats(11,5).enable = 'off';
-Formats(11,5).span = [1 1];
-DefAns.RedWindow1 = 6;
-
-Prompt(31,:) = {' to ','RedWindow2',[]};
-Formats(11,6).type = 'edit';
-Formats(11,6).format = 'integer';
-Formats(11,6).limits = [1 inf];
-Formats(11,6).size = [25 25];
-Formats(11,6).unitsloc = 'bottomleft';
-Formats(11,6).enable = 'off';
-Formats(11,6).span = [1 1];
-DefAns.RedWindow2 = 50;
-
-Prompt(32,:) = {' ','FarRedWindow1',[]};
-Formats(11,7).type = 'edit';
-Formats(11,7).format = 'integer';
-Formats(11,7).limits = [1 inf];
-Formats(11,7).size = [25 25];
-Formats(11,7).unitsloc = 'bottomleft';
-Formats(11,7).enable = 'off';
-Formats(11,7).span = [1 1];
+Formats(9,7).span = [1 1];
 DefAns.FarRedWindow1 = 6;
 
-Prompt(33,:) = {' to ','FarRedWindow2',[]};
-Formats(11,8).type = 'edit';
-Formats(11,8).format = 'integer';
-Formats(11,8).limits = [1 inf];
-Formats(11,8).size = [25 25];
-Formats(11,8).unitsloc = 'bottomleft';
-Formats(11,8).enable = 'off';
-Formats(11,8).span = [1 1];
+Prompt(25,:) = {' to ','FarRedWindow2',[]};
+Formats(9,8).type = 'edit';
+Formats(9,8).format = 'integer';
+Formats(9,8).limits = [1 inf];
+Formats(9,8).size = [25 25];
+Formats(9,8).unitsloc = 'bottomleft';
+Formats(9,8).enable = 'off';
+Formats(9,8).span = [1 1];
 DefAns.FarRedWindow2 = 50;
 
-Prompt(34,:) = {'Count steps?','countBlueSteps',[]};
-Formats(12,1).type = 'check';
-Formats(12,1).enable = 'off';
-Formats(12,1).span = [1 2];
+Prompt(26,:) = {'Count steps?','countBlueSteps',[]};
+Formats(10,1).type = 'check';
+Formats(10,1).enable = 'off';
+Formats(10,1).span = [1 2];
 DefAns.countBlueSteps = true;
 
-Prompt(35,:) = {'Count steps?','countGreenSteps',[]};
-Formats(12,3).type = 'check';
-Formats(12,3).enable = 'on';
-Formats(12,3).span = [1 2];
+Prompt(27,:) = {'Count steps?','countGreenSteps',[]};
+Formats(10,3).type = 'check';
+Formats(10,3).enable = 'on';
+Formats(10,3).span = [1 2];
 DefAns.countGreenSteps = true;
 
-Prompt(36,:) = {'Count steps?','countRedSteps',[]};
-Formats(12,5).type = 'check';
-Formats(12,5).enable = 'off';
-Formats(12,5).span = [1 2];
+Prompt(28,:) = {'Count steps?','countRedSteps',[]};
+Formats(10,5).type = 'check';
+Formats(10,5).enable = 'off';
+Formats(10,5).span = [1 2];
 DefAns.countRedSteps = true;
 
-Prompt(37,:) = {'Count steps?','countFarRedSteps',[]};
-Formats(12,7).type = 'check';
-Formats(12,7).enable = 'off';
-Formats(12,7).span = [1 2];
+Prompt(29,:) = {'Count steps?','countFarRedSteps',[]};
+Formats(10,7).type = 'check';
+Formats(10,7).enable = 'off';
+Formats(10,7).span = [1 2];
 DefAns.countFarRedSteps = true;
 
 [Answer,Cancelled] = inputsdlg(Prompt,Title,Formats,DefAns,Options);
@@ -348,70 +268,44 @@ function updateEnabled(h)
     else
         set( findall( h(16,1), '-property', 'Enable'), 'Enable', 'off');
     end
-    
-    
-    if nd2 && blue
-        set( [h(17,1) h(21,1)],'Enable','on');
-    else
-        set( [h(17,1) h(21,1)],'Enable','off');
-    end
-    
-    if nd2 && green
-        set( [h(18,1) h(22,1)],'Enable','on');
-    else
-        set( [h(18,1) h(22,1)],'Enable','off');
-    end
-    
-    if nd2 && red
-        set( [h(19,1) h(23,1)],'Enable','on');
-    else
-        set( [h(19,1) h(23,1)],'Enable','off');
-    end
-
-    if nd2 && farRed
-        set( [h(20,1) h(24,1)],'Enable','on');
-    else
-        set( [h(20,1) h(24,1)],'Enable','off');
-    end
-    
-    
+       
     if blue
+        set( h(18,1),'Enable','on');
+        set( h(19,1),'Enable','on');
         set( h(26,1),'Enable','on');
-        set( h(27,1),'Enable','on');
-        set( h(34,1),'Enable','on');
     else
+        set( h(18,1),'Enable','off');
+        set( h(19,1),'Enable','off');
         set( h(26,1),'Enable','off');
-        set( h(27,1),'Enable','off');
-        set( h(34,1),'Enable','off');
     end
     
     if green
-        set( h(28,1),'Enable','on');
-        set( h(29,1),'Enable','on');
-        set( h(35,1),'Enable','on');
+        set( h(20,1),'Enable','on');
+        set( h(21,1),'Enable','on');
+        set( h(27,1),'Enable','on');
     else
-        set( h(28,1),'Enable','off');
-        set( h(29,1),'Enable','off');
-        set( h(35,1),'Enable','off');
+        set( h(20,1),'Enable','off');
+        set( h(21,1),'Enable','off');
+        set( h(27,1),'Enable','off');
     end
     
     if red
-        set( h(30,1),'Enable','on');
-        set( h(31,1),'Enable','on');
-        set( h(36,1),'Enable','on');
+        set( h(22,1),'Enable','on');
+        set( h(23,1),'Enable','on');
+        set( h(28,1),'Enable','on');
     else
-        set( h(30,1),'Enable','off');
-        set( h(31,1),'Enable','off');
-        set( h(36,1),'Enable','off');
+        set( h(22,1),'Enable','off');
+        set( h(23,1),'Enable','off');
+        set( h(28,1),'Enable','off');
     end
     
     if farRed
-        set( h(32,1),'Enable','on');
-        set( h(33,1),'Enable','on');
-        set( h(37,1),'Enable','on');
+        set( h(24,1),'Enable','on');
+        set( h(25,1),'Enable','on');
+        set( h(29,1),'Enable','on');
     else
-        set( h(32,1),'Enable','off');
-        set( h(33,1),'Enable','off');
-        set( h(37,1),'Enable','off');
+        set( h(24,1),'Enable','off');
+        set( h(25,1),'Enable','off');
+        set( h(29,1),'Enable','off');
     end
 end
