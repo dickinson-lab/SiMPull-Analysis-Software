@@ -15,8 +15,21 @@
 % converted to units of per second by the user.
 
 % Note that this code, as written, assumes that the complexes being
-% analyzed are 1:1 heterodimers.  It is not designed to deal with oligomers
-% and will give strange results if data from an oligomeric complex is analyzed.
+% analyzed are 1:1 heterodimers.  It is not designed to deal with oligomers. 
+% If one wishes to analyze data from a complex that is expected to be oligomeric, 
+% there are two possibilities: 
+    % If photobleach step counting has been performed, set "maxBaitSteps"
+    % to 1 to only consider the monomeric pool. 
+    % If photobleach step counting has not been performed, the code will
+    % still run but will ignore any photobleaching behavior. If this is a concern, 
+    % run the photobleach step counter first. 
+% In either case, note that the program only considers the oligomeric state
+% of the bait protein.  The rationale for this is that if a monomeric bait
+% protein interacts with an oligomeric prey, there will still be a single
+% observable k_off when the entire oligomeric prey complex dissociates from
+% a single bait. However, an oligomeric bait protein might have multiple
+% binidng sites for prey proteins, which would behave independently,
+% complicating the interpretation of k_obs. 
 
 % Usage: [dynData, summary] = dwellTime_koff(maxBaitSteps, matFiles, printResults, dynData, params)
 % Parameters (all optional): 
@@ -83,7 +96,7 @@ function [dynData, koff_summary] = dwellTime_koff(varargin)
     end
     
     % Summary structure for results - this facilitates copying into Excel
-    koff_summary = struct('Sample_name',[]); %,'k_obs_lower',[],'k_obs',[],'k_obs_upper',[],'n',[],'non_disappearing',[]);
+    koff_summary = struct('Sample_name',[]); 
     
     if length(matFiles) > 1
         statusbar = waitbar(0);
@@ -114,6 +127,12 @@ function [dynData, koff_summary] = dwellTime_koff(varargin)
             load([expDir filesep fileName]);
         end
         BaitChannel = params.BaitChannel; %Extract channel info - this is just for code readability
+        % Warn if the maxBaitSteps parameter was set but photobleaching data aren't present
+        if maxBaitSteps && ~isfield(dynData.([BaitChannel 'SpotData']),'nFluors')
+            warning(['The maxBaitSteps parameter was supplied but this dataset does not have photobleaching analysis.\n'...
+                     'Continuing analysis of traces with ' num2str(maxBaitSteps) ' steps.\n'...
+                     'Ensure that this is the desired behavior or run countDynamicBleaching.m first']);
+        end
         
         if length(matFiles) > 1
             waitbar((a-1)/length(matFiles),statusbar,strrep(['Finding Dwell Times for ' fileName],'_','\_'));
@@ -121,7 +140,11 @@ function [dynData, koff_summary] = dwellTime_koff(varargin)
  
         %% Loop over spots, find dwell times for each
         for c = 1:length(dynData.([BaitChannel 'SpotData']))     
-            [nBaitSteps, ~] = size(dynData.([BaitChannel 'SpotData'])(c).changepoints);
+            if isfield(dynData.([BaitChannel 'SpotData']),'nFluors')
+                nBaitSteps = dynData.([BaitChannel 'SpotData'])(c).nFluors;
+            else
+                [nBaitSteps, ~] = size(dynData.([BaitChannel 'SpotData'])(c).changepoints);
+            end
             if maxBaitSteps && nBaitSteps > maxBaitSteps
                 %Skip analyzing this trace if it's too complicated
                 dynData.([BaitChannel 'SpotData'])(c).dwellTime = NaN;
@@ -151,6 +174,7 @@ function [dynData, koff_summary] = dwellTime_koff(varargin)
             waitbar((a-1)/length(matFiles),statusbar,strrep(['Calculating k_off for ' fileName],'_','\_'));
         end
         koff_summary(a).Sample_name = fileName;
+        koff_summary(a).maxStepsUsed = maxBaitSteps; % Save information about the sizes of complexes that were considered.
 
         for e = 1:length(params.preyChNums)
             PreyChannel = ['PreyCh' num2str(params.preyChNums(e))]; 
@@ -183,7 +207,7 @@ function [dynData, koff_summary] = dwellTime_koff(varargin)
             P(2,1) = (1 + n_off) / (2 + n_off + n_bound);
             P(3,1) = betaincinv(0.025, 1+n_off, 1+n_bound, 'lower'); %Lower bound of confidence interval
         
-            % Calculate koff
+            % Calculate k_obs
             k_obs = -log(1-P);
             
             %% Display the results
