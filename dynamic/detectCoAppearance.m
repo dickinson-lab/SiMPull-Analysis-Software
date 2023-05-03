@@ -278,7 +278,9 @@ function [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params)
         end
         % Ignore spots that are too close to the edge
         dynData.BaitSpotData = dynData.BaitSpotData(index);
-        dynData.([preyChannel 'SpotData']) = dynData.([preyChannel 'SpotData'])(index);
+        for g = params.preyChNums
+            dynData.(['PreyCh' num2str(g) 'SpotData']) = dynData.(['PreyCh' num2str(g) 'SpotData'])(index);
+        end
         [dynData.BaitSpotCount,~] = size(dynData.BaitSpotData); %Count how many bait spots are left
     
         % Pull intensity traces for the prey
