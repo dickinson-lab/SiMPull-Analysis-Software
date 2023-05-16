@@ -19,7 +19,7 @@
 function output = tabulateCoAppearance(varargin)
 % Parse input
 if nargin == 0
-    matFiles = uipickfiles('Prompt','Select data files or folders to analyze','Type',{'*.mat'},'FilterSpec',startPath);
+    matFiles = uipickfiles('Prompt','Select data files or folders to analyze','Type',{'*.mat'});
     warnFlag = false;
 elseif nargin == 1
     matFiles = varargin{1};
