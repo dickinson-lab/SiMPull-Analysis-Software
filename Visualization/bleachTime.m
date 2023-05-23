@@ -1,5 +1,7 @@
 %Exptracts and displays the time to bleach (i.e., the length of time a
-%fluor is active before bleaching). 
+%fluor is active before bleaching). The data are plotted as a histogram of
+%bleaching times, which allows the user to see the mode of the bleaching
+%time. 
 
 clear all;
 %close all;

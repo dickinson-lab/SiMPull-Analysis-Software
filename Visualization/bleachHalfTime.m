@@ -1,5 +1,6 @@
-%Exptracts and displays the time to bleach (i.e., the length of time a
-%fluor is active before bleaching) based on an exponential fit. 
+%Plots the survival curve of fluorophores during photobleaching (i.e., the
+%fraction of fluors still active as a function of time), then fits this
+%data to an exponential decay to extract a half-time for bleaching. 
 
 %clear all;
 %close all;
