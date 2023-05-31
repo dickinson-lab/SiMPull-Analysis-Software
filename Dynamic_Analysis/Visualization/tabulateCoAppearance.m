@@ -104,14 +104,14 @@ for a = 1:length(matFiles)
         end
         spotChoiceIdx = spotChoiceIdx & ~cellfun(@isnan, {dynData.BaitSpotData.appearTimeSecs}); 
         
-        % filterIdx eliminates blinking, late-appearing and short-dwell spots. 
+        % filterIdx eliminates blinking, late-appearing and short-dwell spots, 
         % In a future version, these three filters could be applied separately. 
         filterIdx = spotChoiceIdx & ~cellfun(@(x) isnumeric(x) && length(x)==1 && ~isnan(x) && x<2500, {dynData.BaitSpotData.nFramesSinceLastApp}); % Blinker filter
         filterIdx = filterIdx & ~cellfun(@(x,y) x > 50*(y+1), {dynData.BaitSpotData.appearTimeSecs}, {dynData.BaitSpotData.appearedInWindow}); % Late appearance filter
         if ~isfield(dynData.BaitSpotData,'dwellTime')
             [dynData, ~] = dwellTime_koff(0,{[expDir filesep fileName]},false, dynData, params);
         end
-        filterIdx = filterIdx & ~cellfun(@(x) x<10, {dynData.BaitSpotData.dwellTime});
+        filterIdx = filterIdx & ~cellfun(@(x) x<10, {dynData.BaitSpotData.dwellTime}); % Short Dwell Time Filter
 
         % Create structs for each prey's % co-appearance with bait
         for s = 1:params.nChannels
@@ -120,7 +120,11 @@ for a = 1:length(matFiles)
             end
             preyChannel = ['PreyCh' num2str(s)];
             colocData = {dynData.([BaitChannel 'SpotData'])(spotChoiceIdx).(['appears_w_' preyChannel])};
-            filteredColocData = {dynData.([BaitChannel 'SpotData'])(filterIdx).(['appears_w_' preyChannel])};
+            filteredColocData = {dynData.BaitSpotData(filterIdx).(['appears_w_' preyChannel])};
+            % Calculate a filtering index to ignore co-appearing spots 
+            % with equal dwell times (which likely result fluorescence bleed-through). 
+            dwellDiff = cell2mat({dynData.BaitSpotData.dwellTime}) - cell2mat({dynData.PreyCh2SpotData.dwellTime});
+            equalDwellIdx = abs(dwellDiff) <= 5; % The threshold of 5 matches what is used in dwellTime_koff.m. This value could be adjusted for more or less stringent filtering.
             baitsCounted = zeros(1,lastWindow);
             coAppearing = zeros(1,lastWindow);
             filtCounted = zeros(1,lastWindow);
@@ -135,6 +139,7 @@ for a = 1:length(matFiles)
                 % Filtered data
                 index = cell2mat({dynData.([BaitChannel 'SpotData'])(filterIdx).appearTimeSecs}) > lowerBound & cell2mat({dynData.([BaitChannel 'SpotData'])(filterIdx).appearTimeSecs}) <= upperBound;
                 filtCounted(d) = sum(~cellfun(@(x) isempty(x) || isnan(x), filteredColocData(index)));
+                index = cell2mat({dynData.([BaitChannel 'SpotData'])(filterIdx & ~equalDwellIdx).appearTimeSecs}) > lowerBound & cell2mat({dynData.([BaitChannel 'SpotData'])(filterIdx & ~equalDwellIdx).appearTimeSecs}) <= upperBound; %Second index calculation here because the equal dwell filter applies only to coappearance, not to bait spot count.
                 filtCoAppearing(d) = sum(cellfun(@(x) ~isempty(x) && x==true, filteredColocData(index)));
             end  
 
