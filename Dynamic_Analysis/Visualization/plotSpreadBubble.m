@@ -13,6 +13,10 @@ function handles = plotSpreadBubble(varargin)
 % in each sample. Then call 
 %       >> plotSpreadBubble(pctColoc,'markerSizes',nBaits);
 %
+% As of 6/7/2023, normalizing marker sizes (to prevent really huge bubbles)
+% is optional. Pass property 'normalizeMarkerSizes','false' to disable
+% (default = true). 
+%
 % One can also show a weighted mean and 95% confidence interval as follows: 
 %       >> plotSpreadBubble(pctColoc, 'markerSizes', nBaits,...
 %                           'showWeightedMean', argument);
@@ -143,6 +147,7 @@ def.categoryLabels = '';
 def.yLabel = '';
 def.spreadWidth = [];
 def.markerSizes = 6;
+def.normalizeMarkerSizes = true;
 def.showWeightedMean = false;
 
 % in development
@@ -181,6 +186,7 @@ if ~isempty(varargin) && ~ischar(varargin{1}) && ~isstruct(varargin{1})
     parserObj.addOptional('showMM',def.showMM);
     parserObj.addOptional('xValues',def.xValues);
     parserObj.addOptional('markerSizes',def.markerSizes);
+    parserObj.addOptional('normalizeMarkerSizes',def.normalizeMarkerSizes)
     parserObj.addOptional('showWeightedMean',def.showWeightedMean);
     
     parserObj.parse(varargin{:});
@@ -341,7 +347,7 @@ elseif length(opt.markerSizes) ~= length(data)
     error('please submit one marker size per data point (%i data points, %i sizes)',length(data),length(opt.markerSizes));
 end
 % Normalize size
-if max(opt.markerSizes) > 500
+if (opt.normalizeMarkerSizes) && max(opt.markerSizes) > 500
     scalefactor = 500 / max(opt.markerSizes);
     opt.markerSizes = scalefactor .* opt.markerSizes;
 end
