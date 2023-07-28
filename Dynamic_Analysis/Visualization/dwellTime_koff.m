@@ -50,7 +50,7 @@
     % 'matFiles'. Both dynData and params must be passed or the function
     % will give an error. This syntax only supports analyzing a single dataset. 
 
-function [dynData, koff_summary] = dwellTime_koff(varargin)
+function [dynData, koff_summary, koff_results] = dwellTime_koff(varargin)
     %Parse user input
     if nargin == 0
         maxBaitSteps = 0;
@@ -226,6 +226,8 @@ function [dynData, koff_summary] = dwellTime_koff(varargin)
             koff_summary(a).([PreyChannel '_k_obs']) = k_obs(2);
             koff_summary(a).([PreyChannel '_k_obs_upper']) = k_obs(1);
             koff_summary(a).([PreyChannel '_n']) = n;
+            koff_summary(a).([PreyChannel '_n_off']) = n_off;
+            koff_summary(a).([PreyChannel '_n_bound']) = n_bound;
             koff_summary(a).([PreyChannel '_non_disappearing']) = preyNoDisappearance; 
         
             dynData.([PreyChannel '_P_off']) = P;
@@ -236,7 +238,8 @@ function [dynData, koff_summary] = dwellTime_koff(varargin)
         if length(matFiles) > 1
             waitbar((a-1)/length(matFiles),statusbar,strrep(['Saving ' fileName],'_','\_'));
         end
-        save([expDir filesep fileName], 'dynData','params','koff_summary');
+        koff_results = koff_summary(a);
+        save([expDir filesep fileName], 'dynData','params','koff_results');
     end
     if length(matFiles) > 1
         close(statusbar)

@@ -14,7 +14,7 @@ function handles = plotSpreadBubble(varargin)
 %       >> plotSpreadBubble(pctColoc,'markerSizes',nBaits);
 %
 % As of 6/7/2023, normalizing marker sizes (to prevent really huge bubbles)
-% is optional. Pass property 'normalizeMarkerSizes','false' to disable
+% is optional. Pass property 'normalizeMarkerSizes', false to disable
 % (default = true). 
 %
 % One can also show a weighted mean and 95% confidence interval as follows: 

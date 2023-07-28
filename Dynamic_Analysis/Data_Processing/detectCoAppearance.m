@@ -120,7 +120,7 @@ params.elapsedTime = elapsedTime;
 params = coApp_vs_time(dynData,params,expDir,imgName);
 
 %% Save data
-save([expDir filesep imgName '.mat'], 'dynData','params');
+save([expDir filesep imgName '.mat'], 'dynData','params',"-v7.3");
 end
 
 
