@@ -3,9 +3,10 @@
 % a statistically robust way, calculates the mean and 95% credible interval
 % for k_off for each experimental condition. 
 
-% Before running this script, you need to know k_photobleach for each
-% dataset - this is typically calculated from control (e.g. mNG::Halo) data
-% captured the same day (or at least the same week) as your experiment.
+% Before running this script, you need a list of experiments to analyze and 
+% a matched photobleaching control for each dataset - this is typically 
+% mNG::Halo data captured the same day (or at least the same week) as your 
+% experiment.
 
 %% User dialog to capture information about datasets
 
@@ -104,7 +105,7 @@ for b = 1:length(fileNames)
         n_bound = n_bound + n_bleach;
     end
     P_corr = betaincinv(0.5,1+n_off,1+n_bound);
-    k_corr = -log(1-P_corr) / 0.05;
+    k_corr = -log(1-P_corr) / 0.05; % Here a 50 ms exposure time is assumed
     
     % Store results
     sample_names.(categories{b}){end+1} = fileNames{b}(1:end-4);
@@ -117,7 +118,6 @@ end
 %% Calculate Mean & Credible Interval, and Plot
 k_off_cell = cell(length(names),1);
 n_cell = cell(length(names),1);
-
 fh = figure;
 ah = axes;
 hold on
@@ -130,7 +130,7 @@ for d = 1:length(names)
     P(1,1) = betaincinv(0.025, 1+n_off(1), 1+n_bound(1), 'upper'); %Upper bound of confidence interval
     P(2,1) = (1 + n_off(2)) / (2 + n_off(2) + n_bound(2)); %Maximum likelihood estimate of k_off
     P(3,1) = betaincinv(0.025, 1+n_off(3), 1+n_bound(3), 'lower'); %Lower bound of confidence interval
-    k_off = -log(1-P) / 0.05;
+    k_off = -log(1-P) / 0.05; % Here a 50 ms exposure time is assumed
     resultSummary{d} = ['Condition ' names{d} ': k_off = ' num2str(k_off(3,1)) ' < ' num2str(k_off(2,1)) ' < ' num2str(k_off(1,1)) ];
     disp(resultSummary{d});
     errorbar(ah, d, k_off(2), k_off(2)-k_off(3), k_off(1)-k_off(2), '_k', 'MarkerSize', 12,'LineWidth',1.5);
@@ -142,6 +142,11 @@ else
     k_off_mat = padcat(k_off_cell{:})';
     n_mat = padcat(n_cell{:})';
 end
+% Remove zeros, which cause errors
+zeroIdx = n_mat == 0;
+k_off_mat(zeroIdx) = NaN;
+n_mat(zeroIdx) = NaN;
+
 bubbleHandles = plotSpreadBubble(ah,k_off_mat,'markerSizes',n_mat,'xNames',names,'normalizeMarkerSizes',false);
 ylabel('k_o_f_f (s^-^1)');
 for e = 1:length(names)
@@ -153,36 +158,3 @@ end
 userData.Results = resultSummary;
 userData.DataAnalyzed = infoTable;
 set(fh,'UserData',userData);
-
-function [PreyCh, remember] = choosePreyChDlg(preyChNums)
-    Title = 'Channel Selection';
-    Options.Resize = 'off';
-    Options.Interpreter = 'tex';
-    Options.CancelButton = 'on';
-    Options.ApplyButton = 'off';
-    Options.ButtonNames = {'Continue','Cancel'}; 
-    Prompt = {};
-    Formats = {};
-    DefAns = struct([]);
-    
-    Prompt(1,:) = {'Only one channel can be analyzed with this script. Which one do you want to analyze?',[],[]};
-    Formats(1,1).type = 'text';
-    
-    Prompt(2,:) = {[],'choice',[]};
-    Formats(2,1).type = 'list';
-    Formats(2,1).format = 'text';
-    Formats(2,1).style = 'radiobutton';
-    Formats(2,1).items = {};
-    for e = preyChNums
-        Formats(2,1).items{end+1} = num2str(e);
-    end
-    DefAns(1).choice = Formats(2,1).items{1};
-    
-    Prompt(3,:) = {'Remember Selection?','remember',[]};
-    Formats(3,1).type = 'check';
-    DefAns.remember = true;
-
-    [Answer,Cancelled] = inputsdlg(Prompt,Title,Formats,DefAns,Options);
-    v2struct(Answer);
-    PreyCh = ['PreyCh' choice];
-end
