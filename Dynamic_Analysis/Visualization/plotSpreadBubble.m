@@ -149,6 +149,8 @@ def.spreadWidth = [];
 def.markerSizes = 6;
 def.normalizeMarkerSizes = true;
 def.showWeightedMean = false;
+def.upper = [];
+def.lower = [];
 
 % in development
 def.individualLabels = false; % one category label across all distributions
@@ -188,6 +190,8 @@ if ~isempty(varargin) && ~ischar(varargin{1}) && ~isstruct(varargin{1})
     parserObj.addOptional('markerSizes',def.markerSizes);
     parserObj.addOptional('normalizeMarkerSizes',def.normalizeMarkerSizes)
     parserObj.addOptional('showWeightedMean',def.showWeightedMean);
+    parserObj.addOptional('upper',def.upper);
+    parserObj.addOptional('lower',def.lower);
     
     parserObj.parse(varargin{:});
     opt = parserObj.Results;
@@ -227,14 +231,23 @@ else
 end
 
 
-% If user provided marker sizes, make sure this input is the same size as
-% the data
+% If user provided marker sizes or upper and lower error bars, make sure 
+% this input is the same size as the data
 if ~isscalar(opt.markerSizes)
     if any(size(opt.markerSizes) ~= size(data))
         error('Marker size data must match y axis data.');
     end
 end
-
+if ~isempty(opt.upper) 
+    if any(size(opt.upper) ~= size(data))
+        error('Error bar data must match y axis data.');
+    end
+end
+if ~isempty(opt.lower) 
+    if any(size(opt.lower) ~= size(data))
+        error('Error bar data must match y axis data.');
+    end
+end
 
 % We want data to be a vector, so that indexing with both groupIdx and
 % distributionIdx becomes straightforward, and so that we can conveniently
@@ -260,7 +273,7 @@ else
 end
 
 
-% Now do the same for marker sizes, but no need to re-generate
+% Now do the same for marker sizes and error bars, but no need to re-generate
 % distributionIdx or nData since these must be the same as for the data.
 
 if ~isscalar(opt.markerSizes)
@@ -274,8 +287,28 @@ if ~isscalar(opt.markerSizes)
         opt.markerSizes = opt.markerSizes(:);
     end
 end
-
-
+if ~isscalar(opt.upper)
+    if iscell(opt.upper)
+        % make sure data is all n-by-1
+        opt.upper = cellfun(@(x)x(:),opt.upper,'UniformOutput',false);
+        % make vector
+        opt.upper = cat(1,opt.upper{:});
+    else
+        % distributions in columns
+        opt.upper = opt.upper(:);
+    end
+end
+if ~isscalar(opt.lower)
+    if iscell(opt.lower)
+        % make sure data is all n-by-1
+        opt.lower = cellfun(@(x)x(:),opt.lower,'UniformOutput',false);
+        % make vector
+        opt.lower = cat(1,opt.lower{:});
+    else
+        % distributions in columns
+        opt.lower = opt.lower(:);
+    end
+end
 
 % distribution groups
 if ~isempty(opt.distributionIdx)
@@ -490,7 +523,8 @@ data(badData) = [];
 distributionIdx(badData) = [];
 categoryIdx(badData) = [];
 opt.markerSizes(badData) = [];
-
+opt.lower(badData) = [];
+opt.upper(badData) = [];
 
 
 %% TRANSFORM DATA
@@ -607,6 +641,7 @@ if opt.showWeightedMean
 end
 
 ph = NaN(nData,nCategories);
+eh = NaN(nData,nCategories);
 for iData = 1:nData
     for iCategory = 1:nCategories
         currentIdx = distributionIdx == iData & categoryIdx == iCategory;
@@ -628,6 +663,28 @@ for iData = 1:nData
                         plotMarkers{iData,iCategory},...
                         'LineWidth',1,...
                         'DisplayName',plotLabels{iData,iCategory});
+            end
+            %Add error bars on each point
+            if ~isempty(opt.upper) || ~isempty(opt.lower)
+                 switch opt.xyOri
+                    case 'normal'
+                        eh(iData,iCategory) = errorbar(ah,data(currentIdx,1),...
+                            data(currentIdx,2),...
+                            opt.lower(currentIdx),...                        
+                            opt.upper(currentIdx),...
+                            '.','Color',plotColors{iData,iCategory},...
+                            'CapSize',0,...
+                            'LineWidth',0.5);
+                    case 'flipped'
+                        eh(iData,iCategory) = plot(ah,data(currentIdx,2),...
+                            data(currentIdx,1),...
+                            opt.lower(currentIdx),...                        
+                            opt.upper(currentIdx),...
+                            'horizontal',...
+                            '.','Color', plotColors{iData,iCategory},...
+                            CapSize',0,...
+                            'LineWidth',0.5); 
+                 end
             end
         end
     end
@@ -748,7 +805,8 @@ end
 
 if nargout > 0
     handles{1} = ph;
-    handles{2} = [mh;mdh];
-    handles{3} = ah;
+    handles{2} = eh;
+    handles{3} = [mh;mdh];
+    handles{4} = ah;
 end
 

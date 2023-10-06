@@ -239,7 +239,7 @@ function [dynData, koff_summary, koff_results] = dwellTime_koff(varargin)
             waitbar((a-1)/length(matFiles),statusbar,strrep(['Saving ' fileName],'_','\_'));
         end
         koff_results = koff_summary(a);
-        save([expDir filesep fileName], 'dynData','params','koff_results',"-v7.3");
+        save([expDir filesep fileName], 'dynData','params','koff_results',"-append");
     end
     if length(matFiles) > 1
         close(statusbar)

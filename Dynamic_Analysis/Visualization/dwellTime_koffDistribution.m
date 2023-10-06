@@ -104,12 +104,15 @@ for b = 1:length(fileNames)
         n_off = n_off - n_bleach;
         n_bound = n_bound + n_bleach;
     end
-    P_corr = betaincinv(0.5,1+n_off,1+n_bound);
+    %P_corr = betaincinv(0.5,1+n_off,1+n_bound);
+    P_corr(1,1) = betaincinv(0.025, 1+n_off(1), 1+n_bound(1), 'upper'); %Upper bound of confidence interval
+    P_corr(1,2) = (1 + n_off(2)) / (2 + n_off(2) + n_bound(2)); %Maximum likelihood estimate of k_off
+    P_corr(1,3) = betaincinv(0.025, 1+n_off(3), 1+n_bound(3), 'lower'); %Lower bound of confidence interval
     k_corr = -log(1-P_corr) / 0.05; % Here a 50 ms exposure time is assumed
     
     % Store results
     sample_names.(categories{b}){end+1} = fileNames{b}(1:end-4);
-    k_off_combined.(categories{b})(end+1) = k_corr(2);
+    k_off_combined.(categories{b})(end+1,:) = k_corr;
     n_combined.(categories{b})(end+1) = n;
     n_off_combined.(categories{b})(end+1,:) = n_off;
     n_bound_combined.(categories{b})(end+1,:) = n_bound;
@@ -117,13 +120,18 @@ end
 
 %% Calculate Mean & Credible Interval, and Plot
 k_off_cell = cell(length(names),1);
+k_off_cell_upper = cell(length(names),1);
+k_off_cell_lower = cell(length(names),1);
 n_cell = cell(length(names),1);
+mh = cell(length(names),1);
 fh = figure;
 ah = axes;
 hold on
 resultSummary = cell(length(names),1);
 for d = 1:length(names)
-    k_off_cell(d) = {k_off_combined.(names{d})};
+    k_off_cell_lower(d) = {k_off_combined.(names{d})(:,3)};
+    k_off_cell(d) = {k_off_combined.(names{d})(:,2)};
+    k_off_cell_upper(d) = {k_off_combined.(names{d})(:,1)};
     n_cell(d) = {n_combined.(names{d})};
     n_off = sum(n_off_combined.(names{d}));
     n_bound = sum(n_bound_combined.(names{d}));
@@ -133,13 +141,17 @@ for d = 1:length(names)
     k_off = -log(1-P) / 0.05; % Here a 50 ms exposure time is assumed
     resultSummary{d} = ['Condition ' names{d} ': k_off = ' num2str(k_off(3,1)) ' < ' num2str(k_off(2,1)) ' < ' num2str(k_off(1,1)) ];
     disp(resultSummary{d});
-    errorbar(ah, d, k_off(2), k_off(2)-k_off(3), k_off(1)-k_off(2), '_k', 'MarkerSize', 12,'LineWidth',1.5);
+    mh{d} = errorbar(ah, d, k_off(2), k_off(2)-k_off(3), k_off(1)-k_off(2), '_b', 'MarkerSize', 12,'LineWidth',2.5);
 end
 if length(k_off_cell) == 1
     k_off_mat = k_off_cell{1}';
+    k_off_mat_lower = k_off_mat - k_off_cell_lower{1}';
+    k_off_mat_upper = k_off_cell_upper{1}' - k_off_mat;
     n_mat = n_cell{1}';
 else
-    k_off_mat = padcat(k_off_cell{:})';
+    k_off_mat = padcat(k_off_cell{:});
+    k_off_mat_lower = k_off_mat - padcat(k_off_cell_lower{:});
+    k_off_mat_upper = padcat(k_off_cell_upper{:}) - k_off_mat;
     n_mat = padcat(n_cell{:})';
 end
 % Remove zeros, which cause errors
@@ -147,13 +159,31 @@ zeroIdx = n_mat == 0;
 k_off_mat(zeroIdx) = NaN;
 n_mat(zeroIdx) = NaN;
 
-bubbleHandles = plotSpreadBubble(ah,k_off_mat,'markerSizes',n_mat,'xNames',names,'normalizeMarkerSizes',false);
+%Plot
+bubbleHandles = plotSpreadBubble(ah,k_off_mat, ...
+                                 'markerSizes',n_mat, ...
+                                 'upper',k_off_mat_upper, ...
+                                 'lower',k_off_mat_lower, ...
+                                 'xNames',names, ...
+                                 'normalizeMarkerSizes',false, ...
+                                 'binWidth',1, ...
+                                 'distributionColors',[0.7 0.7 0.7]);
 ylabel('k_o_f_f (s^-^1)');
 for e = 1:length(names)
+    % Relabel bubbles
     labelHandle = get(bubbleHandles{1}(e),'DataTipTemplate');
     labelHandle.DataTipRows(1) = dataTipTextRow('Sample:',strrep(sample_names.(names{e}),'_','\_') );
     labelHandle.DataTipRows(2).Label = 'k_o_f_f';
     labelHandle.DataTipRows(3).Label = 'n coappearing';
+    labelHandle.DataTipRows(4) = dataTipTextRow('k_o_f_f Range',@(x,y,yDelta) y+yDelta);
+    % Relabel error bars
+    labelHandle = get(bubbleHandles{2}(e),'DataTipTemplate');
+    labelHandle.DataTipRows(1) = dataTipTextRow('Sample:',strrep(sample_names.(names{e}),'_','\_') );
+    labelHandle.DataTipRows(2).Label = 'k_o_f_f';
+    labelHandle.DataTipRows(3) = dataTipTextRow('n coappearing',n_mat(:,e));
+    labelHandle.DataTipRows(4) = dataTipTextRow('k_o_f_f Range',@(x,y,yDelta) y+yDelta);
+    % Move max probability estimate to front
+    uistack(mh{e},'top')
 end
 userData.Results = resultSummary;
 userData.DataAnalyzed = infoTable;

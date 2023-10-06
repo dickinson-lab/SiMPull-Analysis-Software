@@ -68,7 +68,7 @@ for a = 1:length(matFiles)
 end
 close(fileBar);
 
-% Plot
+% Plot combined data
 dwellTimeVector = horzcat(allDwellTimes{:});
 noDissociationVector = horzcat(noDissociation{:});
 ecdf(cd,dwellTimeVector,'Function','survivor','Censoring',double(noDissociationVector)); 

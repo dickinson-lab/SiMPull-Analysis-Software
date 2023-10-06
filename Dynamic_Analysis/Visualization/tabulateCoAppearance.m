@@ -93,7 +93,7 @@ for a = 1:length(matFiles)
         end
     end
 
-    lastWindow = max(cell2mat({dynData.([BaitChannel 'SpotData']).appearedInWindow}));
+    lastWindow = ceil(max(cell2mat({dynData.([BaitChannel 'SpotData']).appearTimeSecs})) / 2.5);
     baitsForDensity = [];
     for b = 1:maxSteps
         % spotChoiceIdx selects spots with a given number of photobleaching steps
@@ -123,8 +123,8 @@ for a = 1:length(matFiles)
             filteredColocData = {dynData.BaitSpotData(filterIdx).(['appears_w_' preyChannel])};
             % Calculate a filtering index to ignore co-appearing spots 
             % with equal dwell times (which likely result fluorescence bleed-through). 
-            dwellDiff = cell2mat({dynData.BaitSpotData.dwellTime}) - cell2mat({dynData.PreyCh2SpotData.dwellTime});
-            equalDwellIdx = abs(dwellDiff) <= 5; % The threshold of 5 matches what is used in dwellTime_koff.m. This value could be adjusted for more or less stringent filtering.
+            %dwellDiff = cell2mat({dynData.BaitSpotData.dwellTime}) - cell2mat({dynData.PreyCh2SpotData.dwellTime});
+            %equalDwellIdx = abs(dwellDiff) <= 5; % The threshold of 5 matches what is used in dwellTime_koff.m. This value could be adjusted for more or less stringent filtering.
             baitsCounted = zeros(1,lastWindow);
             coAppearing = zeros(1,lastWindow);
             filtCounted = zeros(1,lastWindow);
@@ -139,7 +139,7 @@ for a = 1:length(matFiles)
                 % Filtered data
                 index = cell2mat({dynData.([BaitChannel 'SpotData'])(filterIdx).appearTimeSecs}) > lowerBound & cell2mat({dynData.([BaitChannel 'SpotData'])(filterIdx).appearTimeSecs}) <= upperBound;
                 filtCounted(d) = sum(~cellfun(@(x) isempty(x) || isnan(x), filteredColocData(index)));
-                index = cell2mat({dynData.([BaitChannel 'SpotData'])(filterIdx & ~equalDwellIdx).appearTimeSecs}) > lowerBound & cell2mat({dynData.([BaitChannel 'SpotData'])(filterIdx & ~equalDwellIdx).appearTimeSecs}) <= upperBound; %Second index calculation here because the equal dwell filter applies only to coappearance, not to bait spot count.
+                %index = cell2mat({dynData.([BaitChannel 'SpotData'])(filterIdx & ~equalDwellIdx).appearTimeSecs}) > lowerBound & cell2mat({dynData.([BaitChannel 'SpotData'])(filterIdx & ~equalDwellIdx).appearTimeSecs}) <= upperBound; %Second index calculation here because the equal dwell filter applies only to coappearance, not to bait spot count.
                 filtCoAppearing(d) = sum(cellfun(@(x) ~isempty(x) && x==true, filteredColocData(index)));
             end  
 
