@@ -72,7 +72,7 @@ for b = 1:length(fileNames)
     % Load bleach control data
     controlIdx = find(strcmp(controlNames,bleachControls{b}));
     if length(controlIdx) ~= 1
-        errorDlg('It appears you have multiple control datasets with the same filenames. For this analysis to work, each control filename needs to be unique. Please rename your files accordingly.')
+        errordlg('It appears you have multiple control datasets with the same filenames. For this analysis to work, each control filename needs to be unique. Please rename your files accordingly.')
     end
     vars = who('-file', [controlDir{controlIdx} filesep controlNames{controlIdx}]);
     if ismember('koff_results',vars)
