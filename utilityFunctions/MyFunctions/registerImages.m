@@ -10,52 +10,6 @@ function [MOVINGREG] = registerImages(MOVING,FIXED)
 %-----------------------------------------------------------
 
 
-% Normalize FIXED image
-
-% Get linear indices to finite valued data
-finiteIdx = isfinite(FIXED(:));
-
-% Replace NaN values with 0
-FIXED(isnan(FIXED)) = 0;
-
-% Replace Inf values with 1
-FIXED(FIXED==Inf) = 1;
-
-% Replace -Inf values with 0
-FIXED(FIXED==-Inf) = 0;
-
-% Normalize input data to range in [0,1].
-FIXEDmin = min(FIXED(:));
-FIXEDmax = max(FIXED(:));
-if isequal(FIXEDmax,FIXEDmin)
-    FIXED = 0*FIXED;
-else
-    FIXED(finiteIdx) = (FIXED(finiteIdx) - FIXEDmin) ./ (FIXEDmax - FIXEDmin);
-end
-
-% Normalize MOVING image
-
-% Get linear indices to finite valued data
-finiteIdx = isfinite(MOVING(:));
-
-% Replace NaN values with 0
-MOVING(isnan(MOVING)) = 0;
-
-% Replace Inf values with 1
-MOVING(MOVING==Inf) = 1;
-
-% Replace -Inf values with 0
-MOVING(MOVING==-Inf) = 0;
-
-% Normalize input data to range in [0,1].
-MOVINGmin = min(MOVING(:));
-MOVINGmax = max(MOVING(:));
-if isequal(MOVINGmax,MOVINGmin)
-    MOVING = 0*MOVING;
-else
-    MOVING(finiteIdx) = (MOVING(finiteIdx) - MOVINGmin) ./ (MOVINGmax - MOVINGmin);
-end
-
 % Default spatial referencing objects
 fixedRefObj = imref2d(size(FIXED));
 movingRefObj = imref2d(size(MOVING));
