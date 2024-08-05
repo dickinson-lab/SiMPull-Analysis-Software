@@ -13,16 +13,14 @@ preyChannelNames = fieldnames(dataTables.filteredCounted);
 for b = 1:length(preyChannelNames)
     %Add up observations
     preyChannel = preyChannelNames{b};
-    maxSize = length(dataTables.filteredCounted.(preyChannel));
+    [~,~,maxSize] = size(dataTables.filteredCounted.(preyChannel));
     totalObs = cell(1,maxSize);
     colocObs = cell(1,maxSize);
     totalBaits = zeros(nEmbryos,1);
     for a = 1:maxSize
-        totalObs{a} = sum(dataTables.filteredCounted.(preyChannel){a},2);
-        totalObs{a} = padarray(totalObs{a}, nEmbryos-length(totalObs{a}), 'pre');
+        totalObs{a} = sum(dataTables.filteredCounted.(preyChannel)(:,:,a),2);
         totalBaits = totalBaits + totalObs{a};
-        colocObs{a} = sum(dataTables.filteredCoApp.(preyChannel){a},2);
-        colocObs{a} = padarray(colocObs{a}, nEmbryos-length(colocObs{a}), 'pre');
+        colocObs{a} = sum(dataTables.filteredCoApp.(preyChannel)(:,:,a),2);
     end
     nonColocObs = cellfun(@minus,totalObs,colocObs,'UniformOutput',false);
     

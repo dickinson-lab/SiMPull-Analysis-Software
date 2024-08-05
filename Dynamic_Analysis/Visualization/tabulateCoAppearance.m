@@ -145,19 +145,20 @@ for a = 1:length(matFiles)
 
             % Put all the data together. Organization: 
                 % Each metric is saved in a structure with a field for each prey channel.
-                % Each field holds a cell array with one element for each particle size being analyzed (loop b).
-                % In each of these arrays, the horizontal dimension represents time (in windows), and the vertical dimension is for datasets (loop a).
+                % Each field holds a 3D array where the horizontal dimension represents time (in windows),  
+                % the vertical dimension is for datasets (loop a), and 
+                % the third dimension is particle size (loop b).
                 % We also sum all of the baitsCounted for purposes of calculating density
             if a == 1
-                output.totalCounted.(preyChannel){b} = baitsCounted;
-                output.totalCoApp.(preyChannel){b} = coAppearing;
-                output.filteredCounted.(preyChannel){b} = filtCounted;
-                output.filteredCoApp.(preyChannel){b} = filtCoAppearing;
+                output.totalCounted.(preyChannel)(:,:,b) = baitsCounted;
+                output.totalCoApp.(preyChannel)(:,:,b) = coAppearing;
+                output.filteredCounted.(preyChannel)(:,:,b) = filtCounted;
+                output.filteredCoApp.(preyChannel)(:,:,b) = filtCoAppearing;
             else
-                output.totalCounted.(preyChannel){b}(a,1:length(baitsCounted)) = baitsCounted;
-                output.totalCoApp.(preyChannel){b}(a,1:length(coAppearing)) = coAppearing;
-                output.filteredCounted.(preyChannel){b}(a,1:length(baitsCounted)) = filtCounted;
-                output.filteredCoApp.(preyChannel){b}(a,1:length(coAppearing)) = filtCoAppearing;
+                output.totalCounted.(preyChannel)(a,1:length(baitsCounted),b) = baitsCounted;
+                output.totalCoApp.(preyChannel)(a,1:length(coAppearing),b) = coAppearing;
+                output.filteredCounted.(preyChannel)(a,1:length(baitsCounted),b) = filtCounted;
+                output.filteredCoApp.(preyChannel)(a,1:length(coAppearing),b) = filtCoAppearing;
             end
             if b == 1
                 baitsForDensity = baitsCounted;
