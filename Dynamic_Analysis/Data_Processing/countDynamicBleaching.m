@@ -2,11 +2,15 @@
 % analyzed (but note that in not all cases will the results for all
 % channels be informative). 
 
-function countDynamicBleaching
+function countDynamicBleaching(varargin)
 warning('off'); %Prevent unnecessary warnings from libtiff
 
-% Ask user for data files
-matFiles = uipickfiles('Prompt','Select data files to analyze','Type',{'*.mat'});
+if nargin==1
+    matFiles = varargin{1};
+else
+    % Ask user for data files
+    matFiles = uipickfiles('Prompt','Select data files to analyze','Type',{'*.mat'});
+end
 
 fileBar = waitbar(0);
 for a = 1:length(matFiles)  

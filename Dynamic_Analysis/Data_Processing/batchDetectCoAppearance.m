@@ -26,27 +26,31 @@ else
 end
 
 % Image registration
-if strcmp(DataType,'Composite Data')  
-    % Register composite images
-    regImg = TIFFStack(regFile,[],nChannels);
-    subImg = regImg(:,:,:,RegWindow1:RegWindow2);
-    avgImg = mean(subImg, 4);
-    for g = 1:nChannels 
-        if g == baitChNum 
-            continue 
-        else
-            regData(g) = registerImages( avgImg(:,:,g), avgImg(:,:,baitChNum) );
+if nChannels > 1
+    if strcmp(DataType,'Composite Data')  
+        % Register composite images
+        regImg = TIFFStack(regFile,[],nChannels);
+        subImg = regImg(:,:,:,RegWindow1:RegWindow2);
+        avgImg = mean(subImg, 4);
+        for g = 1:nChannels 
+            if g == baitChNum 
+                continue 
+            else
+                regData(g) = registerImages( avgImg(:,:,g), avgImg(:,:,baitChNum) );
+            end
         end
+    else
+        % Register side-by-side dual-view images
+        regImg = TIFFStack(regFile);
+        subImg = regImg(:,:,RegWindow1:RegWindow2);
+        avgImg = mean(subImg, 3);
+        [~, xmax] = size(avgImg);
+        leftImg = avgImg(:,1:(xmax/2));
+        rightImg = avgImg(:,(xmax/2)+1:xmax);
+        regData = registerImages(rightImg, leftImg);
     end
 else
-    % Register side-by-side dual-view images
-    regImg = TIFFStack(regFile);
-    subImg = regImg(:,:,RegWindow1:RegWindow2);
-    avgImg = mean(subImg, 3);
-    [~, xmax] = size(avgImg);
-    leftImg = avgImg(:,1:(xmax/2));
-    rightImg = avgImg(:,(xmax/2)+1:xmax);
-    regData = registerImages(rightImg, leftImg);
+    regData = struct([]);
 end
 
 % Loop over image directories and call detectCoAppearance on each one
@@ -63,4 +67,10 @@ for a = 1:length(imgDir)
     detectCoAppearance(imgFile, Answer, regData);
     
 end
+
 close(statusbar)
+
+% Optionally count photobleaching steps
+if countBleaching
+    countDynamicBleaching(imgDir);
+end
