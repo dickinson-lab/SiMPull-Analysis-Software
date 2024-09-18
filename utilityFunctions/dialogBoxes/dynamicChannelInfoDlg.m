@@ -58,7 +58,7 @@ function [Answer, Cancelled] = dynamicChannelInfoDlg(expDir)
     Prompt(9,:) = {'\fontsize{12}Image File:','regFile',[]};
     Formats(6,1).type = 'edit';
     Formats(6,1).format = 'file';
-    Formats(6,1).items = [expDir filesep '*.tiff'];
+    Formats(6,1).items = [expDir filesep '*.tif*'];
     Formats(6,1).limits = [0 1];
     Formats(6,1).required = 'on';
     Formats(6,1).size = [0 25];
@@ -99,9 +99,9 @@ function [Answer, Cancelled] = dynamicChannelInfoDlg(expDir)
     Formats(10,1).type = 'list';
     Formats(10,1).format = 'text';
     Formats(10,1).style = 'radiobutton';
-    Formats(10,1).items = {'111.4 nm    ' '121.9 nm    ' '110 nm    ' 'Other'};
+    Formats(10,1).items = {'97.5 nm    ' '108.3 nm    ' '110 nm    ' 'Other'};
     Formats(10,1).span = [1 2];
-    DefAns.pixelSizeChoice = '111.4 nm    ';
+    DefAns.pixelSizeChoice = '97.5 nm    ';
     
     Prompt(16,:) = {'Other pixel size:','pixelSize',[]};
     Formats(10,3).type = 'edit';
@@ -112,14 +112,18 @@ function [Answer, Cancelled] = dynamicChannelInfoDlg(expDir)
     Formats(10,3).span = [1 2];
     DefAns.pixelSize = 100;
 
-    Prompt(17,:) = {' ',[],[]};
-    Formats(11,1).type = 'text';
+    Prompt(17,:) = {'Count photobleaching steps','countBleaching',[]};
+    Formats(11,1).type = 'check';
     Formats(11,1).span = [1 4];
+    DefAns.countBleaching = false;
 
     Prompt(18,:) = {' ',[],[]};
     Formats(12,1).type = 'text';
     Formats(12,1).span = [1 4];
 
+    Prompt(19,:) = {' ',[],[]};
+    Formats(13,1).type = 'text';
+    Formats(13,1).span = [1 4];
 
     [Answer,Cancelled] = inputsdlg(Prompt,Title,Formats,DefAns,Options);
 end

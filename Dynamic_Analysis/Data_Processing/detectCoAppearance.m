@@ -94,9 +94,9 @@ params.pixelSize = pixelSize;
 params.RegistrationData = regData; 
 params.RegFile = regFile;
 if strcmp(DataType,'Composite Data')
-    if nChannels == 1 
-        error('Composite data should have more than one channel');
-    end
+    % if nChannels == 1 
+    %     error('Composite data should have more than one channel');
+    % end
     params.nChannels = nChannels;
     params.baitChNum = baitChNum;
     params.BaitChannel = 'Bait';
