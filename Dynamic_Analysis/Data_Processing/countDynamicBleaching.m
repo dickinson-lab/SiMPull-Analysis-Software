@@ -124,7 +124,7 @@ for a = 1:length(matFiles)
        
     %% Save 
     waitbar((a-1)/length(matFiles),fileBar,strrep(['Saving ' fileName],'_','\_'));
-    save([expDir filesep fileName], 'dynData','params');
+    save([expDir filesep fileName], 'dynData','params', "-v7.3");
 end
 
 close(fileBar)
