@@ -4,7 +4,7 @@
 warning('off') % Suppress unnecessary warnings while plotting
 
 % Ask user for data files
-matFiles = uipickfiles('Prompt','Select data files to analyze','Type',{'*.mat'});
+matFiles = uipickfiles('Prompt','Select data files or folders to analyze','Type',{'*.mat'});
 
 % Extract size and co-appearance information from data
 dataTables = tabulateCoAppearance(matFiles, true);
@@ -75,7 +75,7 @@ for b = 1:length(preyChannelNames)
             plot(ax,l:r,ciTotalObs(2,l:r),'k');
         end
     end
-    plot(ax,x,meanTotalObs,'o-k','LineWidth',2,'MarkerSize',8);
+    plot(ax,1:maxSize,meanTotalObs,'o-k','LineWidth',2,'MarkerSize',8);
     plot(ax,x1,meanTotalObs(x1),'ok','LineWidth',2,'MarkerSize',8,'MarkerFaceColor','k'); %Draw these points again to highlight points supported by >10 observations
     set(ax,'FontSize',14,'Box','on','LineWidth',2);
     ylabel(ax,'Mean Observations per Embryo');
@@ -113,7 +113,7 @@ for b = 1:length(preyChannelNames)
             plot(ax,l:r,ciColocObs(2,l:r),'Color',[0 0.5 0]);
         end
     end
-    plot(ax,x,meanColocObs,'o-','Color',[0 0.5 0],'LineWidth',2,'MarkerSize',8);
+    plot(ax,1:maxSize,meanColocObs,'o-','Color',[0 0.5 0],'LineWidth',2,'MarkerSize',8);
     plot(ax,x1,meanColocObs(x1),'o','Color',[0 0.5 0],'LineWidth',2,'MarkerSize',8,'MarkerFaceColor',[0 0.5 0]); %Draw these points again to highlight points supported by >10 observations
     %Plot non-colocalized data
     enoughData = ciNonColocObs(1,:)>0;
@@ -137,7 +137,7 @@ for b = 1:length(preyChannelNames)
     end
     plot(ax,x1,ciNonColocObs(1,x1),'Color',[0.2 0 1])
     plot(ax,x1,ciNonColocObs(2,x1),'Color',[0.2 0 1])
-    plot(ax,x,meanNonColocObs,'o-','Color',[0.2 0 1],'LineWidth',2,'MarkerSize',8);
+    plot(ax,1:maxSize,meanNonColocObs,'o-','Color',[0.2 0 1],'LineWidth',2,'MarkerSize',8);
     plot(ax,x1,meanNonColocObs(x1),'o','Color',[0.2 0 1],'LineWidth',2,'MarkerSize',8,'MarkerFaceColor',[0.2 0 1]); %Draw these points again to highlight points supported by >10 observations
     set(ax,'FontSize',14,'Box','on','LineWidth',2);
     ylabel(ax,'Mean Observations per Embryo');
