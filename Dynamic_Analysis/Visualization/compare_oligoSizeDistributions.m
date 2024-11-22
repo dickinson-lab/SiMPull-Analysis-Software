@@ -194,7 +194,7 @@ function makePlots(data1, data2, plotTitle)
     title(ax,plotTitle,'FontSize',14);
     hold on
     %Plot total data
-    enoughData = isfinite(ciDiff(1,:)) & ciDiff(1,:)>0 & isfinite(ciDiff(2,:) & ciDiff(2,:)>0);
+    enoughData = isfinite(ciDiff(1,:)) & ciDiff(1,:)>0 & isfinite(ciDiff(2,:)) & ciDiff(2,:)>0;
     x1 = find(enoughData);
     noData = find(~enoughData);
     breaks = [0, noData, max(x1)+1]; %This is a bit funky but results in each "segment" between zeros being plotted on its own in the loop below
