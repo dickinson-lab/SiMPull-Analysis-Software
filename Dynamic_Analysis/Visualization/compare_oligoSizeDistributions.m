@@ -117,7 +117,7 @@ function makePlots(data1, data2, plotTitle)
         r = breaks(c+1)-1;
         if l==r
             % No easy way to draw a single error bar that matches the style, so do it manually
-            patch([l-0.1,l+0.1,l+0.1,l-0.1],[ciData1(1,l), ciData1(1,l),ciColocObs(2,l),ciData1(2,l)], color1,'FaceAlpha',0.3,'EdgeColor','none');
+            patch([l-0.1,l+0.1,l+0.1,l-0.1],[ciData1(1,l), ciData1(1,l),ciData1(2,l),ciData1(2,l)], color1,'FaceAlpha',0.3,'EdgeColor','none');
             line([l-0.1,l+0.1], [ciData1(1,l), ciData1(1,l)],'Color',color1);
             line([l-0.1,l+0.1], [ciData1(2,l), ciData1(2,l)],'Color',color1);
         else
