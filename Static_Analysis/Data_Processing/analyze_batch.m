@@ -290,12 +290,18 @@ for a=1:length(dirList)
             for i = 1:nChannels
                 %Figure out which files we need to load
                 color = channels{i};
-                colorIndex = false(1,length(fileList));
-                for r = 1:length(wavelengths.(color))
-                    ptrn = ['_[\d-]*' wavelengths.(color){r} '[\d-]*\.nd2$'];
-                    colorIndex = colorIndex | ~cellfun(@isempty, regexp({fileList.name}, ptrn)); 
+                if nChannels > 1
+                    % If there's more than one channel, sort images by color
+                    colorIndex = false(1,length(fileList));
+                    for r = 1:length(wavelengths.(color))
+                        ptrn = ['_[\d-]*' wavelengths.(color){r} '[\d-]*\.nd2$'];
+                        colorIndex = colorIndex | ~cellfun(@isempty, regexp({fileList.name}, ptrn)); 
+                    end
+                    imagesOfThisColor = fileList(colorIndex);
+                else
+                    % Otherwise, just process everyone
+                    imagesOfThisColor = fileList;
                 end
-                imagesOfThisColor = fileList(colorIndex);
                 
                 %% Perform spot counting for each image
                 for b = 1:length(imagesOfThisColor)
