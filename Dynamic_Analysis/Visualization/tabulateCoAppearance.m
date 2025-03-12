@@ -107,7 +107,13 @@ for a = 1:length(matFiles)
         % filterIdx eliminates blinking, late-appearing and short-dwell spots, 
         % In a future version, these three filters could be applied separately. 
         filterIdx = spotChoiceIdx & ~cellfun(@(x) isnumeric(x) && length(x)==1 && ~isnan(x) && x<2500, {dynData.BaitSpotData.nFramesSinceLastApp}); % Blinker filter
-        filterIdx = filterIdx & ~cellfun(@(x,y) isnumeric(x) && x > 50*(y+1), {dynData.BaitSpotData.appearTimeFrames}, {dynData.BaitSpotData.appearedInWindow}); % Late appearance filter
+        if isfield(dynData.BaitSpotData, 'appearTimeFrames') % Current field naming
+                filterIdx = filterIdx & ~cellfun(@(x,y) isnumeric(x) && x > 50*(y+1), {dynData.BaitSpotData.appearTimeFrames}, {dynData.BaitSpotData.appearedInWindow}); % Late appearance filter
+            elseif isfield(dynData.BaitSpotData, 'appearTime') % Legacy field naming
+                filterIdx = filterIdx & ~cellfun(@(x,y) isnumeric(x) && x > 50*(y+1), {dynData.BaitSpotData.appearTime}, {dynData.BaitSpotData.appearedInWindow}); % Late appearance filter
+            else
+                error('Missing appearance time field in BaitSpotData structure');
+        end
         if ~isfield(dynData.BaitSpotData,'dwellTime')
             [dynData, ~] = dwellTime_koff(0,{[expDir filesep fileName]},false, dynData, params);
         end
