@@ -84,6 +84,7 @@ end
 close(fileBar)
 
 % Condense data and Plot
+totalPctCoApp = zeros(a,5);
 colors = jet(params.nChannels);
 for s = 1:params.nChannels
     if s == params.baitChNum
@@ -101,7 +102,7 @@ for s = 1:params.nChannels
         preyTrend = movsum(coAppearing,trendWindow,'omitnan');
         colocTrend = 100 * (preyTrend ./ baitTrend);
         % Calculate total (time-independent) co-appearance
-        totalPctCoApp(d) = 100 * (sum(coAppearing) / sum(baitsCounted) );
+        totalPctCoApp(:,d) = 100 * (sum(totalCoApp.(preyChannel){d},2,'omitnan') ./ sum(totalCounted.(preyChannel){d},2,'omitnan') );
         disp(['N(' num2str(d) ')=' num2str(sum(baitsCounted))]);
 
         %Plot
@@ -116,6 +117,6 @@ for s = 1:params.nChannels
         plot(x,colocTrend,'-','LineWidth',1,'Color',colors(s,:),'DisplayName',preyChannel)
     end
     figure('Name','Total pct. co-appearance');
-    bar(1:5,totalPctCoApp);
+    plotSpreadBubble(totalPctCoApp,'showWeightedMean',true);
 end
 

@@ -523,9 +523,12 @@ data(badData) = [];
 distributionIdx(badData) = [];
 categoryIdx(badData) = [];
 opt.markerSizes(badData) = [];
-opt.lower(badData) = [];
-opt.upper(badData) = [];
-
+if ~isempty(opt.lower)
+    opt.lower(badData) = [];
+end
+if ~isempty(opt.upper)
+    opt.upper(badData) = [];
+end
 
 %% TRANSFORM DATA
 % Here, I try to estimate what the aspect ratio of the data is going to be
