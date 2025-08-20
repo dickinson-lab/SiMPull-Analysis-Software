@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/ingydotnet/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/dickinson-lab/NDTiff_MATLAB
+	branch = main
+	commit = 7b4e12990e890c9344acedb3d6758cafbf87fee3
+	parent = 3015eac88669baceda085c4bcfa76d5b90151297
+	method = merge
+	cmdver = 0.4.9
