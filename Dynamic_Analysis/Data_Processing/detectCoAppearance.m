@@ -48,6 +48,7 @@ if nargin == 0
     else
         v2struct(Answer);
         DataType = 'Composite Data';  %% Data types are deprecated, set here to preserve backward compatibility
+        params.isNDTiff = exist('tiffType','var') && regexp(tiffType,'NDTiff');
     end
     
     % Image registration
@@ -84,6 +85,7 @@ elseif nargin == 3
     v2struct(Answer);
     regData = varargin{3};
     DataType = 'Composite Data';  %% Data types are deprecated, set here to preserve backward compatibility
+    params.isNDTiff = exist('tiffType','var') && regexp(tiffType,'NDTiff');
 else
     error('Incorrect number of input arguments given. Call detectCoAppearance(imgFilesCellArray, DialogBoxAnswers, regData) to provide parameters, or call with no arguments to raise dialog boxes.');
 end
@@ -114,13 +116,13 @@ dynData = blinkerFinder(dynData,params.BaitChannel);
 
 %% Plot coAppearance over time
 % Calculated time elapsed between embryo lysis and data acquisition and save in params
-elapsedTime = getElapsedTime(expDir, imgName);
+elapsedTime = getElapsedTime(expDir, imgName, params.isNDTiff);
 params.elapsedTime = elapsedTime;
 % Create and save plot
-params = coApp_vs_time(dynData,params,expDir,imgName);
+params = coApp_vs_time(dynData,params,expDir);
 
 %% Save data
-save([expDir filesep imgName '.mat'], 'dynData','params',"-v7.3");
+save([expDir(1:end-1) '.mat'], 'dynData','params',"-v7.3");
 end
 
 
@@ -129,19 +131,30 @@ end
 %% Composite data (Images are ImageJ hyperstacks with multiple channels) 
 function [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params)
     %% Load images
-    wb = waitbar(0,'Loading Images...','Name',strrep(['Analyzing Experiment ' expDir],'_','\_'));
+    wb = waitbar(0,'Loading Images...','Name',strrep(['Analyzing Experiment ' expDir],'_','\_'));       
+    tempDir = [userpath filesep 'temp'];
     if length(imgFile) > 1 %if the user selected multiple files
+        % Download files from pod - this is faster than opening over the network
+        slash = strfind(expDir,filesep);
+        imgName = expDir(slash(end-1)+1 : end-1);
+        copyfile(expDir,[tempDir filesep imgName]);
+        % Each file will be loaded as a TIFFStack object, then concatenated together.
+        % We use TIFFStack even for NDTiff files, as it's faster than the native NDTiff opener.
+        % Order is determined by the user via uipickfiles, or guessed at automatically in batch mode
         nFiles = length(imgFile);
         stackOfStacks = cell(nFiles,1);
-        % Each file will be loaded as a TIFFStack object, then concatenated together.
-        % Order is determined by the user via uipickfiles
         for a = 1:nFiles
-            stackOfStacks{a} = TIFFStack(imgFile{a},[],params.nChannels);
+            localFile{a} = [tempDir filesep imgName filesep imgFile{a}(slash(end):end)];        
+            stackOfStacks{a} = TIFFStack(localFile{a},[],params.nChannels);
         end
         stackObj = TensorStack(4, stackOfStacks{:});
     else
         % If there's just a single TIFF file, it's simpler
-        stackObj = TIFFStack(imgFile{1},[],params.nChannels);
+        slash = strfind(expDir,filesep);
+        imgName = expDir(slash(end-1)+1 : end-1);
+        copyfile(expDir,[tempDir filesep imgName]);
+        localFile = [tempDir filesep imgName filesep imgFile{a}(slash(end):end)];
+        stackObj = TIFFStack(localFile,[],params.nChannels);
     end
 
     %% Find difference peaks
@@ -161,10 +174,8 @@ function [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params)
     %% Save average and difference images
     % Check if data have already been processed. If so, check if the value of 'window' has changed.
     newAvg = false;
-    slash = strfind(imgFile{1},filesep);
-    imgName = imgFile{1}(slash(end)+1:strfind(imgFile{1},'_MMStack')-1);
-    if exist([expDir filesep imgName '.mat'], 'file')
-        existingData = load([expDir filesep imgName '.mat'], 'dynData');
+    if exist([expDir(1:end-1) '.mat'], 'file')
+        existingData = load([expDir(1:end-1) '.mat'], 'dynData');
         % If a different number of windows were used previously, make newAvg flag true for next step
         if existingData.dynData.avgWindow ~= params.window
             newAvg = true;
@@ -174,33 +185,33 @@ function [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params)
 
     [~,~,~,ndiffs] = size(diffImg); 
     % Check if any windowed average and difference images exist before saving
-    if exist([expDir filesep imgName '_avgImg.tif'], 'file')||exist([expDir filesep imgName '_diffImg.tif'], 'file')
+    if exist([expDir(1:end-1) '_avgImg.tif'], 'file')||exist([expDir(1:end-1) '_diffImg.tif'], 'file')
         if newAvg % If averaging window has been changed, delete all existing files
            warning('off','all');
-           delete ([expDir filesep imgName '_avgImg.tif']);
-           delete ([expDir filesep imgName '_diffImg.tif']);
+           delete ([expDir(1:end-1) '_avgImg.tif']);
+           delete ([expDir(1:end-1) '_diffImg.tif']);
            % Save difference images with new averaging window
            for w=1:ndiffs
                for v=1:params.nChannels
-                    imwrite(uint16(diffImg(:,:,v,w)),[expDir filesep imgName '_diffImg.tif'],'tif','WriteMode','append','Compression','none');
+                    imwrite(uint16(diffImg(:,:,v,w)),[expDir(1:end-1) '_diffImg.tif'],'tif','WriteMode','append','Compression','none');
                end
            end
            % Save average images
            for w=1:ndiffs+1
                for v=1:params.nChannels
-                   imwrite(uint16(avgImg(:,:,v,w)),[expDir filesep imgName '_avgImg.tif'],'tif','WriteMode','append','Compression','none');
+                   imwrite(uint16(avgImg(:,:,v,w)),[expDir(1:end-1) '_avgImg.tif'],'tif','WriteMode','append','Compression','none');
                end
            end
         end
     else % Save if no images yet exist
         for w=1:ndiffs
             for v=1:params.nChannels
-                imwrite(uint16(diffImg(:,:,v,w)),[expDir filesep imgName '_diffImg.tif'],'tif','WriteMode','append','Compression','none');
+                imwrite(uint16(diffImg(:,:,v,w)),[expDir(1:end-1) '_diffImg.tif'],'tif','WriteMode','append','Compression','none');
            end
         end
         for w=1:ndiffs+1
             for v=1:params.nChannels
-                imwrite(uint16(avgImg(:,:,v,w)),[expDir filesep imgName '_avgImg.tif'],'tif','WriteMode','append','Compression','none');
+                imwrite(uint16(avgImg(:,:,v,w)),[expDir(1:end-1) '_avgImg.tif'],'tif','WriteMode','append','Compression','none');
             end
         end
     end
@@ -307,10 +318,83 @@ function [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params)
             dynData = findCoApp(dynData, 'Bait', preyChannel, wb);
         end
     end
-close(wb)
+    % Delete Temp Files
+    delete(localFile{:});
+    close(wb)
+end
+
+function [dynData,lastFoundSpots] = filterLastFoundSpots(psDiffResults,dynData,lastFoundSpots,baitChName,currentFrame)
+    % The baitDiff approach will tend to find the same object in two consecutive windows. So now we need 
+    % to go through the list of found spots and keep only those that weren't found previously. 
+    [foundSpots] = {psDiffResults.([baitChName 'SpotData']).spotLocation}';
+    for c = 1:psDiffResults.([baitChName 'SpotCount'])
+        query = cell2mat(foundSpots(c));
+        if ~isempty(lastFoundSpots) && ~isempty(lastFoundSpots{1}) % This If statement protects against errors when no spots were found in the previous frame.
+            match = find(cellfun(@(x) sum(abs(x-query))<3, lastFoundSpots)); %Peaks <3 pixels from a previously-found peak are ignored
+        else
+            match = [];
+        end
+        if isempty(match) %If we didn't find a match, that means it's a new spot. Add it to the main data structure
+            psDiffResults.([baitChName 'SpotData'])(c).appearedInWindow = currentFrame; %Save info about when this spot appeared
+            dynData.([baitChName 'SpotData'])(end+1) = psDiffResults.([baitChName 'SpotData'])(c);
+        end
+    end
+    lastFoundSpots = foundSpots; %Save the list of spots found this time to compare to the next time through the loop
+end
+
+
+function dynData = findCoApp(dynData, baitChannel, preyChannel, wb)
+    % Find spots that appear at the same time. Here a "greedy" algorithm is
+    % used that counts any up-step in prey intensity coincinding with bait appearance as a co-appearance
+    % event, regardless of whether it's the first up-step in the prey channel
+    waitbar(0,wb,'Finding prey co-appearance events...');
+    for c = 1:dynData.([baitChannel 'SpotCount'])
+        waitbar((c-1)/dynData.([baitChannel 'SpotCount']),wb);
+        %Detect Changepoints
+        traj = dynData.([preyChannel 'SpotData'])(c).intensityTrace;
+        [results, error] = find_changepoints_c(traj,2);
+        dynData.([preyChannel 'SpotData'])(c).changepoints = results.changepoints;
+        dynData.([preyChannel 'SpotData'])(c).steplevels = results.steplevels;
+        dynData.([preyChannel 'SpotData'])(c).stepstdev = results.stepstdev;
+        if error
+            dynData.([preyChannel 'SpotData'])(c).appearTimeFrames = 'Analysis Failed';
+            dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = NaN;
+            continue
+        end
+
+        %Look for an upstep at the appearance time
+        if isnumeric(dynData.([baitChannel 'SpotData'])(c).appearTimeFrames)
+            baitAppearTime = dynData.([baitChannel 'SpotData'])(c).appearTimeFrames;
+
+            % Make sure there is a step to be tested 
+            if ~isempty(dynData.([preyChannel 'SpotData'])(c).changepoints)
+                preyStepTimes = dynData.([preyChannel 'SpotData'])(c).changepoints(:,1) + dynData.avgWindow * (dynData.([preyChannel 'SpotData'])(c).appearedInWindow - 1);
+            else
+                % If there are no steps in the prey channel, we're done - it can't co-appear
+                dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = false;
+                continue 
+            end
+            matchingStep = find( abs(baitAppearTime - preyStepTimes) <= 4 );  %Spots appearing within 4 frames of each other are considered simultaneous
+
+            if ~isempty(matchingStep) && dynData.([preyChannel 'SpotData'])(c).steplevels(max(matchingStep)+1) > dynData.([preyChannel 'SpotData'])(c).steplevels(min(matchingStep)) % && the intensity has to increase (otherwise it's not an appearance event)
+                                                                                                                                                                                     % The "min" and "max" avoid crashing when more than one step matches.
+                dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = true;
+            else
+                dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = false;
+            end
+
+        else
+            dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = NaN;
+        end
+    end
+
+    % Tally results
+    dynData.([baitChannel 'AppearanceFound']) = sum( isnumeric([ dynData.([baitChannel 'SpotData']).appearTimeFrames ]) ) ;
+    dynData.([baitChannel preyChannel 'CoAppearing']) = sum([ dynData.([baitChannel 'SpotData']).(['appears_w_' preyChannel]) ], 'omitnan');
 end
 
 %% Dual-view data (side-by-side images)
+% Deprecated; preserved for backwards-compatibility only
 function [imgName, dynData, params] = detCoApp_dv(expDir,imgFile,params)
     %% Load images
     wb = waitbar(0,'Loading Images...','Name',strrep(['Analyzing Experiment ' expDir],'_','\_'));
@@ -508,75 +592,4 @@ function [imgName, dynData, params] = detCoApp_dv(expDir,imgFile,params)
         dynData = findCoApp(dynData, baitChannel, preyChannel, wb);
     end
 close(wb)
-end  
-
-
-function [dynData,lastFoundSpots] = filterLastFoundSpots(psDiffResults,dynData,lastFoundSpots,baitChName,currentFrame)
-    % The baitDiff approach will tend to find the same object in two consecutive windows. So now we need 
-    % to go through the list of found spots and keep only those that weren't found previously. 
-    [foundSpots] = {psDiffResults.([baitChName 'SpotData']).spotLocation}';
-    for c = 1:psDiffResults.([baitChName 'SpotCount'])
-        query = cell2mat(foundSpots(c));
-        if ~isempty(lastFoundSpots) && ~isempty(lastFoundSpots{1}) % This If statement protects against errors when no spots were found in the previous frame.
-            match = find(cellfun(@(x) sum(abs(x-query))<3, lastFoundSpots)); %Peaks <3 pixels from a previously-found peak are ignored
-        else
-            match = [];
-        end
-        if isempty(match) %If we didn't find a match, that means it's a new spot. Add it to the main data structure
-            psDiffResults.([baitChName 'SpotData'])(c).appearedInWindow = currentFrame; %Save info about when this spot appeared
-            dynData.([baitChName 'SpotData'])(end+1) = psDiffResults.([baitChName 'SpotData'])(c);
-        end
-    end
-    lastFoundSpots = foundSpots; %Save the list of spots found this time to compare to the next time through the loop
-end
-
-
-function dynData = findCoApp(dynData, baitChannel, preyChannel, wb)
-    % Find spots that appear at the same time. Here a "greedy" algorithm is
-    % used that counts any up-step in prey intensity coincinding with bait appearance as a co-appearance
-    % event, regardless of whether it's the first up-step in the prey channel
-    waitbar(0,wb,'Finding prey co-appearance events...');
-    for c = 1:dynData.([baitChannel 'SpotCount'])
-        waitbar((c-1)/dynData.([baitChannel 'SpotCount']),wb);
-        %Detect Changepoints
-        traj = dynData.([preyChannel 'SpotData'])(c).intensityTrace;
-        [results, error] = find_changepoints_c(traj,2);
-        dynData.([preyChannel 'SpotData'])(c).changepoints = results.changepoints;
-        dynData.([preyChannel 'SpotData'])(c).steplevels = results.steplevels;
-        dynData.([preyChannel 'SpotData'])(c).stepstdev = results.stepstdev;
-        if error
-            dynData.([preyChannel 'SpotData'])(c).appearTimeFrames = 'Analysis Failed';
-            dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = NaN;
-            continue
-        end
-
-        %Look for an upstep at the appearance time
-        if isnumeric(dynData.([baitChannel 'SpotData'])(c).appearTimeFrames)
-            baitAppearTime = dynData.([baitChannel 'SpotData'])(c).appearTimeFrames;
-
-            % Make sure there is a step to be tested 
-            if ~isempty(dynData.([preyChannel 'SpotData'])(c).changepoints)
-                preyStepTimes = dynData.([preyChannel 'SpotData'])(c).changepoints(:,1) + dynData.avgWindow * (dynData.([preyChannel 'SpotData'])(c).appearedInWindow - 1);
-            else
-                % If there are no steps in the prey channel, we're done - it can't co-appear
-                dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = false;
-                continue 
-            end
-            matchingStep = find( abs(baitAppearTime - preyStepTimes) <= 4 );  %Spots appearing within 4 frames of each other are considered simultaneous
-
-            if ~isempty(matchingStep) && dynData.([preyChannel 'SpotData'])(c).steplevels(max(matchingStep)+1) > dynData.([preyChannel 'SpotData'])(c).steplevels(min(matchingStep)) % && the intensity has to increase (otherwise it's not an appearance event)
-                                                                                                                                                                                     % The "min" and "max" avoid crashing when more than one step matches.
-                dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = true;
-            else
-                dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = false;
-            end
-
-        else
-            dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = NaN;
-        end
-    end
-
-    % Tally results
-    dynData.([baitChannel 'AppearanceFound']) = sum( isnumeric([ dynData.([baitChannel 'SpotData']).appearTimeFrames ]) ) ;
-    dynData.([baitChannel preyChannel 'CoAppearing']) = sum([ dynData.([baitChannel 'SpotData']).(['appears_w_' preyChannel]) ], 'omitnan');
 end

@@ -1,7 +1,7 @@
 % Plots percent coAppearance as a function of (windowed) appearance time for dynamic SiMPull data. 
 % This function is not meant to be called by the user but rather by either detectCoAppearance.m or by batchCoApp_vs_time.m. 
 
-function params = coApp_vs_time(dynData,params,expDir,imgName)
+function params = coApp_vs_time(dynData,params,expDir)
 % Adjustable parameter for how many 50 frame windows will be averaged for the trendline
 trendWindow = 50;
 
@@ -106,7 +106,7 @@ end
 
 % Save plot
 set(f, 'visible','on'); % Ensure that figure will be visible by default before saving
-savefig([expDir filesep imgName '_coApp_vs_time.fig']);
+savefig([expDir(1:end-1) '_coApp_vs_time.fig']);
 close(f)
 end
 

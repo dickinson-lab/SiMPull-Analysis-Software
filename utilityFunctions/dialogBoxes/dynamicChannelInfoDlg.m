@@ -43,87 +43,99 @@ function [Answer, Cancelled] = dynamicChannelInfoDlg(expDir)
     Formats(2,3).span = [1 2];
     DefAns.baitChNum = 1;
     
-    Prompt(6,:) = {' ',[],[]};
+    Prompt(6,:) = {'\fontsize{12}TIFF File type:',[],[]};
     Formats(3,1).type = 'text';
     Formats(3,1).span = [1 4];
 
-    Prompt(7,:) = {'\fontsize{12}Choose a representative image to perform dual-view registration. This registration will then be applied across all of your images.',[],[]};
-    Formats(4,1).type = 'text';
+    Prompt(7,:) = {'','tiffType',[]};    
+    Formats(4,1).type = 'list';
+    Formats(4,1).format = 'text';
+    Formats(4,1).style = 'radiobutton';
+    Formats(4,1).items = {'NDTiff    ' 'Other *.tif'};
     Formats(4,1).span = [1 4];
+    DefAns.tiffType = 'NDTiff    ';
 
-    Prompt(8,:) = {'\fontsize{12}You should choose an image that has distinct spots (not too dense) and a lot of colocalized signal. Control data (e.g. mNG::Halo) or bead images work best.',[],[]};
+    Prompt(8,:) = {' ',[],[]};
     Formats(5,1).type = 'text';
-    Formats(5,1).span = [1 4];
-    
-    Prompt(9,:) = {'\fontsize{12}Image File:','regFile',[]};
-    Formats(6,1).type = 'edit';
-    Formats(6,1).format = 'file';
-    Formats(6,1).items = [expDir filesep '*.tif*'];
-    Formats(6,1).limits = [0 1];
-    Formats(6,1).required = 'on';
-    Formats(6,1).size = [0 25];
-    Formats(6,1).span = [1 4];
-    %DefAns.regFile = expDir;
+    Formats(5).span = [1 4];
 
-    Prompt(10,:) = {'\fontsize{12}Frames to average for image registration:',[],[]};
+    Prompt(9,:) = {'\fontsize{12}Choose a representative image to perform dual-view registration. This registration will then be applied across all of your images.',[],[]};
+    Formats(6,1).type = 'text';
+    Formats(6,1).span = [1 4];
+
+    Prompt(10,:) = {'\fontsize{12}You should choose an image that has distinct spots (not too dense) and a lot of colocalized signal. Control data (e.g. mNG::Halo) or bead images work best.',[],[]};
     Formats(7,1).type = 'text';
     Formats(7,1).span = [1 4];
-
-    Prompt(11,:) = {'    ','RegWindow1',[]};
+    
+    Prompt(11,:) = {'\fontsize{12}Image File:','regFile',[]};
     Formats(8,1).type = 'edit';
-    Formats(8,1).format = 'integer';
-    Formats(8,1).limits = [1 inf];
-    Formats(8,1).size = [25 25];
-    Formats(8,1).unitsloc = 'bottomleft';
-    Formats(8,1).span = [1 1];
-    DefAns.RegWindow1 = 1;
+    Formats(8,1).format = 'file';
+    Formats(8,1).items = [expDir filesep '*.tif*'];
+    Formats(8,1).limits = [0 1];
+    Formats(8,1).required = 'on';
+    Formats(8,1).size = [0 25];
+    Formats(8,1).span = [1 4];
+    %DefAns.regFile = expDir;
 
-    Prompt(12,:) = {'\fontsize{12} to ','RegWindow2',[]};
-    Formats(8,2).type = 'edit';
-    Formats(8,2).format = 'integer';
-    Formats(8,2).limits = [1 inf];
-    Formats(8,2).size = [25 25];
-    Formats(8,2).unitsloc = 'bottomleft';
-    Formats(8,2).span = [1 1];
-    DefAns.RegWindow2 = 1;
-    
-    Prompt(13,:) = {'',[],[]};
-    Formats(8,3).type = 'text';
-    Formats(8,3).span = [1 2];
-    
-    Prompt(14,:) = {'\fontsize{12}Pixel size (nm):',[],[]};
+    Prompt(12,:) = {'\fontsize{12}Frames to average for image registration:',[],[]};
     Formats(9,1).type = 'text';
     Formats(9,1).span = [1 4];
 
-    Prompt(15,:) = {'','pixelSizeChoice',[]};    
-    Formats(10,1).type = 'list';
-    Formats(10,1).format = 'text';
-    Formats(10,1).style = 'radiobutton';
-    Formats(10,1).items = {'97.5 nm    ' '108.3 nm    ' '110 nm    ' 'Other'};
-    Formats(10,1).span = [1 2];
+    Prompt(13,:) = {'    ','RegWindow1',[]};
+    Formats(10,1).type = 'edit';
+    Formats(10,1).format = 'integer';
+    Formats(10,1).limits = [1 inf];
+    Formats(10,1).size = [25 25];
+    Formats(10,1).unitsloc = 'bottomleft';
+    Formats(10,1).span = [1 1];
+    DefAns.RegWindow1 = 1;
+
+    Prompt(14,:) = {'\fontsize{12} to ','RegWindow2',[]};
+    Formats(10,2).type = 'edit';
+    Formats(10,2).format = 'integer';
+    Formats(10,2).limits = [1 inf];
+    Formats(10,2).size = [25 25];
+    Formats(10,2).unitsloc = 'bottomleft';
+    Formats(10,2).span = [1 1];
+    DefAns.RegWindow2 = 1;
+    
+    Prompt(15,:) = {'',[],[]};
+    Formats(10,3).type = 'text';
+    Formats(10,3).span = [1 2];
+    
+    Prompt(16,:) = {'\fontsize{12}Pixel size (nm):',[],[]};
+    Formats(11,1).type = 'text';
+    Formats(11,1).span = [1 4];
+
+    Prompt(17,:) = {'','pixelSizeChoice',[]};    
+    Formats(12,1).type = 'list';
+    Formats(12,1).format = 'text';
+    Formats(12,1).style = 'radiobutton';
+    Formats(12,1).items = {'97.5 nm    ' '108.3 nm    ' '110 nm    ' 'Other'};
+    Formats(12,1).span = [1 2];
     DefAns.pixelSizeChoice = '97.5 nm    ';
     
-    Prompt(16,:) = {'Other pixel size:','pixelSize',[]};
-    Formats(10,3).type = 'edit';
-    Formats(10,3).format = 'float';
-    Formats(10,3).limits = [1 inf];
-    Formats(10,3).size = [50 25];
-    Formats(10,3).unitsloc = 'bottomleft';
-    Formats(10,3).span = [1 2];
+    Prompt(18,:) = {'Other pixel size:','pixelSize',[]};
+    Formats(12,3).type = 'edit';
+    Formats(12,3).format = 'float';
+    Formats(12,3).limits = [1 inf];
+    Formats(12,3).size = [50 25];
+    Formats(12,3).unitsloc = 'bottomleft';
+    Formats(12,3).span = [1 2];
     DefAns.pixelSize = 100;
 
-    Prompt(17,:) = {'Count photobleaching steps','countBleaching',[]};
-    Formats(11,1).type = 'check';
-    Formats(11,1).span = [1 4];
+    Prompt(19,:) = {'Count photobleaching steps','countBleaching',[]};
+    Formats(13,1).type = 'check';
+    Formats(13,1).span = [1 4];
     DefAns.countBleaching = false;
 
-    Prompt(18,:) = {' ',[],[]};
-    Formats(12,1).type = 'text';
-    Formats(12,1).span = [1 4];
+    Prompt(20,:) = {' ',[],[]};
+    Formats(14,1).type = 'text';
+    Formats(14,1).span = [1 4];
 
-    Prompt(19,:) = {' ',[],[]};
-    Formats(13,1).type = 'text';
-    Formats(13,1).span = [1 4];
+    Prompt(21,:) = {' ',[],[]};
+    Formats(15,1).type = 'text';
+    Formats(15,1).span = [1 4];
 
     [Answer,Cancelled] = inputsdlg(Prompt,Title,Formats,DefAns,Options);
 end
