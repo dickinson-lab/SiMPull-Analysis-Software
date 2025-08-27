@@ -133,28 +133,40 @@ function [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params)
     %% Load images
     wb = waitbar(0,'Loading Images...','Name',strrep(['Analyzing Experiment ' expDir],'_','\_'));       
     tempDir = [userpath filesep 'temp'];
+    % Find out if file is local or on a network drive
+    remote = isNetworkDrive(imgFile{1});
     if length(imgFile) > 1 %if the user selected multiple files
-        % Download files from pod - this is faster than opening over the network
         slash = strfind(expDir,filesep);
         imgName = expDir(slash(end-1)+1 : end-1);
-        copyfile(expDir,[tempDir filesep imgName]);
-        % Each file will be loaded as a TIFFStack object, then concatenated together.
-        % We use TIFFStack even for NDTiff files, as it's faster than the native NDTiff opener.
-        % Order is determined by the user via uipickfiles, or guessed at automatically in batch mode
         nFiles = length(imgFile);
         stackOfStacks = cell(nFiles,1);
-        for a = 1:nFiles
-            localFile{a} = [tempDir filesep imgName filesep imgFile{a}(slash(end):end)];        
-            stackOfStacks{a} = TIFFStack(localFile{a},[],params.nChannels);
+        if remote
+            % Download files from pod - this is faster than opening over the network
+            copyfile(expDir,[tempDir filesep imgName]);
+            % Each file will be loaded as a TIFFStack object, then concatenated together.
+            % We use TIFFStack even for NDTiff files, as it's faster than the native NDTiff opener.
+            % Order is determined by the user via uipickfiles, or guessed at automatically in batch mode
+            for a = 1:nFiles
+                localFile{a} = [tempDir filesep imgName filesep imgFile{a}(slash(end):end)];        
+                stackOfStacks{a} = TIFFStack(localFile{a},[],params.nChannels);
+            end
+        else
+            for a = 1:nFiles     
+                stackOfStacks{a} = TIFFStack(imgFile{a},[],params.nChannels);
+            end
         end
         stackObj = TensorStack(4, stackOfStacks{:});
     else
         % If there's just a single TIFF file, it's simpler
         slash = strfind(expDir,filesep);
         imgName = expDir(slash(end-1)+1 : end-1);
-        copyfile(expDir,[tempDir filesep imgName]);
-        localFile = [tempDir filesep imgName filesep imgFile{a}(slash(end):end)];
-        stackObj = TIFFStack(localFile,[],params.nChannels);
+        if remote
+            copyfile(expDir,[tempDir filesep imgName]);
+            localFile = [tempDir filesep imgName filesep imgFile{a}(slash(end):end)];
+            stackObj = TIFFStack(localFile,[],params.nChannels);
+        else
+            stackObj = TIFFStack(imgFile{1},[],params.nChannels);
+        end
     end
 
     %% Find difference peaks
