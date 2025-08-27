@@ -331,7 +331,9 @@ function [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params)
         end
     end
     % Delete Temp Files
-    delete([tempDir filesep imageName]);
+    if remote
+        delete([tempDir filesep imgName]);
+    end
     close(wb)
 end
 
