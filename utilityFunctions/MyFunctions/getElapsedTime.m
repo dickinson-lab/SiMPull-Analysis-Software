@@ -52,8 +52,8 @@ else
         startTime = contains(str,'StartTime');
         if startTime
             str = split(str);
-            aquisitionTime = str(3,1);
-            aquisitionTime = str2double(split(aquisitionTime,':'));
+            acquisitionTime = str(3,1);
+            acquisitionTime = str2double(split(acquisitionTime,':'));
         end
         n = n+1;
     end
@@ -85,7 +85,7 @@ else
 end
 
 %% Calculate seconds elapsed between lysis and acquisition, if possible
-aquisitionTime= (aquisitionTime(2)*60) + aquisitionTime(3);
+acquisitionTime= (acquisitionTime(2)*60) + acquisitionTime(3);
 lysisTime= (lysisTime(2)*60) + lysisTime(3);
-elapsedTime = aquisitionTime - lysisTime;
+elapsedTime = acquisitionTime - lysisTime;
 end

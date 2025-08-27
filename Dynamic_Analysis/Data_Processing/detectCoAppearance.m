@@ -319,7 +319,7 @@ function [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params)
         end
     end
     % Delete Temp Files
-    delete(localFile{:});
+    delete([tempDir filesep imageName]);
     close(wb)
 end
 
