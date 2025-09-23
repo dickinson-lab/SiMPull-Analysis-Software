@@ -1,11 +1,11 @@
 % Finds and saves dwell times for dynamic SiMPull data. Both channels are
 % analyzed. Then, the prey channel information if used to calculate and
-% save a k_off.
+% save a k_obs.
 
-% k_off is estimated following the Bayesian method of Kinz-Thompson & Gonzalez. 
-% Note that what is actually reported is k_obs, which is a sum of koff and 
-% the photobleaching rate constant k_ph. k_ph must be measured independently, 
-% for example by applying this analysis to covalent mNG::Halo dimers. 
+% k_obs is estimated following the Bayesian method of Kinz-Thompson & Gonzalez. 
+% k_obs is a sum of koff and the photobleaching rate constant k_ph. 
+% k_ph must be measured independently, for example by applying this 
+% analysis to covalent mNG::Halo dimers. 
 
 % Return values of P and k_obs are 3-element vectors that express the 95%
 % credible interval of the estimation; for example, P = [P_upper, P_mean, P_lower]
@@ -31,7 +31,7 @@
 % binidng sites for prey proteins, which would behave independently,
 % complicating the interpretation of k_obs. 
 
-% Usage: [dynData, summary] = dwellTime_koff(maxBaitSteps, matFiles, printResults, dynData, params)
+% Usage: [dynData, summary, k_obs_results] = dwellTime_kobs(maxBaitSteps, matFiles, printResults, dynData, params)
 % Parameters (all optional): 
     % maxBaitSteps: Maximum number of steps a trace can have in order to be analyzed.
     % This avoids analyzing nonsensical traces in dense regions of the data.
@@ -50,7 +50,7 @@
     % 'matFiles'. Both dynData and params must be passed or the function
     % will give an error. This syntax only supports analyzing a single dataset. 
 
-function [dynData, koff_summary, koff_results] = dwellTime_koff(varargin)
+function [dynData, koff_summary, koff_results] = dwellTime_kobs(varargin)
     %Parse user input
     if nargin == 0
         maxBaitSteps = 0;
@@ -175,7 +175,56 @@ function [dynData, koff_summary, koff_results] = dwellTime_koff(varargin)
         end
         koff_summary(a).Sample_name = fileName;
         koff_summary(a).maxStepsUsed = maxBaitSteps; % Save information about the sizes of complexes that were considered.
+        
+        %% k_obs for bait channel
+        % Eliminate bait spots with no dwell time information (no photobleaching steps found)
+        nonSkippedIndex = ~cellfun(@isnan, {dynData.([BaitChannel 'SpotData']).dwellTime});
+        hasStepIndex = ~cellfun(@isnan, {dynData.([PreyChannel 'SpotData']).dwellTime});
+        index = nonSkippedIndex & hasStepIndex;
+        baitStruct = dynData.([BaitChannel 'SpotData'])(index); 
 
+        % Count non-disappearing spots - if this is a large number, we might need to re-process data to pull longer intensity traces
+        baitNoDisappearance = sum(cell2mat({baitStruct.noDisappearance}));
+        
+        % Count up the number of spots observed and the number of observations of the complex remaining intact 
+        n = sum(index); % Number of complexes analyzed
+        n_bound = sum(cell2mat({baitStruct.dwellTime})); % n_bound is the number of times we observed the prey protein staying bound (not disappearing). 
+        
+        % Count the number of bait protein disappearances.  
+        % We only count cases where the bait protein is observed to disappear.
+        index1 = ~cell2mat({baitStruct.noDisappearance});
+        n_off = sum(index1);
+        
+        % Calculate P and its confidence intervals
+        P(1,1) = betaincinv(0.025, 1+n_off, 1+n_bound, 'upper'); %Upper bound of confidence interval
+        P(2,1) = (1 + n_off) / (2 + n_off + n_bound);
+        P(3,1) = betaincinv(0.025, 1+n_off, 1+n_bound, 'lower'); %Lower bound of confidence interval
+    
+        % Calculate k_obs
+        k_obs = -log(1-P);
+        
+        % Display the results
+        if printResults
+            disp(['Results for ' fileName ' Bait channel:']);
+            disp(['Analyzed data for ' num2str(n) ' bait spots']);
+            disp(['Bait channel k_obs = ' num2str(k_obs(2)) ' (' num2str(k_obs(3)) ', ' num2str(k_obs(1)) ')']);
+            disp([ num2str(baitNoDisappearance) ' bait molecules that remained bound throughout their intensity traces' ]);
+            disp(newline);
+        end
+        
+        %Add results to summary structure
+        koff_summary(a).([BaitChannel '_k_obs_lower']) = k_obs(3);
+        koff_summary(a).([BaitChannel '_k_obs']) = k_obs(2);
+        koff_summary(a).([BaitChannel '_k_obs_upper']) = k_obs(1);
+        koff_summary(a).([BaitChannel '_n']) = n;
+        koff_summary(a).([BaitChannel '_n_off']) = n_off;
+        koff_summary(a).([BaitChannel '_n_bound']) = n_bound;
+        koff_summary(a).([BaitChannel '_non_disappearing']) = baitNoDisappearance; 
+    
+        dynData.([BaitChannel '_P_off']) = P;
+        dynData.([BaitChannel '_k_obs']) = k_obs;
+
+        %% k_obs for prey channel(s)
         for e = 1:length(params.preyChNums)
             PreyChannel = ['PreyCh' num2str(params.preyChNums(e))]; 
         
@@ -210,7 +259,7 @@ function [dynData, koff_summary, koff_results] = dwellTime_koff(varargin)
             % Calculate k_obs
             k_obs = -log(1-P);
             
-            %% Display the results
+            % Display the results
             if printResults
                 disp(['Results for ' fileName ', ' PreyChannel ' channel:']);
                 disp(['Analyzed data for ' num2str(n) ' co-appearing spots']);
@@ -234,7 +283,7 @@ function [dynData, koff_summary, koff_results] = dwellTime_koff(varargin)
             dynData.([PreyChannel '_k_obs']) = k_obs;
         end
         
-        %Save 
+        %% Save 
         if length(matFiles) > 1
             waitbar((a-1)/length(matFiles),statusbar,strrep(['Saving ' fileName],'_','\_'));
         end

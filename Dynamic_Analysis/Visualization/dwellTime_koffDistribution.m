@@ -52,7 +52,7 @@ for b = 1:length(fileNames)
     if ismember('koff_results',vars)
         load([expDir{b} filesep fileNames{b}],'params','koff_results')
     else
-        [~, ~, koff_results] = dwellTime_koff(0, {[expDir{b} filesep fileNames{b}]}, false);
+        [~, ~, koff_results] = dwellTime_kobs(0, {[expDir{b} filesep fileNames{b}]}, false);
         load([expDir{b} filesep fileNames{b}],'params')
     end
     
@@ -79,7 +79,7 @@ for b = 1:length(fileNames)
     if ismember('koff_results',vars)
         load([controlDir{controlIdx} filesep controlNames{controlIdx}],'params','koff_results')
     else
-        [~, ~, koff_results] = dwellTime_koff(0, {[controlDir{controlIdx} filesep controlNames{controlIdx}]}, false);
+        [~, ~, koff_results] = dwellTime_kobs(0, {[controlDir{controlIdx} filesep controlNames{controlIdx}]}, false);
         load([controlDir{controlIdx} filesep controlNames{controlIdx}],'params')
     end
     % Determine prey channel
