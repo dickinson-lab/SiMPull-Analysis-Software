@@ -22,14 +22,16 @@ for a = 1:length(matFiles)
     if isfolder(matFiles{a})
         fileName = [fileName '.mat'];
         expDir = matFiles{a};
+        matDir = matFiles{a};
         if ~isfile([expDir filesep fileName])
             warndlg(['No .mat file found for selected folder ' expDir]);
             continue
         end
     else
         expDir = matFiles{a}(1:end-4); %Just chops off the '.mat' extension; this will work if .mat file is outside the image directory
+        matDir = matFiles{a}(1:slash(end));
         if ~isfolder(expDir)
-            expDir = matFiles{a}(1:slash(end)); %If that doesn't work, .mat file must be inside the image directory
+            expDir = matDir; %If that doesn't work, .mat file must be inside the image directory
         end
         if ~isfolder(expDir)
             error('Could not locate image files - did you move the .mat file from the location where it was originally created?');
@@ -37,7 +39,7 @@ for a = 1:length(matFiles)
     end
     
     % Load data structure
-    load([expDir filesep fileName],'dynData','params');
+    load([matDir filesep fileName],'dynData','params');
     %Extract channel info - this is just for code readability
     BaitChannel = params.BaitChannel;
     if ~strcmp(params.DataType, 'Composite Data')
@@ -130,7 +132,7 @@ for a = 1:length(matFiles)
        
     %% Save 
     waitbar((a-1)/length(matFiles),fileBar,strrep(['Saving ' fileName],'_','\_'));
-    save([expDir filesep fileName], 'dynData','params', "-v7.3");
+    save([matDir filesep fileName], 'dynData','params', "-v7.3");
 end
 
 close(fileBar)
