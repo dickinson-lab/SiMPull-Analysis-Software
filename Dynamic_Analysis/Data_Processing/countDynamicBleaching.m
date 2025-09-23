@@ -27,7 +27,13 @@ for a = 1:length(matFiles)
             continue
         end
     else
-        expDir = matFiles{a}(1:slash(end));
+        expDir = matFiles{a}(1:end-4); %Just chops off the '.mat' extension; this will work if .mat file is outside the image directory
+        if ~isfolder(expDir)
+            expDir = matFiles{a}(1:slash(end)); %If that doesn't work, .mat file must be inside the image directory
+        end
+        if ~isfolder(expDir)
+            error('Could not locate image files - did you move the .mat file from the location where it was originally created?');
+        end
     end
     
     % Load data structure
@@ -188,7 +194,7 @@ close(fileBar)
         % Concatenate to existing data and re-count
         for f = find(traceIdx)
             dynData.([channel 'SpotData'])(f).intensityTrace = horzcat(dynData.([channel 'SpotData'])(f).intensityTrace(1:firstFrame-traceFirstFrame(f)), tempData.SpotData(f).intensityTrace);
-            [results, error] = find_changepoints_c(dynData.([channel 'SpotData'])(f).intensityTrace, 2);
+            [results, ~] = find_changepoints_c(dynData.([channel 'SpotData'])(f).intensityTrace, 2);
             dynData.([channel 'SpotData'])(f).changepoints = results.changepoints;
             dynData.([channel 'SpotData'])(f).steplevels = results.steplevels;
             dynData.([channel 'SpotData'])(f).stepstdev = results.stepstdev;
