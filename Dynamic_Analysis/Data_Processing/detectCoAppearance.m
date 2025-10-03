@@ -162,7 +162,7 @@ function [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params)
         imgName = expDir(slash(end-1)+1 : end-1);
         if remote
             copyfile(expDir,[tempDir filesep imgName]);
-            localFile = [tempDir filesep imgName filesep imgFile{a}(slash(end):end)];
+            localFile = [tempDir filesep imgName filesep imgFile{1}(slash(end):end)];
             stackObj = TIFFStack(localFile,[],params.nChannels);
         else
             stackObj = TIFFStack(imgFile{1},[],params.nChannels);
