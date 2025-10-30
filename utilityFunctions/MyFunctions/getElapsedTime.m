@@ -85,7 +85,7 @@ else
 end
 
 %% Calculate seconds elapsed between lysis and acquisition, if possible
-acquisitionTime= (acquisitionTime(2)*60) + acquisitionTime(3);
-lysisTime= (lysisTime(2)*60) + lysisTime(3);
-elapsedTime = acquisitionTime - lysisTime;
+acquisitionSecs= (acquisitionTime(1)*3600 + acquisitionTime(2)*60) + acquisitionTime(3);
+lysisSecs= (lysisTime(1)*3600 + lysisTime(2)*60) + lysisTime(3);
+elapsedTime = acquisitionSecs - lysisSecs;
 end
