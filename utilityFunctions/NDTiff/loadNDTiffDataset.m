@@ -135,4 +135,11 @@ function [image, smd] = loadNDTiffDataset(path, varargin)
     % Load & convert summary metadata
     smdJSON = dataset.getSummaryMetadata();
     smd = jsonObjectToStruct(smdJSON);
+
+    %Clean up MATLAB's mess on Mac - without this, each dataset can only be
+    %opened once. 
+    if exist([input filesep '._NDTiff.index'], 'file')==2
+        delete([input filesep '._NDTiff.index']);
+    end
+
 end

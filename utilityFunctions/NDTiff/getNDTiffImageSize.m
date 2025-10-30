@@ -19,4 +19,9 @@ function [x,y, c, z, t, p] = getNDTiffImageSize(input)
     t = max(cell2mat({axesStruct.time})) + 1;
     p = max(cell2mat({axesStruct.position})) + 1;
     
+    %Clean up MATLAB's mess on Mac - without this, each dataset can only be
+    %opened once. 
+    if exist([input filesep '._NDTiff.index'], 'file')==2
+        delete([input filesep '._NDTiff.index']);
+    end
 end
