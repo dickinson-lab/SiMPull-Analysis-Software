@@ -9,8 +9,9 @@
 % and two for their filtered counterparts "filteredCounted" and "filteredCoApp"
 % Data Organization: 
     % Each metric is saved in a structure with a field for each prey channel.
-    % Each field holds a cell array with one element for each particle size being analyzed (loop b).
-    % In each of these arrays, the horizontal dimension represents time (in windows), and the vertical dimension is for datasets (loop a).
+    % Each field holds a 3D array where the horizontal dimension represents time (in windows),  
+    %   the vertical dimension is for datasets (loop a), and 
+    %   the third dimension is particle size (loop b).
     % We also sum all of the baitsCounted for purposes of calculating density
 
 % In addition, the function returns logical indices called "lowDensity" and
@@ -93,9 +94,9 @@ for a = 1:length(matFiles)
         end
     end
 
-    lastWindow = ceil(max(cell2mat({dynData.([BaitChannel 'SpotData']).appearTimeSecs})) / 2.5);
+    lastWindow = ceil(max(cell2mat({dynData.([BaitChannel 'SpotData']).appearTimeSecs})) / 2.5); %Hard-coded 2.5 s averaging window - could be a paramter later if needed  
     baitsForDensity = [];
-    for b = 1:maxSteps
+    for b = 1:maxSteps %Loop b iterates over bait stoichiometry (step numbers)
         % spotChoiceIdx selects spots with a given number of photobleaching steps
         if isfield(dynData.BaitSpotData,'nFluors')
             spotChoiceIdx = [dynData.BaitSpotData.nFluors] == b;
@@ -119,22 +120,30 @@ for a = 1:length(matFiles)
         end
         filterIdx = filterIdx & ~cellfun(@(x) x<10, {dynData.BaitSpotData.dwellTime}); % Short Dwell Time Filter
 
-        % Create structs for each prey's % co-appearance with bait
+        % Create structs for each prey's co-appearance with bait
         for s = 1:params.nChannels
             if s == params.baitChNum
                 continue %Skip the bait channel
             end
             preyChannel = ['PreyCh' num2str(s)];
             colocData = {dynData.([BaitChannel 'SpotData'])(spotChoiceIdx).(['appears_w_' preyChannel])};
+            nPreyData = {dynData.([preyChannel 'SpotData'])(spotChoiceIdx).nFluors};
+            nPreyData( cellfun(@isempty, nPreyData) ) = {0}; %Replace empty cells with zeros
+            nPreyData( cellfun(@(x) x>b, nPreyData) ) = {b}; %Enforce a maximum of one prey per bait - this is a simplifying assumption that could be relaxed later
             filteredColocData = {dynData.BaitSpotData(filterIdx).(['appears_w_' preyChannel])};
+            filtered_nPreyData = {dynData.([preyChannel 'SpotData'])(filterIdx).nFluors};
+            filtered_nPreyData( cellfun(@isempty, filtered_nPreyData) ) = {0}; %Replace empty cells with zeros
+            filtered_nPreyData( cellfun(@(x) x>b, filtered_nPreyData) ) = {b}; %Enforce a maximum of one prey per bait - this is a simplifying assumption that could be relaxed later
             % Calculate a filtering index to ignore co-appearing spots 
             % with equal dwell times (which likely result fluorescence bleed-through). 
             %dwellDiff = cell2mat({dynData.BaitSpotData.dwellTime}) - cell2mat({dynData.PreyCh2SpotData.dwellTime});
             %equalDwellIdx = abs(dwellDiff) <= 5; % The threshold of 5 matches what is used in dwellTime_koff.m. This value could be adjusted for more or less stringent filtering.
             baitsCounted = zeros(1,lastWindow);
             coAppearing = zeros(1,lastWindow);
+            nPrey = zeros(1,lastWindow);
             filtCounted = zeros(1,lastWindow);
             filtCoAppearing = zeros(1,lastWindow);
+            filt_nPrey = zeros(1,lastWindow);
             for d = 1:lastWindow
                 lowerBound = (d-1) * params.window * 0.05;
                 upperBound = d * params.window * 0.05; %Hard-coded 50 ms exposure time - could be a paramter later if needed 
@@ -142,11 +151,13 @@ for a = 1:length(matFiles)
                 index = cell2mat({dynData.([BaitChannel 'SpotData'])(spotChoiceIdx).appearTimeSecs}) > lowerBound & cell2mat({dynData.([BaitChannel 'SpotData'])(spotChoiceIdx).appearTimeSecs}) <= upperBound;
                 baitsCounted(d) = sum(~cellfun(@(x) isempty(x) || isnan(x), colocData(index)));
                 coAppearing(d) = sum(cellfun(@(x) ~isempty(x) && x==true, colocData(index)));
+                nPrey(d) = sum(cell2mat(nPreyData(index)));
                 % Filtered data
                 index = cell2mat({dynData.([BaitChannel 'SpotData'])(filterIdx).appearTimeSecs}) > lowerBound & cell2mat({dynData.([BaitChannel 'SpotData'])(filterIdx).appearTimeSecs}) <= upperBound;
                 filtCounted(d) = sum(~cellfun(@(x) isempty(x) || isnan(x), filteredColocData(index)));
                 %index = cell2mat({dynData.([BaitChannel 'SpotData'])(filterIdx & ~equalDwellIdx).appearTimeSecs}) > lowerBound & cell2mat({dynData.([BaitChannel 'SpotData'])(filterIdx & ~equalDwellIdx).appearTimeSecs}) <= upperBound; %Second index calculation here because the equal dwell filter applies only to coappearance, not to bait spot count.
                 filtCoAppearing(d) = sum(cellfun(@(x) ~isempty(x) && x==true, filteredColocData(index)));
+                filt_nPrey(d) = sum(cell2mat(filtered_nPreyData(index)));
             end  
 
             % Put all the data together. Organization: 
@@ -158,13 +169,17 @@ for a = 1:length(matFiles)
             if a == 1
                 output.totalCounted.(preyChannel)(:,:,b) = baitsCounted;
                 output.totalCoApp.(preyChannel)(:,:,b) = coAppearing;
+                output.total_nPrey.(preyChannel)(:,:,b) = nPrey;
                 output.filteredCounted.(preyChannel)(:,:,b) = filtCounted;
                 output.filteredCoApp.(preyChannel)(:,:,b) = filtCoAppearing;
+                output.filtered_nPrey.(preyChannel)(:,:,b) = filt_nPrey;
             else
                 output.totalCounted.(preyChannel)(a,1:length(baitsCounted),b) = baitsCounted;
                 output.totalCoApp.(preyChannel)(a,1:length(coAppearing),b) = coAppearing;
+                output.total_nPrey.(preyChannel)(a,1:length(nPrey),b) = nPrey;
                 output.filteredCounted.(preyChannel)(a,1:length(baitsCounted),b) = filtCounted;
                 output.filteredCoApp.(preyChannel)(a,1:length(coAppearing),b) = filtCoAppearing;
+                output.filtered_nPrey.(preyChannel)(a,1:length(nPrey),b) = filt_nPrey;
             end
             if b == 1
                 baitsForDensity = baitsCounted;

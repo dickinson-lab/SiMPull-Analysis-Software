@@ -67,7 +67,7 @@ close(fileBar)
 for c = params.preyChNums
     figure('Name','Prey Channel 2 Histogram')
     h = histogram2(stepCountData{c}(1,:), stepCountData{c}(2,:), 'BinMethod', 'integers');
-    xlabel('Bait Molecles Counted')
+    xlabel('Bait Molecules Counted')
     ylabel('Prey Molecules Counted')
     figure('Name','Prey Channel 2 Bubble Plot')
     x = h.XBinEdges +0.5;
