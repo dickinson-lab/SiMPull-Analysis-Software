@@ -90,7 +90,7 @@ else
     error('Incorrect number of input arguments given. Call detectCoAppearance(imgFilesCellArray, DialogBoxAnswers, regData) to provide parameters, or call with no arguments to raise dialog boxes.');
 end
 
-% Save parameters for future use and branch based on image type
+%% Detect Co-appearance: Save parameters for future use and branch based on image type
 params.DataType = DataType;
 params.pixelSize = pixelSize;
 params.RegistrationData = regData; 
@@ -102,34 +102,6 @@ if strcmp(DataType,'Composite Data')
     params.nChannels = nChannels;
     params.baitChNum = baitChNum;
     params.BaitChannel = 'Bait';
-    [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params);
-else
-    params.LeftChannel = LeftChannel;
-    params.RightChannel = RightChannel;
-    params.BaitPos = BaitPos;
-    params.BaitChannel = Answer.([BaitPos 'Channel']); 
-    [imgName, dynData, params] = detCoApp_dv(expDir,imgFile,params);
-end
-
-%% Run blinkerFinder.m
-dynData = blinkerFinder(dynData,params.BaitChannel);
-
-%% Plot coAppearance over time
-% Calculated time elapsed between embryo lysis and data acquisition and save in params
-elapsedTime = getElapsedTime(expDir, imgName, params.isNDTiff);
-params.elapsedTime = elapsedTime;
-% Create and save plot
-params = coApp_vs_time(dynData,params,expDir);
-
-%% Save data
-save([expDir(1:end-1) '.mat'], 'dynData','params',"-v7.3");
-end
-
-
-%% Functions for Individual Data Types
-
-%% Composite data (Images are ImageJ hyperstacks with multiple channels) 
-function [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params)
     %% Load images
     wb = waitbar(0,'Loading Images...','Name',strrep(['Analyzing Experiment ' expDir],'_','\_'));       
     tempDir = [userpath filesep 'temp'];
@@ -168,7 +140,45 @@ function [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params)
             stackObj = TIFFStack(imgFile{1},[],params.nChannels);
         end
     end
+    [dynData, params] = detCoApp_comp(expDir,stackObj,params,wb);
+else
+    params.LeftChannel = LeftChannel;
+    params.RightChannel = RightChannel;
+    params.BaitPos = BaitPos;
+    params.BaitChannel = Answer.([BaitPos 'Channel']); 
+    [imgName, dynData, params] = detCoApp_dv(expDir,imgFile,params);
+end
 
+%% Run blinkerFinder.m
+dynData = blinkerFinder(dynData,params.BaitChannel);
+
+%% Plot coAppearance over time
+% Calculated time elapsed between embryo lysis and data acquisition and save in params
+elapsedTime = getElapsedTime(expDir, imgName, params.isNDTiff);
+params.elapsedTime = elapsedTime;
+% Create and save plot
+params = coApp_vs_time(dynData,params,expDir);
+
+%% Optionally count photobleaching steps
+if countBleaching
+    dynData = countDynamicBleaching(dynData,params,stackObj);
+end
+
+%% Save data
+save([expDir(1:end-1) '.mat'], 'dynData','params',"-v7.3");
+
+% Delete Temp Files
+if strcmp(DataType,'Composite Data') && remote
+    clear stackObj
+    delete([tempDir filesep imgName]);
+end
+end
+
+
+%% Functions for Individual Data Types
+
+%% Composite data (Images are ImageJ hyperstacks with multiple channels) 
+function [dynData, params] = detCoApp_comp(expDir,stackObj,params,wb)
     %% Find difference peaks
     waitbar(0,wb,'Finding bait protein appearances...');
     % Figure out what portion of the image we're going to work with and set x indices accordingly
@@ -329,10 +339,6 @@ function [imgName, dynData, params] = detCoApp_comp(expDir,imgFile,params)
             %% Find co-appearing spots
             dynData = findCoApp(dynData, 'Bait', preyChannel, wb);
         end
-    end
-    % Delete Temp Files
-    if remote
-        delete([tempDir filesep imgName]);
     end
     close(wb)
 end

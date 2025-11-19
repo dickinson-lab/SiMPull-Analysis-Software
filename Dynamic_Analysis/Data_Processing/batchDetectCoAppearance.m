@@ -69,8 +69,3 @@ for a = 1:length(imgDir)
 end
 
 close(statusbar)
-
-% Optionally count photobleaching steps
-if countBleaching
-    countDynamicBleaching(imgDir);
-end
