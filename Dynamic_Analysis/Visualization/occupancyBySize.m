@@ -35,6 +35,7 @@ for c = fieldnames(table.totalCounted) %This loops over prey channels
     end
     pctCoApp(:,5) = 100 * (coApp ./ counted );
     pctOcc(:,5) = 100 * (nPrey ./ countedMolecules );
+    disp(['N(5+)=' num2str(sum(counted))]);
     % Plot
     plotSpreadBubble(pctCoApp,'showWeightedMean',true);
     title('Percent Co-Appearance');
