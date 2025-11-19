@@ -23,8 +23,11 @@ for a = 1:length(matFiles)
         fileName = [fileName '.mat'];
         expDir = matFiles{a};
         matDir = matFiles{a};
-        if ~isfile([expDir filesep fileName])
-            warndlg(['No .mat file found for selected folder ' expDir]);
+        if ~isfile([matDir filesep fileName])
+            matDir = matDir(1:slash(end)); %Look in the parent directory
+        end
+        if ~isfile([matDir filesep fileName])
+            warndlg(['No .mat file found for selected folder ' expDir '. Photobleaching step counting aborted.']);
             continue
         end
     else

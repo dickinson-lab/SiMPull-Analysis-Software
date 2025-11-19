@@ -64,7 +64,7 @@ for a = 1:length(matFiles)
         error('Missing appearance time field in BaitSpotData structure');
     end
     if ~isfield(dynData.BaitSpotData,'dwellTime')
-        [dynData, ~] = dwellTime_koff(0,{[expDir filesep fileName]},false, dynData, params);
+        [dynData, ~] = dwellTime_kobs(0,{[expDir filesep fileName]},false, dynData, params);
     end
     filterIdx = filterIdx & ~cellfun(@(x) x<10, {dynData.BaitSpotData.dwellTime}); % Short Dwell Time Filter
 
