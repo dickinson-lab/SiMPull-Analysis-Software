@@ -127,11 +127,23 @@ for a = 1:length(matFiles)
             end
             preyChannel = ['PreyCh' num2str(s)];
             colocData = {dynData.([BaitChannel 'SpotData'])(spotChoiceIdx).(['appears_w_' preyChannel])};
-            nPreyData = {dynData.([preyChannel 'SpotData'])(spotChoiceIdx).nFluors};
+            if isfield(dynData.([preyChannel 'SpotData']),'nFluors')
+                nPreyData = {dynData.([preyChannel 'SpotData'])(spotChoiceIdx).nFluors};
+            else
+                % If there's no nFluors field for the prey channel, it means no co-appearance was detected, so put all zeros
+                nPreyData = cell(sum(spotChoiceIdx),1);
+                nPreyData(:) = {0};
+            end
             nPreyData( cellfun(@isempty, nPreyData) ) = {0}; %Replace empty cells with zeros
             %nPreyData( cellfun(@(x) x>b, nPreyData) ) = {b}; %Enforce a maximum of one prey per bait - this is a simplifying assumption that could be relaxed later
             filteredColocData = {dynData.BaitSpotData(filterIdx).(['appears_w_' preyChannel])};
-            filtered_nPreyData = {dynData.([preyChannel 'SpotData'])(filterIdx).nFluors};
+            if isfield(dynData.([preyChannel 'SpotData']),'nFluors')
+                filtered_nPreyData = {dynData.([preyChannel 'SpotData'])(filterIdx).nFluors};
+            else
+                % If there's no nFluors field for the prey channel, it means no co-appearance was detected, so put all zeros
+                filtered_nPreyData = cell(sum(spotChoiceIdx),1);
+                filtered_nPreyData(:) = {0};
+            end
             filtered_nPreyData( cellfun(@isempty, filtered_nPreyData) ) = {0}; %Replace empty cells with zeros
             %filtered_nPreyData( cellfun(@(x) x>b, filtered_nPreyData) ) = {b}; %Enforce a maximum of one prey per bait - this is a simplifying assumption that could be relaxed later
             % Calculate a filtering index to ignore co-appearing spots 
