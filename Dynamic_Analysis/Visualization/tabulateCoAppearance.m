@@ -129,11 +129,11 @@ for a = 1:length(matFiles)
             colocData = {dynData.([BaitChannel 'SpotData'])(spotChoiceIdx).(['appears_w_' preyChannel])};
             nPreyData = {dynData.([preyChannel 'SpotData'])(spotChoiceIdx).nFluors};
             nPreyData( cellfun(@isempty, nPreyData) ) = {0}; %Replace empty cells with zeros
-            nPreyData( cellfun(@(x) x>b, nPreyData) ) = {b}; %Enforce a maximum of one prey per bait - this is a simplifying assumption that could be relaxed later
+            %nPreyData( cellfun(@(x) x>b, nPreyData) ) = {b}; %Enforce a maximum of one prey per bait - this is a simplifying assumption that could be relaxed later
             filteredColocData = {dynData.BaitSpotData(filterIdx).(['appears_w_' preyChannel])};
             filtered_nPreyData = {dynData.([preyChannel 'SpotData'])(filterIdx).nFluors};
             filtered_nPreyData( cellfun(@isempty, filtered_nPreyData) ) = {0}; %Replace empty cells with zeros
-            filtered_nPreyData( cellfun(@(x) x>b, filtered_nPreyData) ) = {b}; %Enforce a maximum of one prey per bait - this is a simplifying assumption that could be relaxed later
+            %filtered_nPreyData( cellfun(@(x) x>b, filtered_nPreyData) ) = {b}; %Enforce a maximum of one prey per bait - this is a simplifying assumption that could be relaxed later
             % Calculate a filtering index to ignore co-appearing spots 
             % with equal dwell times (which likely result fluorescence bleed-through). 
             %dwellDiff = cell2mat({dynData.BaitSpotData.dwellTime}) - cell2mat({dynData.PreyCh2SpotData.dwellTime});

@@ -31,11 +31,11 @@ for c = fieldnames(table.totalCounted) %This loops over prey channels
         countedMolecules(:,5) = countedMolecules(:,5) + d*sum(table.totalCounted.(preyChannel)(:,:,d),2,'omitnan');
     end
     pctCoApp = 100 * (coApp ./ countedSpots );
-    pctOcc = 100 * (nPrey ./ countedMolecules );
+    Occupancy = nPrey ./ countedMolecules;
     disp(['N(5+)=' num2str(sum(countedSpots(:,5)))]);
     % Plot
     plotSpreadBubble(pctCoApp,'showWeightedMean',true);
     title('Percent Co-Appearance');
-    plotSpreadBubble(pctOcc,'showWeightedMean',true);
-    title(['Fraction of binding sites occupied' newline '(assuming 1:1 stoichiometry)']);
+    plotSpreadBubble(Occupancy,'showWeightedMean',true);
+    title('Average prey molecules per bait molecule');
 end
