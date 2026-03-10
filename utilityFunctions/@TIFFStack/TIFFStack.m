@@ -192,16 +192,23 @@ classdef TIFFStack < handle
          oStack.bForceTiffread = bForceTiffread;
          
          % - Can we use the accelerated TIFF library?
-         if (exist('tifflib') ~= 3) %#ok<EXIST>
-            % - Try to copy the library
-            try
-                strTiffLibLoc = which('/private/tifflib');
-                strTIFFStackLoc = fileparts(which('TIFFStack'));
-                copyfile(strTiffLibLoc, fullfile(strTIFFStackLoc, 'private'), 'f');
-                oStack.bUseTiffLib = (exist('tifflib') == 3) & ~bForceTiffread; %#ok<EXIST>
-            catch
-                oStack.bUseTiffLib = (exist('/private/tifflib') == 2) & ~bForceTiffread; %#ok<EXIST>
-            end
+         if (isMATLABReleaseOlderThan("R2024b"))
+             if (exist('tifflib') ~= 3) %#ok<EXIST>
+                % - Try to copy the library
+                try
+                    strTiffLibLoc = which('/private/tifflib');
+                    strTIFFStackLoc = fileparts(which('TIFFStack'));
+                    copyfile(strTiffLibLoc, fullfile(strTIFFStackLoc, 'private'), 'f');
+                    oStack.bUseTiffLib = (exist('tifflib') == 3) & ~bForceTiffread; %#ok<EXIST>
+                catch
+                    oStack.bUseTiffLib = (exist('tifflib') == 2) & ~bForceTiffread; %#ok<EXIST>
+                end
+             end
+         else
+             if (exist('tifflib') ~= 3 && exist('tifflib') ~= 2 )
+                 strTIFFStackLoc = fileparts(which('TIFFStack'));   
+                 copyfile( fullfile(strTIFFStackLoc, 'private/tifflib_shim.m'), fullfile(strTIFFStackLoc, 'private/tifflib.m'), 'f');
+             end
          end
          
          
