@@ -194,12 +194,16 @@ classdef TIFFStack < handle
          % - Can we use the accelerated TIFF library?
          if (exist('tifflib') ~= 3) %#ok<EXIST>
             % - Try to copy the library
-            strTiffLibLoc = which('/private/tifflib');
-            strTIFFStackLoc = fileparts(which('TIFFStack'));
-            copyfile(strTiffLibLoc, fullfile(strTIFFStackLoc, 'private'), 'f');
+            try
+                strTiffLibLoc = which('/private/tifflib');
+                strTIFFStackLoc = fileparts(which('TIFFStack'));
+                copyfile(strTiffLibLoc, fullfile(strTIFFStackLoc, 'private'), 'f');
+                oStack.bUseTiffLib = (exist('tifflib') == 3) & ~bForceTiffread; %#ok<EXIST>
+            catch
+                oStack.bUseTiffLib = (exist('/private/tifflib') == 2) & ~bForceTiffread; %#ok<EXIST>
+            end
          end
          
-         oStack.bUseTiffLib = (exist('tifflib') == 3) & ~bForceTiffread; %#ok<EXIST>
          
          if (~oStack.bUseTiffLib)
             warning('TIFFStack:SlowAccess', ...
