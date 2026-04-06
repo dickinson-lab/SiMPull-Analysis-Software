@@ -23,9 +23,9 @@ else
     matFiles = uipickfiles('Prompt','Select data files to analyze','Type',{'*.mat'});
 end
 
-fileBar = waitbar(0);
-for a = 1:length(matFiles)  
-    if ~isempty(matFiles) % If we need to load data
+if ~isempty(matFiles) % If we need to load data
+    fileBar = waitbar(0,"");
+    for a = 1:length(matFiles)  
         % Get file name
         slash = strfind(matFiles{a},filesep);
         fileName = matFiles{a}(slash(end)+1:end); 
@@ -55,7 +55,12 @@ for a = 1:length(matFiles)
         
         % Load data structure
         load([matDir filesep fileName],'dynData','params');
+        count();
     end
+    close(fileBar)
+end
+
+function count() 
     %Extract channel info - this is just for code readability
     BaitChannel = params.BaitChannel;
     if ~strcmp(params.DataType, 'Composite Data')
@@ -155,7 +160,7 @@ for a = 1:length(matFiles)
     end
 end
 
-close(fileBar)
+
 
     %% Helper function to count bleaching events for a single trace
     % Since this is a nested function, it can access variables from the parent
