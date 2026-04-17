@@ -41,10 +41,15 @@ for a = 1:length(matFiles)
     % Get Directory
     if isfolder(matFiles{a})
         fileName = [fileName '.mat'];
+        % Look in the image folder first, where older versions of the code kept .mat files
         expDir = matFiles{a};
         if ~isfile([expDir filesep fileName])
-            warndlg(['No .mat file found for selected folder ' expDir]);
-            continue
+            % Look in the root directory, where newer versions keep it
+            expDir = matFiles{a}(1:slash(end));
+            if ~isfile([expDir filesep fileName])
+                warndlg(['No .mat file found for selected folder ' expDir]);
+                continue
+            end
         end
     else
         expDir = matFiles{a}(1:slash(end));

@@ -21,7 +21,7 @@ uiwait(app.SampleInformationUIFigure);
 clear app
 
 categories = infoTable(:,2);
-categories = strrep(categories,' ','_');
+categories(~cellfun(@isempty, categories)) = strrep(categories(~cellfun(@isempty, categories)),' ','_');
 bleachControls = infoTable(:,3);
 
 %% Set up structures to hold the results

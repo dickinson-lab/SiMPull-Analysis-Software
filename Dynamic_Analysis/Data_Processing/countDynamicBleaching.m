@@ -1,4 +1,4 @@
-% Counts photobleaching steps in dynamic SiMPull data. All channels are
+close% Counts photobleaching steps in dynamic SiMPull data. All channels are
 % analyzed (but note that in not all cases will the results for all
 % channels be informative). 
 
