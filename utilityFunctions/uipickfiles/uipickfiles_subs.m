@@ -52,7 +52,7 @@ classdef uipickfiles_subs
         if isempty(p) && full_filter(1) == '/'
             p = '/';
         end
-        if uipickfiles_subs.fdexist(full_filter,'dir')
+        if isfolder(full_filter)
             dfiles = repmat(dir(char(127)),0,1);
         else
             dfiles = dir(full_filter);
@@ -140,13 +140,23 @@ classdef uipickfiles_subs
                 if sort_state(2) > 0
                     [files_sorted,index] = sort([files.datenum]);
                 else
-                    [files_sorted,index] = sort([files.datenum],'descend');
+                    	                [files_sorted,index] = sort_nat(lower({files.name}));
+                end
+                if sort_state(2) < 0
+	                files_sorted = files_sorted(end:-1:1);
+	                index = index(end:-1:1);
                 end
             case 3
                 if sort_state(3) > 0
-                    [files_sorted,index] = sort([files.bytes]);
+	                [files_sorted,index] = sort([files.datenum]);
                 else
-                    [files_sorted,index] = sort([files.bytes],'descend');
+	                [files_sorted,index] = sort([files.datenum],'descend');
+                end
+            case 4
+                if sort_state(4) > 0
+	                [files_sorted,index] = sort([files.bytes]);
+                else
+	                [files_sorted,index] = sort([files.bytes],'descend');
                 end
         end
         end
@@ -164,7 +174,7 @@ classdef uipickfiles_subs
             end
         end
         drives(cellfun('isempty',drives)) = [];
-        if nargin > 0 && iscellstr(other_drives)
+        if nargin > 0 && (iscellstr(other_drives) || isstring(other_drives))
             drives = [drives,unique(other_drives)];
         end
         end
@@ -177,7 +187,7 @@ classdef uipickfiles_subs
         % prepends a folder icon or bullet symbol.
         if ispc
             for i = 1:length(filenames)
-                if ~isempty(regexpi(filenames{i},'\.lnk')) && ...
+                if ~isempty(regexpi(filenames{i},'\.lnk', 'once')) && ...
                         is_shortcut_to_dir(dir_listing(i).name)
                     filenames{i} = sprintf('%s%s%s%s',fsdata.pre_sc,filenames{i},...
                         fsdata.filesep,fsdata.post);
@@ -233,7 +243,7 @@ classdef uipickfiles_subs
             fclose(fid);
             imwrite(im,cmap,icon_path,'Transparency',[1 1 0])
         end
-        success = uipickfiles_subs.fdexist(icon_path,'file');
+                success = isfile(icon_path);
         end
 
         % --------------------
@@ -257,7 +267,7 @@ classdef uipickfiles_subs
             fclose(fid);
             imwrite(im,cmap,icon_path,'Transparency',[1 1 1 0])
         end
-        success = uipickfiles_subs.fdexist(icon_path,'file');
+        success = isfile(icon_path);
         end
 
         % --------------------
@@ -287,7 +297,7 @@ classdef uipickfiles_subs
             fclose(fid);
             imwrite(im,cmap,icon_path,'Transparency',[1 1 1 1 1 0 1 1 1])
         end
-        success = uipickfiles_subs.fdexist(icon_path,'file');
+        success = isfile(icon_path);
         end
 
         % --------------------
@@ -317,7 +327,7 @@ classdef uipickfiles_subs
             fclose(fid);
             imwrite(im,cmap,icon_path,'Transparency',[1 1 1 1 1 1 1 1 0 1])
         end
-        success = uipickfiles_subs.fdexist(icon_path,'file');
+        success = isfile(icon_path);
         end
 
         % --------------------
@@ -330,9 +340,9 @@ classdef uipickfiles_subs
         if fsdata.style == 1
             icon1_path = fullfile(prefdir,'uipickfiles_folder_icon.png');
             icon2_path = fullfile(prefdir,'uipickfiles_foldersc_icon.png');
-            if ~(uipickfiles_subs.fdexist(icon1_path,'file') && uipickfiles_subs.fdexist(icon2_path,'file'))
-                success1 = uipickfiles_subs.generate_folder_icon(icon1_path);
-                success2 = uipickfiles_subs.generate_foldersc_icon(icon2_path);
+            if ~(isfile(icon1_path) && isfile(icon2_path))
+                success1 = generate_folder_icon(icon1_path);
+                success2 = generate_foldersc_icon(icon2_path);
                 if ~(success1 && success2)
                     fsdata.style = 2;
                 end
@@ -346,10 +356,20 @@ classdef uipickfiles_subs
             fsdata.pre_sc = sprintf('<html><img width=12 height=10 src="%s">&nbsp;',icon2_url);
             fsdata.post = '</html>';
         elseif fsdata.style == 2
-            fsdata.pre = '<html><b>&#8226;</b>&nbsp;';
-            fsdata.pre_sc = '<html><b>&#8226;</b>&nbsp;';
-            fsdata.post = '</html>';
+            % fsdata.pre = '<html><b>&#8226;</b>&nbsp;';
+            % fsdata.pre_sc = '<html><b>&#8226;</b>&nbsp;';
+            % fsdata.post = '</html>';
+            % fsdata.pre = '• ';
+            % fsdata.pre = '⬤ ';
+            % fsdata.pre = '▇ ';
+            fsdata.pre = '▶ ';
+            fsdata.pre_sc = '• ';
+            fsdata.post = '';
         elseif fsdata.style == 3
+            fsdata.pre = '📁 ';
+            fsdata.pre_sc = '• ';
+            fsdata.post = '';
+        elseif fsdata.style == 4
             fsdata.pre = '';
             fsdata.pre_sc = '';
             fsdata.post = '';
@@ -368,9 +388,9 @@ classdef uipickfiles_subs
         if csdata.style == 1
             icon1_path = fullfile(prefdir,'uipickfiles_home_icon.png');
             icon2_path = fullfile(prefdir,'uipickfiles_logo_icon.png');
-            if ~(uipickfiles_subs.fdexist(icon1_path,'file') && uipickfiles_subs.fdexist(icon2_path,'file'))
-                success1 = uipickfiles_subs.generate_house_icon(icon1_path);
-                success2 = uipickfiles_subs.generate_logo_icon(icon2_path);
+            if ~(isfile(icon1_path) && isfile(icon2_path))
+                success1 = generate_house_icon(icon1_path);
+                success2 = generate_logo_icon(icon2_path);
                 if ~(success1 && success2)
                     csdata.style = 2;
                 end
@@ -384,6 +404,10 @@ classdef uipickfiles_subs
             csdata.pre_logo = sprintf('<html><img width=21 height=16 src="%s">',icon2_url);
             csdata.post = '</html>';
         elseif csdata.style == 2
+            csdata.pre_home = '[HOME] ';
+            csdata.pre_logo = '[MATLAB] ';
+            csdata.post = '';
+        elseif csdata.style == 3
             csdata.pre_home = '';
             csdata.pre_logo = '';
             csdata.post = '';
@@ -410,7 +434,7 @@ classdef uipickfiles_subs
         while arg_index <= length(varargin)
             arg = varargin{arg_index};
             if ischar(arg)
-                prop_index = uipickfiles_subs.match_property(arg,properties);
+                prop_index = match_property(arg,properties);
                 prop.(properties{prop_index}) = varargin{arg_index + 1};
                 arg_index = arg_index + 2;
             elseif isstruct(arg)
@@ -443,18 +467,20 @@ classdef uipickfiles_subs
         % --------------------
 
         function r = fdexist(item_path,type)
-        %fdexist: Check if file or directory exists.  Does not search MATLAB path.
-        %  type must be 'dir' or 'file'.
-        if strncmpi(type,'dir',length(type))
-            r = java.io.File(item_path).isDirectory();
-        elseif strncmpi(type,'file',length(type))
-            r = java.io.File(item_path).isFile();
-        end
+        % %fdexist: Check if file or directory exists.  Does not search MATLAB path.
+        % %  type must be 'dir' or 'file'.
+        % if strncmpi(type,'dir',length(type))
+        %     r = java.io.File(item_path).isDirectory();
+        % elseif strncmpi(type,'file',length(type))
+        %     r = java.io.File(item_path).isFile();
+        % end
         end
 
         % --------------------
 
-        function r = is_shortcut_to_dir(filename)
+                
+        % function r = is_shortcut_to_dir(filename)
+        function r = is_shortcut_to_dir(~)
         r = false;
         % jFile = java.io.File(filename);
         % sf = sun.awt.shell.ShellFolder.getShellFolder(jFile);
