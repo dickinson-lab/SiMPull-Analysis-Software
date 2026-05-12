@@ -22,6 +22,7 @@ clear app
 
 categories = infoTable(:,2);
 categories(~cellfun(@isempty, categories)) = strrep(categories(~cellfun(@isempty, categories)),' ','_');
+categories(cellfun(@isempty, categories)) = {'Unspecified'};
 bleachControls = infoTable(:,3);
 
 %% Set up structures to hold the results
@@ -145,9 +146,9 @@ for d = 1:length(names)
     mh{d} = errorbar(ah, d, k_off(2), k_off(2)-k_off(3), k_off(1)-k_off(2), '_b', 'MarkerSize', 12,'LineWidth',2.5);
 end
 if length(k_off_cell) == 1
-    k_off_mat = k_off_cell{1}';
-    k_off_mat_lower = k_off_mat - k_off_cell_lower{1}';
-    k_off_mat_upper = k_off_cell_upper{1}' - k_off_mat;
+    k_off_mat = k_off_cell{1};
+    k_off_mat_lower = k_off_mat - k_off_cell_lower{1};
+    k_off_mat_upper = k_off_cell_upper{1} - k_off_mat;
     n_mat = n_cell{1}';
 else
     k_off_mat = padcat(k_off_cell{:});
