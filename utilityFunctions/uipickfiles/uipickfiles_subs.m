@@ -434,13 +434,13 @@ classdef uipickfiles_subs
         while arg_index <= length(varargin)
             arg = varargin{arg_index};
             if ischar(arg)
-                prop_index = match_property(arg,properties);
+                prop_index = uipickfiles_subs.match_property(arg,properties);
                 prop.(properties{prop_index}) = varargin{arg_index + 1};
                 arg_index = arg_index + 2;
             elseif isstruct(arg)
                 arg_fn = fieldnames(arg);
                 for i = 1:length(arg_fn)
-                    prop_index = match_property(arg_fn{i},properties);
+                    prop_index = uipickfiles_subs.match_property(arg_fn{i},properties);
                     prop.(properties{prop_index}) = arg.(arg_fn{i});
                 end
                 arg_index = arg_index + 1;
