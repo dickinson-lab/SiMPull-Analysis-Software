@@ -46,7 +46,13 @@ otherCoord{1} = 1:imSize(1);
 otherCoord{2} = 1:imSize(2);
 halfFilter = floor(filterSize(:)'/2);
 for zall = 1:prod(imSize(3:end))
-    [otherCoord{3:end}] = ind2sub(imSize(3:end),zall);
+    if length(imSize) == 2
+        [otherCoord{3:end}] = deal(1);
+    elseif length(imSize) == 3
+        [otherCoord{3:end}] = ind2sub([imSize(3) 1],zall);
+    elseif length(imSize) > 3
+        [otherCoord{3:end}] = ind2sub(imSize(3:end),zall);
+    end
     img = double(img);
     tmp = addBorder(img(otherCoord{:}),halfFilter,[],padMode);
     tmp = medfilt2(tmp,filterSize);
