@@ -23,6 +23,7 @@ else
     matFiles = uipickfiles('Prompt','Select data files to analyze','Type',{'*.mat'});
 end
 
+maxSpots = [];
 if ~isempty(matFiles) % If we need to load data
     fileBar = waitbar(0,"");
     for a = 1:length(matFiles)  
@@ -71,6 +72,10 @@ function count()
     waitbar((a-1)/length(matFiles),fileBar,strrep(['Counting Photobleaching Steps for ' fileName],'_','\_'));
     nSpots = length(dynData.([BaitChannel 'SpotData']));
     needsLongerTrace = false(params.nChannels,nSpots); %This variable will be set to true each time a spot doesn't bleach completely.
+    maxSpots = params.imgArea / 3e6;    % The 3e6 factor comes from my experimental finding that 1000 spots is approximately the max for a 512x512 EMCCD chip at
+                                        % 150X,which translates to a sensor area of 3e9 square nanometers (1000 molecules / 3e9 nm^2 = 1 molecule / 3e6 nm^2).
+                                        % Note that this calculation assumes a 1.49 NA TIRF objective and doesn't account for possible differences in
+                                        % optical resolution between setups - I may wish to do something more sophisticated in the future. 
     for c = 1:nSpots
         %Bait Channel 
         countStepsDynamic(c, BaitChannel, params.baitChNum);
@@ -165,11 +170,18 @@ end
     %% Helper function to count bleaching events for a single trace
     % Since this is a nested function, it can access variables from the parent
     function countStepsDynamic(spotNum, channel, chNum)
+        % Skip this spot if there were no steps found
         if isempty(dynData.([channel 'SpotData'])(spotNum).changepoints) % No dwell time info available if there are no steps
             dynData.([channel 'SpotData'])(spotNum).nFluors = NaN;
             return
         end
-        
+        % Skip this spot if it appeared in an image that was too dense
+        nSpots = sum(cell2mat({dynData.BaitSpotData.appearedInWindow}) == dynData.BaitSpotData(spotNum).appearedInWindow);
+        if nSpots > maxSpots
+            dynData.([channel 'SpotData'])(spotNum).nFluors = 'Too Dense';
+            return
+        end
+
         spotData = dynData.([channel 'SpotData'])(spotNum); % Copy data for just this spot - for code readability purposes
         % Find the appearance, count intervening steps and check for disappearance
         appearanceStep = 0;
