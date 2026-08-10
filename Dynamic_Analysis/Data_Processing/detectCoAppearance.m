@@ -397,8 +397,14 @@ function dynData = findCoApp(dynData, baitChannel, preyChannel, wb)
             matchingStep = find( abs(baitAppearTime - preyStepTimes) <= 4 );  %Spots appearing within 4 frames of each other are considered simultaneous
 
             if ~isempty(matchingStep) && dynData.([preyChannel 'SpotData'])(c).steplevels(max(matchingStep)+1) > dynData.([preyChannel 'SpotData'])(c).steplevels(min(matchingStep)) % && the intensity has to increase (otherwise it's not an appearance event)
-                                                                                                                                                                                     % The "min" and "max" avoid crashing when more than one step matches.
-                dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = true;
+                % We found a matching step; now make sure it's due to an actual increase in signal rather than bleaching of a neighboring spot.                                      % The "min" and "max" avoid crashing when more than one step matches.
+                % If it is, the signal will start close to zero and increase to a large positive value. Otherwise, it will start negative and increase to zero.
+                % So our heuristic is that if the level post-step is further from zero than the level pre-step, we consider it a true step. 
+                if abs(dynData.([preyChannel 'SpotData'])(c).steplevels(max(matchingStep)+1)) > abs(dynData.([preyChannel 'SpotData'])(c).steplevels(min(matchingStep)))
+                    dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = true;
+                else
+                    dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = false;
+                end
             else
                 dynData.([baitChannel 'SpotData'])(c).(['appears_w_' preyChannel]) = false;
             end
