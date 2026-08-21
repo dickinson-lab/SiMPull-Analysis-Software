@@ -34,7 +34,7 @@ for a = 1:length(matFiles)
     if ismember('koff_results',vars)
         load([expDir filesep fileName])
     else
-        [dynData, ~, koff_results] = dwellTime_koff(0, {[expDir filesep fileName]}, false);
+        [dynData, ~, koff_results] = dwellTime_kobs(0, {[expDir filesep fileName]}, false);
         load([expDir filesep fileName],'params')
     end
 
